@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,8 +19,23 @@ import type { BuildOrder } from "@/types";
 import { BuildOrderEditor } from "./BuildOrderEditor";
 import { CivBadge } from "@/components/overlay/CivBadge";
 
-export function BuildOrderManager() {
+interface BuildOrderManagerProps {
+  filterCiv?: string;
+  filterDiff?: string;
+  onExport?: (orderId: string) => void;
+}
+
+export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrderManagerProps) {
   const { buildOrders, setBuildOrders } = useBuildOrderStore();
+
+  // Filter build orders
+  const filteredOrders = useMemo(() => {
+    return buildOrders.filter((order) => {
+      if (filterCiv && order.civilization !== filterCiv) return false;
+      if (filterDiff && order.difficulty !== filterDiff) return false;
+      return true;
+    });
+  }, [buildOrders, filterCiv, filterDiff]);
   const [editingOrder, setEditingOrder] = useState<BuildOrder | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -99,15 +114,15 @@ export function BuildOrderManager() {
         </Button>
       </div>
 
-      {buildOrders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
-          <p className="text-sm">No build orders yet</p>
-          <p className="text-xs mt-1">Click "New" to create one</p>
+          <p className="text-sm">{buildOrders.length === 0 ? "No build orders yet" : "No matching build orders"}</p>
+          <p className="text-xs mt-1">{buildOrders.length === 0 ? 'Click "New" to create one' : "Try adjusting your filters"}</p>
         </div>
       ) : (
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-2">
-            {buildOrders.map((order) => (
+            {filteredOrders.map((order) => (
               <div
                 key={order.id}
                 className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
@@ -149,11 +164,23 @@ export function BuildOrderManager() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1">
+                  {onExport && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => onExport(order.id)}
+                      title="Export"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => setEditingOrder(order)}
+                    title="Edit"
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>
@@ -162,6 +189,7 @@ export function BuildOrderManager() {
                     size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => setDeleteConfirm(order.id)}
+                    title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>

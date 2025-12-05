@@ -1,0 +1,94 @@
+{
+  "id": "french-knight-rush",
+  "name": "French Knight Rush",
+  "civilization": "French",
+  "description": "Fast Feudal with School of Cavalry for early knight pressure. Exploits French eco bonuses for aggressive play.",
+  "difficulty": "Intermediate",
+  "enabled": true,
+  "steps": [
+    {
+      "id": "step-1",
+      "description": "Queue 2 villagers, rally to sheep",
+      "timing": "0:00",
+      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-2",
+      "description": "Build house with scout, villager to sheep",
+      "timing": "0:25",
+      "resources": { "food": 7, "wood": 0, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-3",
+      "description": "Villager to wood",
+      "timing": "0:50",
+      "resources": { "food": 7, "wood": 1, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-4",
+      "description": "Villager to wood",
+      "timing": "1:15",
+      "resources": { "food": 7, "wood": 2, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-5",
+      "description": "Villager to gold",
+      "timing": "1:40",
+      "resources": { "food": 7, "wood": 2, "gold": 1, "stone": 0 }
+    },
+    {
+      "id": "step-6",
+      "description": "Build Mining Camp, villager to gold",
+      "timing": "2:00",
+      "resources": { "food": 7, "wood": 2, "gold": 2, "stone": 0 }
+    },
+    {
+      "id": "step-7",
+      "description": "Villager to gold",
+      "timing": "2:25",
+      "resources": { "food": 7, "wood": 2, "gold": 3, "stone": 0 }
+    },
+    {
+      "id": "step-8",
+      "description": "Build Lumber Camp, villager to wood",
+      "timing": "2:50",
+      "resources": { "food": 7, "wood": 3, "gold": 3, "stone": 0 }
+    },
+    {
+      "id": "step-9",
+      "description": "Build School of Cavalry (Landmark) - use 2 villagers",
+      "timing": "3:15",
+      "resources": { "food": 7, "wood": 1, "gold": 3, "stone": 0 }
+    },
+    {
+      "id": "step-10",
+      "description": "Continue villagers to food during age up",
+      "timing": "3:45",
+      "resources": { "food": 9, "wood": 1, "gold": 3, "stone": 0 }
+    },
+    {
+      "id": "step-11",
+      "description": "Feudal Age! Queue knights from School of Cavalry",
+      "timing": "4:30",
+      "resources": { "food": 9, "wood": 3, "gold": 3, "stone": 0 }
+    },
+    {
+      "id": "step-12",
+      "description": "Build Stable for double knight production",
+      "timing": "5:00",
+      "resources": { "food": 8, "wood": 4, "gold": 4, "stone": 0 }
+    },
+    {
+      "id": "step-13",
+      "description": "Harass with 2-3 knights, target villagers and trade",
+      "timing": "5:30",
+      "resources": { "food": 8, "wood": 4, "gold": 5, "stone": 0 }
+    },
+    {
+      "id": "step-14",
+      "description": "Maintain knight pressure while booming behind it",
+      "timing": "6:30",
+      "resources": { "food": 10, "wood": 5, "gold": 6, "stone": 0 }
+    }
+  ]
+}

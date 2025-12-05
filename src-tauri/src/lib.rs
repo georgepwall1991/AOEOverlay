@@ -17,8 +17,12 @@ pub struct AppConfig {
     pub theme: String,
     pub hotkeys: HotkeyConfig,
     pub window_position: Option<WindowPosition>,
+    pub window_size: Option<WindowSize>,
     pub click_through: bool,
     pub compact_mode: bool,
+    pub auto_advance: AutoAdvanceConfig,
+    pub filter_civilization: Option<String>,
+    pub filter_difficulty: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -29,12 +33,25 @@ pub struct HotkeyConfig {
     pub cycle_build_order: String,
     pub toggle_click_through: String,
     pub toggle_compact: String,
+    pub reset_build_order: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WindowPosition {
     pub x: i32,
     pub y: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct WindowSize {
+    pub width: u32,
+    pub height: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AutoAdvanceConfig {
+    pub enabled: bool,
+    pub delay_seconds: u32,
 }
 
 impl Default for AppConfig {
@@ -50,10 +67,18 @@ impl Default for AppConfig {
                 cycle_build_order: "F4".to_string(),
                 toggle_click_through: "F5".to_string(),
                 toggle_compact: "F6".to_string(),
+                reset_build_order: "F7".to_string(),
             },
             window_position: None,
+            window_size: None,
             click_through: false,
             compact_mode: false,
+            auto_advance: AutoAdvanceConfig {
+                enabled: false,
+                delay_seconds: 0,
+            },
+            filter_civilization: None,
+            filter_difficulty: None,
         }
     }
 }
@@ -237,6 +262,62 @@ fn toggle_compact_mode(state: tauri::State<AppState>) -> Result<bool, String> {
     Ok(new_state)
 }
 
+#[tauri::command]
+fn get_window_size(window: tauri::Window) -> Result<WindowSize, String> {
+    let size = window.outer_size().map_err(|e| e.to_string())?;
+    Ok(WindowSize {
+        width: size.width,
+        height: size.height,
+    })
+}
+
+#[tauri::command]
+fn set_window_size(window: tauri::Window, width: u32, height: u32) -> Result<(), String> {
+    window
+        .set_size(tauri::Size::Physical(tauri::PhysicalSize { width, height }))
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn import_build_order(path: String) -> Result<BuildOrder, String> {
+    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let order: BuildOrder = serde_json::from_str(&content)
+        .map_err(|e| format!("Invalid build order format: {}", e))?;
+
+    // Save to build orders directory
+    let dir = get_build_orders_dir();
+    let save_path = dir.join(format!("{}.json", order.id));
+    let json = serde_json::to_string_pretty(&order).map_err(|e| e.to_string())?;
+    fs::write(save_path, json).map_err(|e| e.to_string())?;
+
+    Ok(order)
+}
+
+#[tauri::command]
+fn export_build_order(order: BuildOrder, path: String) -> Result<(), String> {
+    let json = serde_json::to_string_pretty(&order).map_err(|e| e.to_string())?;
+    fs::write(&path, json).map_err(|e| format!("Failed to write file: {}", e))
+}
+
+// Map string hotkey name to Code enum
+fn string_to_code(key: &str) -> Option<Code> {
+    match key.to_uppercase().as_str() {
+        "F1" => Some(Code::F1),
+        "F2" => Some(Code::F2),
+        "F3" => Some(Code::F3),
+        "F4" => Some(Code::F4),
+        "F5" => Some(Code::F5),
+        "F6" => Some(Code::F6),
+        "F7" => Some(Code::F7),
+        "F8" => Some(Code::F8),
+        "F9" => Some(Code::F9),
+        "F10" => Some(Code::F10),
+        "F11" => Some(Code::F11),
+        "F12" => Some(Code::F12),
+        _ => None,
+    }
+}
+
 fn load_config() -> AppConfig {
     let config_path = get_config_path();
     if config_path.exists() {
@@ -318,68 +399,92 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Setup global hotkeys
-            let app_handle = app.handle().clone();
+            // Setup global hotkeys from config
+            let hotkey_config = app.state::<AppState>().config.lock().unwrap().hotkeys.clone();
 
-            // F1 - Toggle Overlay
-            let toggle_shortcut = Shortcut::new(None, Code::F1);
-            app.global_shortcut().on_shortcut(toggle_shortcut, move |_app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
-                    let _ = app_handle.emit("hotkey-toggle-overlay", ());
-                    if let Some(window) = app_handle.get_webview_window("overlay") {
-                        if window.is_visible().unwrap_or(false) {
-                            let _ = window.hide();
-                        } else {
-                            let _ = window.show();
+            // Toggle Overlay
+            if let Some(code) = string_to_code(&hotkey_config.toggle_overlay) {
+                let app_handle = app.handle().clone();
+                let shortcut = Shortcut::new(None, code);
+                app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = app_handle.emit("hotkey-toggle-overlay", ());
+                        if let Some(window) = app_handle.get_webview_window("overlay") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.show();
+                            }
                         }
                     }
-                }
-            })?;
+                })?;
+            }
 
-            // F2 - Previous Step
-            let app_handle = app.handle().clone();
-            let prev_shortcut = Shortcut::new(None, Code::F2);
-            app.global_shortcut().on_shortcut(prev_shortcut, move |_app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
-                    let _ = app_handle.emit("hotkey-previous-step", ());
-                }
-            })?;
+            // Previous Step
+            if let Some(code) = string_to_code(&hotkey_config.previous_step) {
+                let app_handle = app.handle().clone();
+                let shortcut = Shortcut::new(None, code);
+                app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = app_handle.emit("hotkey-previous-step", ());
+                    }
+                })?;
+            }
 
-            // F3 - Next Step
-            let app_handle = app.handle().clone();
-            let next_shortcut = Shortcut::new(None, Code::F3);
-            app.global_shortcut().on_shortcut(next_shortcut, move |_app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
-                    let _ = app_handle.emit("hotkey-next-step", ());
-                }
-            })?;
+            // Next Step
+            if let Some(code) = string_to_code(&hotkey_config.next_step) {
+                let app_handle = app.handle().clone();
+                let shortcut = Shortcut::new(None, code);
+                app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = app_handle.emit("hotkey-next-step", ());
+                    }
+                })?;
+            }
 
-            // F4 - Cycle Build Order
-            let app_handle = app.handle().clone();
-            let cycle_shortcut = Shortcut::new(None, Code::F4);
-            app.global_shortcut().on_shortcut(cycle_shortcut, move |_app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
-                    let _ = app_handle.emit("hotkey-cycle-build-order", ());
-                }
-            })?;
+            // Cycle Build Order
+            if let Some(code) = string_to_code(&hotkey_config.cycle_build_order) {
+                let app_handle = app.handle().clone();
+                let shortcut = Shortcut::new(None, code);
+                app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = app_handle.emit("hotkey-cycle-build-order", ());
+                    }
+                })?;
+            }
 
-            // F5 - Toggle Click-Through
-            let app_handle = app.handle().clone();
-            let click_through_shortcut = Shortcut::new(None, Code::F5);
-            app.global_shortcut().on_shortcut(click_through_shortcut, move |_app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
-                    let _ = app_handle.emit("hotkey-toggle-click-through", ());
-                }
-            })?;
+            // Toggle Click-Through
+            if let Some(code) = string_to_code(&hotkey_config.toggle_click_through) {
+                let app_handle = app.handle().clone();
+                let shortcut = Shortcut::new(None, code);
+                app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = app_handle.emit("hotkey-toggle-click-through", ());
+                    }
+                })?;
+            }
 
-            // F6 - Toggle Compact Mode
-            let app_handle = app.handle().clone();
-            let compact_shortcut = Shortcut::new(None, Code::F6);
-            app.global_shortcut().on_shortcut(compact_shortcut, move |_app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
-                    let _ = app_handle.emit("hotkey-toggle-compact", ());
-                }
-            })?;
+            // Toggle Compact Mode
+            if let Some(code) = string_to_code(&hotkey_config.toggle_compact) {
+                let app_handle = app.handle().clone();
+                let shortcut = Shortcut::new(None, code);
+                app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = app_handle.emit("hotkey-toggle-compact", ());
+                    }
+                })?;
+            }
+
+            // Reset Build Order
+            if let Some(code) = string_to_code(&hotkey_config.reset_build_order) {
+                let app_handle = app.handle().clone();
+                let shortcut = Shortcut::new(None, code);
+                app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = app_handle.emit("hotkey-reset-build-order", ());
+                    }
+                })?;
+            }
 
             Ok(())
         })
@@ -391,11 +496,15 @@ pub fn run() {
             delete_build_order,
             get_window_position,
             set_window_position,
+            get_window_size,
+            set_window_size,
             toggle_overlay,
             show_settings,
             set_click_through,
             toggle_click_through,
             toggle_compact_mode,
+            import_build_order,
+            export_build_order,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

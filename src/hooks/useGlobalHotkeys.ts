@@ -4,7 +4,7 @@ import { useBuildOrderStore, useOverlayStore, useConfigStore } from "@/stores";
 import { toggleClickThrough, toggleCompactMode } from "@/lib/tauri";
 
 export function useGlobalHotkeys() {
-  const { nextStep, previousStep, cycleBuildOrder } = useBuildOrderStore();
+  const { nextStep, previousStep, cycleBuildOrder, resetSteps } = useBuildOrderStore();
   const { toggleVisibility } = useOverlayStore();
   const { updateConfig } = useConfigStore();
 
@@ -30,6 +30,9 @@ export function useGlobalHotkeys() {
         const newState = await toggleCompactMode();
         updateConfig({ compact_mode: newState });
       }),
+      listen("hotkey-reset-build-order", () => {
+        resetSteps();
+      }),
     ];
 
     return () => {
@@ -37,5 +40,5 @@ export function useGlobalHotkeys() {
         promise.then((unlisten) => unlisten());
       });
     };
-  }, [nextStep, previousStep, cycleBuildOrder, toggleVisibility, updateConfig]);
+  }, [nextStep, previousStep, cycleBuildOrder, resetSteps, toggleVisibility, updateConfig]);
 }

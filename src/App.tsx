@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Overlay } from "@/components/overlay";
+import { Overlay, AnimatedOverlay } from "@/components/overlay";
 import { SettingsWindow } from "@/components/settings";
-import { useGlobalHotkeys, useBuildOrders, useConfig } from "@/hooks";
+import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize } from "@/hooks";
 
 function App() {
   const [windowLabel, setWindowLabel] = useState<string | null>(null);
@@ -11,6 +11,7 @@ function App() {
   useGlobalHotkeys();
   useBuildOrders();
   useConfig();
+  useWindowSize();
 
   useEffect(() => {
     const initWindow = async () => {
@@ -25,7 +26,11 @@ function App() {
   }
 
   if (windowLabel === "overlay") {
-    return <Overlay />;
+    return (
+      <AnimatedOverlay>
+        <Overlay />
+      </AnimatedOverlay>
+    );
   }
 
   if (windowLabel === "settings") {

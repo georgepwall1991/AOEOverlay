@@ -5,11 +5,22 @@ export interface HotkeyConfig {
   cycle_build_order: string;
   toggle_click_through: string;
   toggle_compact: string;
+  reset_build_order: string;
 }
 
 export interface WindowPosition {
   x: number;
   y: number;
+}
+
+export interface WindowSize {
+  width: number;
+  height: number;
+}
+
+export interface AutoAdvanceConfig {
+  enabled: boolean;
+  delay_seconds: number; // Extra delay after timing before auto-advance
 }
 
 export interface AppConfig {
@@ -18,12 +29,16 @@ export interface AppConfig {
   theme: Theme;
   hotkeys: HotkeyConfig;
   window_position?: WindowPosition;
+  window_size?: WindowSize;
   click_through: boolean;
   compact_mode: boolean;
+  auto_advance: AutoAdvanceConfig;
+  filter_civilization?: string;
+  filter_difficulty?: string;
 }
 
 export type FontSize = "small" | "medium" | "large";
-export type Theme = "dark" | "light" | "auto";
+export type Theme = "dark" | "light" | "system";
 
 export const DEFAULT_CONFIG: AppConfig = {
   overlay_opacity: 0.8,
@@ -36,7 +51,12 @@ export const DEFAULT_CONFIG: AppConfig = {
     cycle_build_order: "F4",
     toggle_click_through: "F5",
     toggle_compact: "F6",
+    reset_build_order: "F7",
   },
   click_through: false,
   compact_mode: false,
+  auto_advance: {
+    enabled: false,
+    delay_seconds: 0,
+  },
 };

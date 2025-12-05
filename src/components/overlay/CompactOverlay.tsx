@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { GripVertical, ChevronLeft, ChevronRight, MousePointer2Off, Settings } from "lucide-react";
 import { useWindowDrag } from "@/hooks";
 import { useOpacity, useConfigStore, useBuildOrderStore, useCurrentBuildOrder } from "@/stores";
@@ -11,9 +12,21 @@ export function CompactOverlay() {
   const { config } = useConfigStore();
   const { currentStepIndex, nextStep, previousStep } = useBuildOrderStore();
   const currentBuildOrder = useCurrentBuildOrder();
+  const [animateStep, setAnimateStep] = useState(false);
+  const prevStepIndex = useRef(currentStepIndex);
 
   const currentStep = currentBuildOrder?.steps[currentStepIndex];
   const totalSteps = currentBuildOrder?.steps.length ?? 0;
+
+  // Animate step change
+  useEffect(() => {
+    if (currentStepIndex !== prevStepIndex.current) {
+      setAnimateStep(true);
+      const timer = setTimeout(() => setAnimateStep(false), 250);
+      prevStepIndex.current = currentStepIndex;
+      return () => clearTimeout(timer);
+    }
+  }, [currentStepIndex]);
 
   return (
     <div className="w-full h-full p-2" style={{ opacity }}>
@@ -48,13 +61,15 @@ export function CompactOverlay() {
           </div>
 
           {config.click_through && (
-            <MousePointer2Off className="w-3 h-3 text-amber-500 flex-shrink-0" title="Click-Through Mode" />
+            <span title="Click-Through Mode">
+              <MousePointer2Off className="w-3 h-3 text-amber-500 flex-shrink-0" />
+            </span>
           )}
         </div>
 
         {/* Current step display */}
         {currentStep ? (
-          <div className="p-2">
+          <div className={cn("p-2", animateStep && "compact-step-animate")}>
             {/* Navigation and step counter */}
             <div className="flex items-center justify-between mb-1">
               <button

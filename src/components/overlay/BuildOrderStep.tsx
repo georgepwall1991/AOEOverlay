@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { BuildOrderStep as StepType } from "@/types";
 import { ResourceIndicator } from "./ResourceIndicator";
@@ -17,6 +18,19 @@ export function BuildOrderStep({
   isPast,
   onClick,
 }: BuildOrderStepProps) {
+  const [showHighlight, setShowHighlight] = useState(false);
+  const wasActive = useRef(isActive);
+
+  // Trigger animation when step becomes active
+  useEffect(() => {
+    if (isActive && !wasActive.current) {
+      setShowHighlight(true);
+      const timer = setTimeout(() => setShowHighlight(false), 400);
+      return () => clearTimeout(timer);
+    }
+    wasActive.current = isActive;
+  }, [isActive]);
+
   return (
     <button
       onClick={onClick}
@@ -24,7 +38,8 @@ export function BuildOrderStep({
         "w-full text-left transition-all duration-300 ease-out",
         isActive ? "step-card-active animate-pulse-glow" : "step-card",
         isPast && "opacity-40",
-        !isActive && !isPast && "opacity-75 hover:opacity-100"
+        !isActive && !isPast && "opacity-75 hover:opacity-100",
+        showHighlight && "step-highlight-enter"
       )}
     >
       <div className="flex items-start gap-3">
@@ -36,7 +51,8 @@ export function BuildOrderStep({
               ? "bg-gradient-to-br from-amber-500 to-yellow-600 text-black shadow-lg shadow-amber-500/20"
               : isPast
                 ? "bg-white/10 text-white/40"
-                : "bg-white/10 text-white/60"
+                : "bg-white/10 text-white/60",
+            showHighlight && "step-number-pop"
           )}
         >
           {stepNumber}

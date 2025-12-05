@@ -47,9 +47,9 @@ export function Overlay() {
           </div>
 
           {/* Click-through indicator */}
-          <div className="w-6 flex justify-end">
+          <div className="w-6 flex justify-end" title={config.click_through ? "Click-Through Mode" : undefined}>
             {config.click_through && (
-              <MousePointer2Off className="w-4 h-4 text-amber-500" title="Click-Through Mode" />
+              <MousePointer2Off className="w-4 h-4 text-amber-500" />
             )}
           </div>
         </div>

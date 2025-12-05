@@ -38,11 +38,16 @@ export function BuildOrderDisplay() {
         </div>
 
         {/* Progress bar */}
-        <div className="mt-3 h-1 bg-white/10 rounded-full overflow-hidden">
+        <div className="mt-3 h-1.5 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-300 ease-out"
+            className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-300 ease-out progress-bar-animated rounded-full"
             style={{ width: `${progressPercent}%` }}
           />
+        </div>
+        <div className="flex justify-between text-[9px] text-white/30 mt-1">
+          <span>Start</span>
+          <span>{Math.round(progressPercent)}%</span>
+          <span>Complete</span>
         </div>
       </div>
 

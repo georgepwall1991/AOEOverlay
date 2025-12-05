@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AppConfig, BuildOrder, WindowPosition } from "@/types";
+import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 
 // Config commands
 export async function getConfig(): Promise<AppConfig> {
@@ -23,6 +23,14 @@ export async function deleteBuildOrder(id: string): Promise<void> {
   return invoke("delete_build_order", { id });
 }
 
+export async function importBuildOrder(path: string): Promise<BuildOrder> {
+  return invoke<BuildOrder>("import_build_order", { path });
+}
+
+export async function exportBuildOrder(order: BuildOrder, path: string): Promise<void> {
+  return invoke("export_build_order", { order, path });
+}
+
 // Window commands
 export async function getWindowPosition(): Promise<WindowPosition> {
   return invoke<WindowPosition>("get_window_position");
@@ -30,6 +38,14 @@ export async function getWindowPosition(): Promise<WindowPosition> {
 
 export async function setWindowPosition(x: number, y: number): Promise<void> {
   return invoke("set_window_position", { x, y });
+}
+
+export async function getWindowSize(): Promise<WindowSize> {
+  return invoke<WindowSize>("get_window_size");
+}
+
+export async function setWindowSize(width: number, height: number): Promise<void> {
+  return invoke("set_window_size", { width, height });
 }
 
 export async function toggleOverlay(): Promise<void> {
