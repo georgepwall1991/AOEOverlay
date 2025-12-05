@@ -1,0 +1,20 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for all windows",
+  "windows": ["overlay", "settings"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "core:window:default",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-set-focus",
+    "core:window:allow-outer-position",
+    "core:window:allow-set-position",
+    "opener:default",
+    "global-shortcut:default",
+    "fs:default",
+    "dialog:default"
+  ]
+}
