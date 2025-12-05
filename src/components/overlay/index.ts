@@ -4,4 +4,5 @@ export * from "./AnimatedOverlay";
 export * from "./BuildOrderDisplay";
 export * from "./BuildOrderStep";
 export * from "./ResourceIndicator";
+export * from "./ResourceIcons";
 export * from "./CivBadge";
