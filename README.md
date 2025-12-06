@@ -164,7 +164,12 @@ AOEOverlay/
 │   └── lib/                # Utilities
 ├── src-tauri/              # Rust backend
 │   └── src/
-│       ├── lib.rs          # Main Tauri backend
+│       ├── lib.rs          # Main Tauri entry point
+│       ├── commands.rs     # Tauri commands
+│       ├── config.rs       # Configuration & file I/O
+│       ├── hotkeys.rs      # Global hotkey management
+│       ├── state.rs        # Application state
+│       ├── tray.rs         # System tray menu
 │       └── tts.rs          # Text-to-speech module
 ├── public/
 │   ├── build-orders/       # Sample build order JSONs

@@ -1,89 +1,76 @@
-use std::process::Command;
+use std::process::{Child, Command, Stdio};
+use tauri::State;
+use crate::state::AppState;
 
-/// Speak text using native TTS
-/// - macOS: uses `say` command
-/// - Windows: uses PowerShell with System.Speech
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+fn kill_active_tts(state: &State<AppState>) {
+    let mut tts_process = match state.tts_process.lock() {
+        Ok(guard) => guard,
+        Err(_) => return, // Mutex poisoned, nothing we can do
+    };
+
+    if let Some(mut child) = tts_process.take() {
+        let _ = child.kill();
+        let _ = child.wait(); // Clean up zombie
+    }
+}
+
 #[cfg(target_os = "macos")]
-pub fn speak_native(text: &str, rate: f32) -> Result<(), String> {
-    // macOS 'say' rate: words per minute, default ~175-200
-    // rate 1.0 = 200 wpm, 0.5 = 100 wpm, 2.0 = 400 wpm
+fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
     let wpm = (rate * 200.0) as i32;
-
     Command::new("say")
         .args(["-r", &wpm.to_string(), text])
-        .status()
-        .map_err(|e| format!("Failed to execute say command: {}", e))?;
-
-    Ok(())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
 }
 
 #[cfg(target_os = "windows")]
-pub fn speak_native(text: &str, rate: f32) -> Result<(), String> {
-    // Windows SAPI rate: -10 to 10, default 0
-    // rate 1.0 = 0, 0.5 = -5, 2.0 = 5
+fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
     let sapi_rate = ((rate - 1.0) * 5.0) as i32;
-
-    // Escape single quotes for PowerShell
     let escaped_text = text.replace("'", "''");
-
     let script = format!(
-        "Add-Type -AssemblyName System.Speech; \
-         $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; \
-         $synth.Rate = {}; \
-         $synth.Speak('{}')",
+        "Add-Type -AssemblyName System.Speech; \n         $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; \n         $synth.Rate = {}; \n         $synth.Speak('{}')",
         sapi_rate, escaped_text
     );
 
     Command::new("powershell")
         .args(["-Command", &script])
-        .status()
-        .map_err(|e| format!("Failed to execute PowerShell: {}", e))?;
-
-    Ok(())
-}
-
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-pub fn speak_native(_text: &str, _rate: f32) -> Result<(), String> {
-    // Linux/other platforms: no-op for now
-    // Could integrate espeak or festival in the future
-    Ok(())
-}
-
-/// Stop any currently speaking TTS
-#[cfg(target_os = "macos")]
-pub fn stop_speaking() -> Result<(), String> {
-    // Kill all 'say' processes
-    Command::new("pkill")
-        .args(["-f", "say"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .spawn()
-        .map_err(|e| format!("Failed to stop speech: {}", e))?;
-
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-pub fn stop_speaking() -> Result<(), String> {
-    // Note: Safely stopping Windows TTS without killing unrelated processes is complex.
-    // For now, we don't forcefully stop - the speech will complete naturally.
-    // A proper solution would use the `tts` crate or track spawned PIDs.
-    // See: https://crates.io/crates/tts
-    Ok(())
 }
 
 #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-pub fn stop_speaking() -> Result<(), String> {
+fn spawn_tts_process(_text: &str, _rate: f32) -> std::io::Result<Child> {
+    Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "TTS not supported on this platform"))
+}
+
+#[tauri::command]
+pub async fn speak(text: String, rate: f32, state: State<'_, AppState>) -> Result<(), String> {
+    // 1. Stop existing speech
+    kill_active_tts(&state);
+
+    // 2. Spawn new speech process
+    match spawn_tts_process(&text, rate) {
+        Ok(child) => {
+            if let Ok(mut guard) = state.tts_process.lock() {
+                *guard = Some(child);
+            }
+            Ok(())
+        }
+        Err(e) => Err(format!("Failed to start TTS: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub fn tts_stop(state: State<AppState>) -> Result<(), String> {
+    kill_active_tts(&state);
     Ok(())
-}
-
-// Tauri commands
-
-#[tauri::command]
-pub async fn speak(text: String, rate: f32) -> Result<(), String> {
-    // This runs on a thread pool, so blocking is fine
-    speak_native(&text, rate)
-}
-
-#[tauri::command]
-pub fn tts_stop() -> Result<(), String> {
-    stop_speaking()
 }
