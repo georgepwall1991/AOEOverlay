@@ -95,9 +95,14 @@ AOEOverlay/
 │
 ├── src-tauri/                    # Rust Backend
 │   ├── src/
-│   │   ├── lib.rs                # Main backend logic
+│   │   ├── lib.rs                # Main entry point
+│   │   ├── commands.rs           # Tauri commands
+│   │   ├── config.rs             # Configuration & I/O
+│   │   ├── hotkeys.rs            # Hotkey management
+│   │   ├── state.rs              # App state
+│   │   ├── tray.rs               # System tray
 │   │   ├── tts.rs                # Text-to-speech module
-│   │   └── main.rs               # Entry point
+│   │   └── main.rs               # Binary entry
 │   ├── Cargo.toml
 │   ├── tauri.conf.json
 │   ├── capabilities/
@@ -226,23 +231,23 @@ App
 
 ### Module Structure
 
+The backend is modularized to improve maintainability and separation of concerns:
+
 ```rust
-// lib.rs - Main module
-mod tts;  // Text-to-speech
-
-// Types
-struct AppConfig { ... }
-struct BuildOrder { ... }
-struct AppState { config: Mutex<AppConfig> }
-
-// Tauri Commands
-fn get_config() -> Result<AppConfig, String>
-fn save_config(config: AppConfig) -> Result<(), String>
-fn get_build_orders() -> Result<Vec<BuildOrder>, String>
-fn toggle_click_through() -> Result<bool, String>
-fn speak(text: String, rate: f32) -> Result<(), String>
-// ... more commands
+// lib.rs - Entry point & orchestration
+mod commands; // Tauri command handlers
+mod config;   // Configuration structs & file I/O
+mod hotkeys;  // Global hotkey registration & parsing
+mod state;    // AppState struct definition
+mod tray;     // System tray menu setup
+mod tts;      // Text-to-speech process management
 ```
+
+### Key Features
+
+1. **Atomic File Writes**: Configuration and build orders are written to temporary files and atomically renamed to prevent corruption.
+2. **In-Memory Caching**: Build orders are loaded once into `AppState` for fast access and modified in-place (write-through cache).
+3. **Process Management**: The TTS module manages active child processes, allowing safe cancellation of speech without global kills.
 
 ### Tauri Commands
 
