@@ -21,15 +21,30 @@ interface TimerState {
   recordStepTime: (suggestedTiming: string | undefined) => void;
 }
 
-// Parse timing string like "3:30" or "10:45" to seconds
+// Parse timing string like "3:30", "10:45", or "1:30:00" to seconds
+// Supports both mm:ss and hh:mm:ss formats
 export function parseTimingToSeconds(timing: string | undefined): number | null {
   if (!timing) return null;
   const parts = timing.split(":");
-  if (parts.length !== 2) return null;
-  const minutes = parseInt(parts[0], 10);
-  const seconds = parseInt(parts[1], 10);
-  if (isNaN(minutes) || isNaN(seconds)) return null;
-  return minutes * 60 + seconds;
+
+  if (parts.length === 2) {
+    // mm:ss format
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    if (isNaN(minutes) || isNaN(seconds)) return null;
+    return minutes * 60 + seconds;
+  }
+
+  if (parts.length === 3) {
+    // hh:mm:ss format
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+    if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return null;
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+  return null;
 }
 
 // Format seconds to MM:SS display

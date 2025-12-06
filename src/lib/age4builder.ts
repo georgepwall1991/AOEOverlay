@@ -5,6 +5,9 @@
 
 import type { BuildOrder, BuildOrderStep, Civilization } from "@/types";
 
+// Maximum allowed steps in a build order to prevent performance issues
+export const MAX_BUILD_ORDER_STEPS = 200;
+
 // Icon mapping from age4builder paths to our icon types
 const ICON_MAP: Record<string, string> = {
   // Units
@@ -185,6 +188,7 @@ function estimateTiming(stepIndex: number): string {
 
 /**
  * Convert age4builder.com JSON format to our overlay format
+ * @throws Error if the build order exceeds MAX_BUILD_ORDER_STEPS
  */
 export function convertAge4Builder(input: Age4BuilderFormat): BuildOrder {
   const steps: BuildOrderStep[] = [];
@@ -197,6 +201,14 @@ export function convertAge4Builder(input: Age4BuilderFormat): BuildOrder {
 
       // Skip empty notes
       if (!description) continue;
+
+      // Validate step count limit
+      if (stepNumber > MAX_BUILD_ORDER_STEPS) {
+        throw new Error(
+          `Build order exceeds maximum of ${MAX_BUILD_ORDER_STEPS} steps. ` +
+          `This build has been truncated for performance reasons.`
+        );
+      }
 
       const ourStep: BuildOrderStep = {
         id: `step-${stepNumber}`,

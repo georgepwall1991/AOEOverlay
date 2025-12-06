@@ -12,6 +12,9 @@ import type {
 
 const API_BASE = "https://aoe4world.com/api/v0";
 
+// Maximum allowed steps in a build order to prevent performance issues
+export const MAX_BUILD_ORDER_STEPS = 200;
+
 class Aoe4WorldApi {
   private async fetch<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -201,10 +204,21 @@ export function extractBuildId(url: string): number | null {
 
 /**
  * Normalize civilization name from API to our format
+ * Logs a warning if civilization is unknown and falls back to English
  */
 function normalizeCivilization(civ: string): Civilization {
   const normalized = civ.toLowerCase().replace(/[\s-]+/g, "_");
-  return CIVILIZATION_MAP[normalized] || "English";
+  const mapped = CIVILIZATION_MAP[normalized];
+
+  if (!mapped) {
+    console.warn(
+      `Unknown civilization "${civ}" from AoE4World API. ` +
+      `Falling back to "English". Please report this if it's a valid civilization.`
+    );
+    return "English";
+  }
+
+  return mapped;
 }
 
 /**
@@ -251,8 +265,17 @@ function formatBuildTiming(timing: string | number | null | undefined): string |
 
 /**
  * Convert AoE4World build to our format
+ * @throws Error if the build order exceeds MAX_BUILD_ORDER_STEPS
  */
 function convertBuild(build: Aoe4WorldBuild): BuildOrder {
+  // Validate step count limit before processing
+  if (build.steps.length > MAX_BUILD_ORDER_STEPS) {
+    throw new Error(
+      `Build order exceeds maximum of ${MAX_BUILD_ORDER_STEPS} steps ` +
+      `(has ${build.steps.length}). Please choose a shorter build order.`
+    );
+  }
+
   const steps: BuildOrderStep[] = build.steps.map((step, index) => {
     const ourStep: BuildOrderStep = {
       id: `step-${step.position || index + 1}`,
