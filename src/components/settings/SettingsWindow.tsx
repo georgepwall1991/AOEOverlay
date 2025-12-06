@@ -197,7 +197,7 @@ export function SettingsWindow() {
     }
   };
 
-  const handleReminderItemToggle = async (item: keyof Pick<ReminderConfig, "villagerQueue" | "scout" | "houses" | "military" | "mapControl">) => {
+  const handleReminderItemToggle = async (item: keyof Pick<ReminderConfig, "villagerQueue" | "scout" | "houses" | "military" | "mapControl" | "macroCheck">) => {
     const newReminders: ReminderConfig = {
       ...reminderConfig,
       [item]: { ...reminderConfig[item], enabled: !reminderConfig[item].enabled },
@@ -210,8 +210,21 @@ export function SettingsWindow() {
     }
   };
 
+  const handleSacredSitesToggle = async () => {
+    const newReminders: ReminderConfig = {
+      ...reminderConfig,
+      sacredSites: { enabled: !reminderConfig.sacredSites?.enabled },
+    };
+    updateConfig({ reminders: newReminders });
+    try {
+      await saveConfig({ ...config, reminders: newReminders });
+    } catch (error) {
+      console.error("Failed to save reminders config:", error);
+    }
+  };
+
   const handleReminderIntervalChange = async (
-    item: keyof Pick<ReminderConfig, "villagerQueue" | "scout" | "houses" | "military" | "mapControl">,
+    item: keyof Pick<ReminderConfig, "villagerQueue" | "scout" | "houses" | "military" | "mapControl" | "macroCheck">,
     value: string
   ) => {
     const interval = parseInt(value, 10) || 30;
@@ -758,6 +771,49 @@ export function SettingsWindow() {
                         <span className="text-xs text-muted-foreground">sec</span>
                       </div>
                     </div>
+
+                    {/* Macro Check */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={reminderConfig.macroCheck?.enabled ?? false}
+                            onCheckedChange={() => handleReminderItemToggle("macroCheck")}
+                          />
+                          <Label>Check your production</Label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="10"
+                          max="120"
+                          value={reminderConfig.macroCheck?.intervalSeconds ?? 45}
+                          onChange={(e) => handleReminderIntervalChange("macroCheck", e.target.value)}
+                          className="w-16 h-8"
+                          disabled={!reminderConfig.macroCheck?.enabled}
+                        />
+                        <span className="text-xs text-muted-foreground">sec</span>
+                      </div>
+                    </div>
+
+                    <Separator className="my-3" />
+
+                    {/* Sacred Sites - One-time alerts */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={reminderConfig.sacredSites?.enabled ?? false}
+                            onCheckedChange={handleSacredSitesToggle}
+                          />
+                          <Label>Sacred Site Alerts</Label>
+                        </div>
+                        <p className="text-xs text-muted-foreground ml-10">
+                          Alerts at 4:30 and 5:00 for sacred sites
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -883,6 +939,11 @@ export function SettingsWindow() {
                   label="Reset to Step 1"
                   value={config.hotkeys.reset_build_order}
                   onChange={(key) => handleHotkeyChange("reset_build_order", key)}
+                />
+                <HotkeyRow
+                  label="Toggle Pause"
+                  value={config.hotkeys.toggle_pause}
+                  onChange={(key) => handleHotkeyChange("toggle_pause", key)}
                 />
               </div>
             </section>

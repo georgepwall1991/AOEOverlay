@@ -40,6 +40,12 @@ pub struct HotkeyConfig {
     pub toggle_click_through: String,
     pub toggle_compact: String,
     pub reset_build_order: String,
+    #[serde(default = "default_toggle_pause")]
+    pub toggle_pause: String,
+}
+
+fn default_toggle_pause() -> String {
+    "F8".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -88,6 +94,11 @@ pub struct ReminderItemConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SacredSitesConfig {
+    pub enabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ReminderConfig {
     pub enabled: bool,
     pub villager_queue: ReminderItemConfig,
@@ -95,6 +106,18 @@ pub struct ReminderConfig {
     pub houses: ReminderItemConfig,
     pub military: ReminderItemConfig,
     pub map_control: ReminderItemConfig,
+    #[serde(default = "default_macro_check")]
+    pub macro_check: ReminderItemConfig,
+    #[serde(default = "default_sacred_sites")]
+    pub sacred_sites: SacredSitesConfig,
+}
+
+fn default_macro_check() -> ReminderItemConfig {
+    ReminderItemConfig { enabled: false, interval_seconds: 20 }
+}
+
+fn default_sacred_sites() -> SacredSitesConfig {
+    SacredSitesConfig { enabled: true }
 }
 
 impl Default for ReminderConfig {
@@ -106,6 +129,8 @@ impl Default for ReminderConfig {
             houses: ReminderItemConfig { enabled: true, interval_seconds: 40 },
             military: ReminderItemConfig { enabled: true, interval_seconds: 60 },
             map_control: ReminderItemConfig { enabled: true, interval_seconds: 90 },
+            macro_check: ReminderItemConfig { enabled: false, interval_seconds: 20 },
+            sacred_sites: SacredSitesConfig { enabled: true },
         }
     }
 }
@@ -124,6 +149,7 @@ impl Default for AppConfig {
                 toggle_click_through: "F5".to_string(),
                 toggle_compact: "F6".to_string(),
                 reset_build_order: "F7".to_string(),
+                toggle_pause: "F8".to_string(),
             },
             window_position: None,
             window_size: None,
@@ -540,6 +566,17 @@ pub fn run() {
                 app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
                     if event.state == ShortcutState::Pressed {
                         let _ = app_handle.emit("hotkey-reset-build-order", ());
+                    }
+                })?;
+            }
+
+            // Toggle Pause
+            if let Some(code) = string_to_code(&hotkey_config.toggle_pause) {
+                let app_handle = app.handle().clone();
+                let shortcut = Shortcut::new(None, code);
+                app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        let _ = app_handle.emit("hotkey-toggle-pause", ());
                     }
                 })?;
             }

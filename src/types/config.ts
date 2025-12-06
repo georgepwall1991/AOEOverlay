@@ -6,6 +6,7 @@ export interface HotkeyConfig {
   toggle_click_through: string;
   toggle_compact: string;
   reset_build_order: string;
+  toggle_pause: string;
 }
 
 export interface WindowPosition {
@@ -43,6 +44,8 @@ export interface ReminderConfig {
   houses: ReminderItemConfig;
   military: ReminderItemConfig;
   mapControl: ReminderItemConfig;
+  macroCheck: ReminderItemConfig; // "Check your production" metronome
+  sacredSites: { enabled: boolean }; // One-time alerts at 4:30 and 5:00
 }
 
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
@@ -83,6 +86,8 @@ export const DEFAULT_REMINDER_CONFIG: ReminderConfig = {
   houses: { enabled: true, intervalSeconds: 40 },
   military: { enabled: true, intervalSeconds: 60 },
   mapControl: { enabled: true, intervalSeconds: 90 },
+  macroCheck: { enabled: false, intervalSeconds: 20 }, // Pro-level macro cycle
+  sacredSites: { enabled: true }, // Sacred site spawn alerts
 };
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -97,6 +102,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     toggle_click_through: "F5",
     toggle_compact: "F6",
     reset_build_order: "F7",
+    toggle_pause: "F8",
   },
   click_through: false,
   compact_mode: false, // Default to expanded mode (more info visible)
