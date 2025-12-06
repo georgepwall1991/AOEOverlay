@@ -4,6 +4,7 @@ import { useOpacity, useConfigStore, useCurrentStep } from "@/stores";
 import { BuildOrderDisplay } from "./BuildOrderDisplay";
 import { CompactOverlay } from "./CompactOverlay";
 import { TimerBar } from "./TimerBar";
+import { UpgradeBadges } from "./UpgradeBadges";
 import { showSettings } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +68,9 @@ export function Overlay() {
         {(isRunning || currentStep?.timing) && (
           <TimerBar targetTiming={currentStep?.timing} />
         )}
+
+        {/* Upgrade reminder badges */}
+        <UpgradeBadges />
 
         {/* Content */}
         <BuildOrderDisplay />

@@ -7,3 +7,4 @@ export * from "./ResourceIndicator";
 export * from "./ResourceIcons";
 export * from "./CivBadge";
 export * from "./TimerBar";
+export * from "./UpgradeBadges";

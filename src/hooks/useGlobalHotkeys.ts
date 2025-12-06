@@ -5,6 +5,7 @@ import {
   useOverlayStore,
   useConfigStore,
   useTimerStore,
+  useBadgeStore,
 } from "@/stores";
 import { toggleClickThrough, toggleCompactMode, speak } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
@@ -15,6 +16,7 @@ export function useGlobalHotkeys() {
   const { toggleVisibility } = useOverlayStore();
   const { updateConfig } = useConfigStore();
   const { startTimer, resetTimer, recordStepTime, togglePause } = useTimerStore();
+  const { resetBadges } = useBadgeStore();
 
   // Convert icon markers to readable text for TTS (e.g., "[icon:town_center]" -> "town center")
   const convertIconMarkersForTTS = useCallback((text: string): string => {
@@ -76,11 +78,12 @@ export function useGlobalHotkeys() {
     }
   }, [nextStep, startTimer, recordStepTime, speakStep]);
 
-  // Handle reset with timer reset
+  // Handle reset with timer reset and badge reset
   const handleReset = useCallback(() => {
     resetSteps();
     resetTimer();
-  }, [resetSteps, resetTimer]);
+    resetBadges();
+  }, [resetSteps, resetTimer, resetBadges]);
 
   useEffect(() => {
     const unlistenPromises = [
@@ -96,6 +99,7 @@ export function useGlobalHotkeys() {
       listen("hotkey-cycle-build-order", () => {
         cycleBuildOrder();
         resetTimer();
+        resetBadges();
       }),
       listen("hotkey-toggle-click-through", async () => {
         const newState = await toggleClickThrough();
@@ -126,6 +130,7 @@ export function useGlobalHotkeys() {
     toggleVisibility,
     updateConfig,
     resetTimer,
+    resetBadges,
     togglePause,
   ]);
 }

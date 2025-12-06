@@ -27,6 +27,7 @@ import { BuildOrderManager } from "./BuildOrderManager";
 import { PlayerStats } from "./PlayerStats";
 import { VoiceSettings } from "./VoiceSettings";
 import { ReminderSettings } from "./ReminderSettings";
+import { UpgradeBadgesSettings } from "./UpgradeBadgesSettings";
 import { HotkeySettings } from "./HotkeySettings";
 import { AppearanceSettings } from "./AppearanceSettings";
 import { GameplaySettings } from "./GameplaySettings";
@@ -198,6 +199,8 @@ export function SettingsWindow() {
             <VoiceSettings />
             <Separator />
             <ReminderSettings />
+            <Separator />
+            <UpgradeBadgesSettings />
           </div>
         </TabsContent>
 
