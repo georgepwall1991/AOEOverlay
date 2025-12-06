@@ -79,7 +79,7 @@ pub struct VoiceConfig {
 impl Default for VoiceConfig {
     fn default() -> Self {
         Self {
-            enabled: false,
+            enabled: true,
             rate: 1.0,
             speak_steps: true,
             speak_reminders: true,
@@ -140,6 +140,15 @@ pub struct UpgradeBadgesConfig {
     pub badges: Vec<UpgradeBadgeConfig>,
 }
 
+impl Default for UpgradeBadgesConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            badges: Vec::new(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TimerDriftConfig {
@@ -179,7 +188,7 @@ impl Default for AppConfig {
             },
             window_position: None,
             window_size: None,
-            click_through: false,
+            click_through: true,
             compact_mode: false,
             auto_advance: AutoAdvanceConfig {
                 enabled: false,
@@ -191,7 +200,7 @@ impl Default for AppConfig {
             floating_style: true,
             voice: Some(VoiceConfig::default()),
             reminders: Some(ReminderConfig::default()),
-            upgrade_badges: None,
+            upgrade_badges: Some(UpgradeBadgesConfig::default()),
             timer_drift: Some(TimerDriftConfig { enabled: true }),
         }
     }
@@ -275,7 +284,7 @@ pub fn load_build_orders() -> Vec<BuildOrder> {
 
     if let Ok(entries) = fs::read_dir(&dir) {
         for entry in entries.flatten() {
-            if entry.path().extension().map_or(false, |e| e == "json") {
+            if entry.path().extension().is_some_and(|e| e == "json") {
                 if let Ok(content) = fs::read_to_string(entry.path()) {
                     if let Ok(order) = serde_json::from_str::<BuildOrder>(&content) {
                         orders.push(order);
@@ -297,7 +306,7 @@ mod tests {
         assert_eq!(config.overlay_opacity, 0.8);
         assert_eq!(config.font_size, "medium");
         assert_eq!(config.theme, "dark");
-        assert!(!config.click_through);
+        assert!(config.click_through); // Default is now true
         assert!(!config.compact_mode);
         assert_eq!(config.hotkeys.toggle_overlay, "F1");
     }
@@ -305,7 +314,7 @@ mod tests {
     #[test]
     fn test_voice_config_default() {
         let voice = VoiceConfig::default();
-        assert!(!voice.enabled);
+        assert!(voice.enabled); // Default is now true
         assert_eq!(voice.rate, 1.0);
         assert!(voice.speak_steps);
     }

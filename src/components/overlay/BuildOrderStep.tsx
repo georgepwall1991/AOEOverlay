@@ -78,11 +78,11 @@ export function BuildOrderStep({
           showHighlight && "step-enter"
         )}
       >
-        <div className="flex items-start gap-2">
+        <div className="flex items-start gap-3">
           {/* Step number */}
           <span
             className={cn(
-              "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition-all duration-200 mt-0.5",
+              "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black transition-all duration-200 mt-0.5",
               isActive
                 ? "step-number-glow text-black"
                 : isPast
@@ -97,10 +97,10 @@ export function BuildOrderStep({
           {/* Content wrapper */}
           <div className="flex-1 min-w-0">
             {/* Top row: timing + resources */}
-            <div className="flex items-center gap-2 mb-0.5">
+            <div className="flex items-center gap-3 mb-1">
               {step.timing && (
                 <span className={cn(
-                  "flex-shrink-0 text-xs px-2 py-0.5 rounded font-mono font-bold",
+                  "flex-shrink-0 text-sm px-2 py-0.5 rounded font-mono font-bold",
                   isActive
                     ? "bg-amber-500/40 text-amber-200 border border-amber-400/50"
                     : showDriftIndicator
@@ -121,12 +121,12 @@ export function BuildOrderStep({
             {/* Description - now wraps */}
             <div
               className={cn(
-                "text-sm leading-snug transition-all duration-200 flex flex-wrap items-center gap-x-1",
+                "text-base leading-snug transition-all duration-200 flex flex-wrap items-center gap-x-1",
                 isActive ? "text-white font-medium" : "text-white/70",
                 floatingStyle && "text-shadow-strong"
               )}
             >
-              {renderIconText(step.description, 22)}
+              {renderIconText(step.description, 29)}
             </div>
           </div>
         </div>

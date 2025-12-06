@@ -2,13 +2,18 @@ use std::sync::Mutex;
 
 mod commands;
 mod config;
+mod error;
 mod hotkeys;
 mod state;
 mod tray;
 mod tts;
 
-use config::{load_config, load_build_orders};
+use config::load_config;
 use state::AppState;
+use commands::*;
+use hotkeys::register_hotkeys;
+use config::load_build_orders;
+use tray::setup_tray;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -27,35 +32,33 @@ pub fn run() {
         })
         .setup(|app| {
             // Setup system tray
-            if let Err(e) = tray::setup_tray(app) {
-                eprintln!("Failed to setup tray: {}", e);
-            }
+            setup_tray(app)?;
 
             // Setup global hotkeys from config
-            if let Err(e) = hotkeys::register_hotkeys(app.handle()) {
+            if let Err(e) = register_hotkeys(app.handle()) {
                 eprintln!("Failed to register hotkeys: {}", e);
             }
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::get_config,
-            commands::save_config,
-            commands::reload_hotkeys,
-            commands::get_build_orders,
-            commands::save_build_order,
-            commands::delete_build_order,
-            commands::get_window_position,
-            commands::set_window_position,
-            commands::get_window_size,
-            commands::set_window_size,
-            commands::toggle_overlay,
-            commands::show_settings,
-            commands::set_click_through,
-            commands::toggle_click_through,
-            commands::toggle_compact_mode,
-            commands::import_build_order,
-            commands::export_build_order,
+            get_config,
+            save_config,
+            reload_hotkeys,
+            get_build_orders,
+            save_build_order,
+            delete_build_order,
+            get_window_position,
+            set_window_position,
+            get_window_size,
+            set_window_size,
+            toggle_overlay,
+            show_settings,
+            set_click_through,
+            toggle_click_through,
+            toggle_compact_mode,
+            import_build_order,
+            export_build_order,
             tts::speak,
             tts::tts_stop,
         ])

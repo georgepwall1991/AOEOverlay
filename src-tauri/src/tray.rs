@@ -20,18 +20,26 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
             match event.id.as_ref() {
                 "show" => {
                     if let Some(window) = app.get_webview_window("overlay") {
-                        let _ = window.show();
+                        if let Err(e) = window.show() {
+                            eprintln!("Failed to show overlay: {}", e);
+                        }
                     }
                 }
                 "hide" => {
                     if let Some(window) = app.get_webview_window("overlay") {
-                        let _ = window.hide();
+                        if let Err(e) = window.hide() {
+                            eprintln!("Failed to hide overlay: {}", e);
+                        }
                     }
                 }
                 "settings" => {
                     if let Some(window) = app.get_webview_window("settings") {
-                        let _ = window.show();
-                        let _ = window.set_focus();
+                        if let Err(e) = window.show() {
+                            eprintln!("Failed to show settings: {}", e);
+                        }
+                        if let Err(e) = window.set_focus() {
+                            eprintln!("Failed to focus settings: {}", e);
+                        }
                     }
                 }
                 "quit" => {
@@ -49,11 +57,15 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
             {
                 let app = tray.app_handle();
                 if let Some(window) = app.get_webview_window("overlay") {
-                    if window.is_visible().unwrap_or(false) {
-                        let _ = window.hide();
-                    } else {
-                        let _ = window.show();
-                        let _ = window.set_focus();
+                    let visible = window.is_visible().unwrap_or(false);
+                    let result = if visible { window.hide() } else { window.show() };
+                    if let Err(e) = result {
+                        eprintln!("Failed to toggle overlay: {}", e);
+                    }
+                    if !visible {
+                        if let Err(e) = window.set_focus() {
+                            eprintln!("Failed to focus overlay: {}", e);
+                        }
                     }
                 }
             }

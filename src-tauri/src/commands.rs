@@ -1,8 +1,11 @@
 use std::fs;
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager, State, Window};
 use crate::config::{AppConfig, BuildOrder, WindowPosition, WindowSize, get_config_path, get_build_orders_dir, atomic_write};
 use crate::state::AppState;
 use crate::hotkeys::register_hotkeys;
+
+const MAX_IMPORT_SIZE: u64 = 1024 * 1024; // 1MB limit
 
 #[tauri::command]
 pub fn get_config(state: State<AppState>) -> Result<AppConfig, String> {
@@ -57,12 +60,16 @@ pub fn delete_build_order(id: String, state: State<AppState>) -> Result<(), Stri
     let dir = get_build_orders_dir();
     let path = dir.join(format!("{}.json", id));
     // If file doesn't exist, that's fine, we still want to remove from cache
-    let _ = fs::remove_file(path); 
+    if let Err(e) = fs::remove_file(&path) {
+        if e.kind() != std::io::ErrorKind::NotFound {
+            eprintln!("Warning: Failed to delete build order file: {}", e);
+        }
+    }
 
     // Update cache
     let mut orders = state.build_orders.lock().map_err(|e| e.to_string())?;
     orders.retain(|o| o.id != id);
-    
+
     Ok(())
 }
 
@@ -123,7 +130,7 @@ pub fn toggle_click_through(app: AppHandle, state: State<AppState>) -> Result<bo
     // Save to file
     let config_path = get_config_path();
     let json = serde_json::to_string_pretty(&*config).map_err(|e| e.to_string())?;
-    fs::write(&config_path, json).map_err(|e| e.to_string())?;
+    atomic_write(&config_path, json).map_err(|e| e.to_string())?;
 
     Ok(new_state)
 }
@@ -137,7 +144,7 @@ pub fn toggle_compact_mode(state: State<AppState>) -> Result<bool, String> {
     // Save to file
     let config_path = get_config_path();
     let json = serde_json::to_string_pretty(&*config).map_err(|e| e.to_string())?;
-    fs::write(&config_path, json).map_err(|e| e.to_string())?;
+    atomic_write(&config_path, json).map_err(|e| e.to_string())?;
 
     Ok(new_state)
 }
@@ -160,7 +167,29 @@ pub fn set_window_size(window: Window, width: u32, height: u32) -> Result<(), St
 
 #[tauri::command]
 pub fn import_build_order(path: String, state: State<AppState>) -> Result<BuildOrder, String> {
-    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let path = PathBuf::from(&path);
+
+    // Validate file exists and get metadata
+    let metadata = fs::metadata(&path)
+        .map_err(|e| format!("Cannot access file: {}", e))?;
+
+    // Validate it's a regular file
+    if !metadata.is_file() {
+        return Err("Path must be a regular file".to_string());
+    }
+
+    // Validate file size
+    if metadata.len() > MAX_IMPORT_SIZE {
+        return Err(format!(
+            "File too large: {} bytes (max {} bytes)",
+            metadata.len(),
+            MAX_IMPORT_SIZE
+        ));
+    }
+
+    // Read and parse
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
     let order: BuildOrder = serde_json::from_str(&content)
         .map_err(|e| format!("Invalid build order format: {}", e))?;
 
@@ -185,4 +214,24 @@ pub fn import_build_order(path: String, state: State<AppState>) -> Result<BuildO
 pub fn export_build_order(order: BuildOrder, path: String) -> Result<(), String> {
     let json = serde_json::to_string_pretty(&order).map_err(|e| e.to_string())?;
     atomic_write(&path, json).map_err(|e| format!("Failed to write file: {}", e))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_max_import_size_constant() {
+        // Verify the import size limit is 1MB
+        assert_eq!(MAX_IMPORT_SIZE, 1024 * 1024);
+        assert_eq!(MAX_IMPORT_SIZE, 1_048_576);
+    }
+
+    #[test]
+    fn test_pathbuf_from_string() {
+        // Verify PathBuf conversion works correctly
+        let path_str = "/some/path/to/file.json";
+        let path = PathBuf::from(path_str);
+        assert_eq!(path.to_str().unwrap(), path_str);
+    }
 }

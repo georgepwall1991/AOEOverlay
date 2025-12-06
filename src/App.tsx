@@ -17,6 +17,10 @@ function App() {
 
   useEffect(() => {
     const initWindow = async () => {
+      if (import.meta.env.VITE_MOCK_TAURI === 'true') {
+        setWindowLabel("overlay");
+        return;
+      }
       const win = getCurrentWindow();
       setWindowLabel(win.label);
     };

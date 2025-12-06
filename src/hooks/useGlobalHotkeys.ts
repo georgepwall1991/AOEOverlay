@@ -7,7 +7,7 @@ import {
   useTimerStore,
   useBadgeStore,
 } from "@/stores";
-import { toggleClickThrough, toggleCompactMode, speak } from "@/lib/tauri";
+import { toggleClickThrough, toggleCompactMode, speak, toggleOverlay } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
 
 export function useGlobalHotkeys() {
@@ -89,6 +89,7 @@ export function useGlobalHotkeys() {
     const unlistenPromises = [
       listen("hotkey-toggle-overlay", () => {
         toggleVisibility();
+        toggleOverlay();
       }),
       listen("hotkey-previous-step", () => {
         previousStep();

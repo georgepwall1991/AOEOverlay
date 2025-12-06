@@ -24,7 +24,7 @@ export function BuildOrderDisplay() {
   }
 
   // Show steps around the current one
-  const visibleRange = 5;
+  const visibleRange = 3;
   const startIndex = Math.max(0, currentStepIndex - 1);
   const endIndex = Math.min(currentOrder.steps.length, startIndex + visibleRange);
   const visibleSteps = currentOrder.steps.slice(startIndex, endIndex);

@@ -72,9 +72,30 @@ fn string_to_code(key: &str) -> Option<Code> {
     }
 }
 
-// Helper to register hotkeys
+fn register_single_hotkey(
+    app: &AppHandle,
+    key_str: &str,
+    event_name: &'static str,
+) -> Result<(), String> {
+    if let Some(code) = string_to_code(key_str) {
+        let app_handle = app.clone();
+        let shortcut = Shortcut::new(None, code);
+        app.global_shortcut()
+            .on_shortcut(shortcut, move |_app, _shortcut, event| {
+                if event.state == ShortcutState::Pressed {
+                    let _ = app_handle.emit(event_name, ());
+                }
+            })
+            .map_err(|e| format!("Failed to register {}: {}", event_name, e))?;
+    }
+    Ok(())
+}
+
 pub fn register_hotkeys(app: &AppHandle) -> Result<(), String> {
-    let _ = app.global_shortcut().unregister_all();
+    // Unregister all existing shortcuts
+    if let Err(e) = app.global_shortcut().unregister_all() {
+        eprintln!("Warning: Failed to unregister existing hotkeys: {}", e);
+    }
 
     let hotkey_config = {
         let state = app.state::<AppState>();
@@ -82,99 +103,20 @@ pub fn register_hotkeys(app: &AppHandle) -> Result<(), String> {
         config.hotkeys.clone()
     };
 
-    // Toggle Overlay
-    if let Some(code) = string_to_code(&hotkey_config.toggle_overlay) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
-        app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                let _ = app_handle.emit("hotkey-toggle-overlay", ());
-                if let Some(window) = app_handle.get_webview_window("overlay") {
-                    if window.is_visible().unwrap_or(false) {
-                        let _ = window.hide();
-                    } else {
-                        let _ = window.show();
-                    }
-                }
-            }
-        }).map_err(|e| e.to_string())?;
-    }
+    // Register all hotkeys using helper
+    let hotkeys: [(&str, &'static str); 8] = [
+        (&hotkey_config.toggle_overlay, "hotkey-toggle-overlay"),
+        (&hotkey_config.previous_step, "hotkey-previous-step"),
+        (&hotkey_config.next_step, "hotkey-next-step"),
+        (&hotkey_config.cycle_build_order, "hotkey-cycle-build-order"),
+        (&hotkey_config.toggle_click_through, "hotkey-toggle-click-through"),
+        (&hotkey_config.toggle_compact, "hotkey-toggle-compact"),
+        (&hotkey_config.reset_build_order, "hotkey-reset-build-order"),
+        (&hotkey_config.toggle_pause, "hotkey-toggle-pause"),
+    ];
 
-    // Previous Step
-    if let Some(code) = string_to_code(&hotkey_config.previous_step) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
-        app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                let _ = app_handle.emit("hotkey-previous-step", ());
-            }
-        }).map_err(|e| e.to_string())?;
-    }
-
-    // Next Step
-    if let Some(code) = string_to_code(&hotkey_config.next_step) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
-        app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                let _ = app_handle.emit("hotkey-next-step", ());
-            }
-        }).map_err(|e| e.to_string())?;
-    }
-
-    // Cycle Build Order
-    if let Some(code) = string_to_code(&hotkey_config.cycle_build_order) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
-        app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                let _ = app_handle.emit("hotkey-cycle-build-order", ());
-            }
-        }).map_err(|e| e.to_string())?;
-    }
-
-    // Toggle Click-Through
-    if let Some(code) = string_to_code(&hotkey_config.toggle_click_through) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
-        app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                let _ = app_handle.emit("hotkey-toggle-click-through", ());
-            }
-        }).map_err(|e| e.to_string())?;
-    }
-
-    // Toggle Compact Mode
-    if let Some(code) = string_to_code(&hotkey_config.toggle_compact) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
-        app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                let _ = app_handle.emit("hotkey-toggle-compact", ());
-            }
-        }).map_err(|e| e.to_string())?;
-    }
-
-    // Reset Build Order
-    if let Some(code) = string_to_code(&hotkey_config.reset_build_order) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
-        app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                let _ = app_handle.emit("hotkey-reset-build-order", ());
-            }
-        }).map_err(|e| e.to_string())?;
-    }
-
-    // Toggle Pause
-    if let Some(code) = string_to_code(&hotkey_config.toggle_pause) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
-        app.global_shortcut().on_shortcut(shortcut, move |_app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed {
-                let _ = app_handle.emit("hotkey-toggle-pause", ());
-            }
-        }).map_err(|e| e.to_string())?;
+    for (key_str, event_name) in hotkeys {
+        register_single_hotkey(app, key_str, event_name)?;
     }
 
     Ok(())

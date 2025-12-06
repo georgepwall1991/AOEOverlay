@@ -92,7 +92,7 @@ export type FontSize = "small" | "medium" | "large";
 export type Theme = "dark" | "light" | "system";
 
 export const DEFAULT_VOICE_CONFIG: VoiceConfig = {
-  enabled: false,
+  enabled: true,
   rate: 1.0,
   speakSteps: true,
   speakReminders: true,
@@ -138,7 +138,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     reset_build_order: "F7",
     toggle_pause: "F8",
   },
-  click_through: false,
+  click_through: true,
   compact_mode: false, // Default to expanded mode (more info visible)
   auto_advance: {
     enabled: false,
@@ -149,4 +149,5 @@ export const DEFAULT_CONFIG: AppConfig = {
   voice: DEFAULT_VOICE_CONFIG,
   reminders: DEFAULT_REMINDER_CONFIG,
   timerDrift: DEFAULT_TIMER_DRIFT_CONFIG,
+  upgradeBadges: DEFAULT_UPGRADE_BADGES_CONFIG,
 };

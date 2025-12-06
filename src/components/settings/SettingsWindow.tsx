@@ -94,11 +94,11 @@ export function SettingsWindow() {
   };
 
   return (
-    <div className="w-full h-full p-6 bg-background text-foreground overflow-hidden flex flex-col">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <div className="w-full h-screen p-6 bg-background text-foreground overflow-hidden flex flex-col">
+      <h1 className="text-2xl font-bold mb-6 shrink-0">Settings</h1>
 
       <Tabs defaultValue="build-orders" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="grid w-full grid-cols-6 mb-6">
+        <TabsList className="grid w-full grid-cols-6 mb-6 shrink-0">
           <TabsTrigger value="build-orders" className="flex items-center gap-2">
             <List className="w-4 h-4" />
             Build Orders
@@ -126,7 +126,7 @@ export function SettingsWindow() {
         </TabsList>
 
         {/* Build Orders Tab */}
-        <TabsContent value="build-orders">
+        <TabsContent value="build-orders" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <div className="space-y-4">
             {/* Import/Export */}
             <div className="flex items-center gap-2 mb-4">
@@ -184,33 +184,33 @@ export function SettingsWindow() {
         </TabsContent>
 
         {/* Player Tab */}
-        <TabsContent value="player" className="flex-1 overflow-auto">
+        <TabsContent value="player" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <PlayerStats />
         </TabsContent>
 
         {/* Gameplay Tab */}
-        <TabsContent value="gameplay">
+        <TabsContent value="gameplay" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <GameplaySettings />
+          <Separator className="my-6" />
+          <UpgradeBadgesSettings />
         </TabsContent>
 
         {/* Voice Tab */}
-        <TabsContent value="voice" className="overflow-auto">
+        <TabsContent value="voice" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <div className="space-y-6 max-w-lg">
             <VoiceSettings />
             <Separator />
             <ReminderSettings />
-            <Separator />
-            <UpgradeBadgesSettings />
           </div>
         </TabsContent>
 
         {/* Appearance Tab */}
-        <TabsContent value="appearance">
+        <TabsContent value="appearance" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <AppearanceSettings />
         </TabsContent>
 
         {/* Hotkeys Tab */}
-        <TabsContent value="hotkeys">
+        <TabsContent value="hotkeys" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <div className="space-y-6 max-w-md">
             <HotkeySettings />
 
