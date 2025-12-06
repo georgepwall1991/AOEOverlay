@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,17 +14,44 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useBuildOrderStore } from "@/stores";
 import { saveBuildOrder, deleteBuildOrder } from "@/lib/tauri";
+import { importAge4Builder } from "@/lib/age4builder";
 import type { BuildOrder } from "@/types";
 import { BuildOrderEditor } from "./BuildOrderEditor";
 import { CivBadge } from "@/components/overlay/CivBadge";
 
-export function BuildOrderManager() {
+interface BuildOrderManagerProps {
+  filterCiv?: string;
+  filterDiff?: string;
+  onExport?: (orderId: string) => void;
+}
+
+export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrderManagerProps) {
   const { buildOrders, setBuildOrders } = useBuildOrderStore();
+
+  // Filter build orders
+  const filteredOrders = useMemo(() => {
+    return buildOrders.filter((order) => {
+      if (filterCiv && order.civilization !== filterCiv) return false;
+      if (filterDiff && order.difficulty !== filterDiff) return false;
+      return true;
+    });
+  }, [buildOrders, filterCiv, filterDiff]);
   const [editingOrder, setEditingOrder] = useState<BuildOrder | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importJson, setImportJson] = useState("");
+  const [importError, setImportError] = useState<string | null>(null);
 
   const handleToggleEnabled = async (order: BuildOrder) => {
     const updated = { ...order, enabled: !order.enabled };
@@ -74,6 +102,24 @@ export function BuildOrderManager() {
     });
   };
 
+  const handleImport = async () => {
+    setImportError(null);
+    try {
+      const imported = importAge4Builder(importJson);
+      // Make sure ID is unique
+      const existingIds = new Set(buildOrders.map(o => o.id));
+      if (existingIds.has(imported.id)) {
+        imported.id = `${imported.id}-${Date.now()}`;
+      }
+      await saveBuildOrder(imported);
+      setBuildOrders([...buildOrders, imported]);
+      setShowImportDialog(false);
+      setImportJson("");
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "Failed to import");
+    }
+  };
+
   // Show editor if editing or creating
   if (editingOrder) {
     return (
@@ -93,21 +139,27 @@ export function BuildOrderManager() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Build Orders</h2>
-        <Button size="sm" onClick={handleCreateNew}>
-          <Plus className="w-4 h-4 mr-1" />
-          New
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowImportDialog(true)}>
+            <Upload className="w-4 h-4 mr-1" />
+            Import
+          </Button>
+          <Button size="sm" onClick={handleCreateNew}>
+            <Plus className="w-4 h-4 mr-1" />
+            New
+          </Button>
+        </div>
       </div>
 
-      {buildOrders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
-          <p className="text-sm">No build orders yet</p>
-          <p className="text-xs mt-1">Click "New" to create one</p>
+          <p className="text-sm">{buildOrders.length === 0 ? "No build orders yet" : "No matching build orders"}</p>
+          <p className="text-xs mt-1">{buildOrders.length === 0 ? 'Click "New" to create one' : "Try adjusting your filters"}</p>
         </div>
       ) : (
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-2">
-            {buildOrders.map((order) => (
+            {filteredOrders.map((order) => (
               <div
                 key={order.id}
                 className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
@@ -149,11 +201,23 @@ export function BuildOrderManager() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1">
+                  {onExport && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => onExport(order.id)}
+                      title="Export"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => setEditingOrder(order)}
+                    title="Edit"
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>
@@ -162,6 +226,7 @@ export function BuildOrderManager() {
                     size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive"
                     onClick={() => setDeleteConfirm(order.id)}
+                    title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -193,6 +258,59 @@ export function BuildOrderManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import from age4builder.com dialog */}
+      <Dialog open={showImportDialog} onOpenChange={(open) => {
+        setShowImportDialog(open);
+        if (!open) {
+          setImportJson("");
+          setImportError(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import from age4builder.com</DialogTitle>
+            <DialogDescription>
+              Go to{" "}
+              <a
+                href="https://age4builder.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline"
+              >
+                age4builder.com
+              </a>
+              , open a build order, click the export/share button to get JSON, and paste it below.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Textarea
+              placeholder='Paste JSON here... (starts with { "civilization": ...})'
+              value={importJson}
+              onChange={(e) => {
+                setImportJson(e.target.value);
+                setImportError(null);
+              }}
+              className="min-h-[200px] font-mono text-xs"
+            />
+
+            {importError && (
+              <p className="text-sm text-destructive">{importError}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleImport} disabled={!importJson.trim()}>
+              <Upload className="w-4 h-4 mr-1" />
+              Import Build Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

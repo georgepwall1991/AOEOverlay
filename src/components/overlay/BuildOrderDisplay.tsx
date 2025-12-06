@@ -1,80 +1,80 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useBuildOrderStore, useCurrentBuildOrder } from "@/stores";
+import { useBuildOrderStore, useCurrentBuildOrder, useConfigStore } from "@/stores";
 import { BuildOrderStep } from "./BuildOrderStep";
 import { CivBadge } from "./CivBadge";
+import { cn } from "@/lib/utils";
 
 export function BuildOrderDisplay() {
   const currentOrder = useCurrentBuildOrder();
   const currentStepIndex = useBuildOrderStore((s) => s.currentStepIndex);
   const goToStep = useBuildOrderStore((s) => s.goToStep);
+  const { config } = useConfigStore();
+  const floatingStyle = config.floating_style;
 
   if (!currentOrder) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center animate-fade-in">
-          <p className="text-sm text-white/40">No build orders loaded</p>
+      <div className="flex-1 flex items-center justify-center py-6">
+        <div className="text-center">
+          <p className="text-sm text-white/40 text-shadow-strong">
+            No build orders loaded
+          </p>
           <p className="text-xs text-white/20 mt-1">Add build orders in Settings</p>
         </div>
       </div>
     );
   }
 
+  // Show steps around the current one
+  const visibleRange = 5;
+  const startIndex = Math.max(0, currentStepIndex - 1);
+  const endIndex = Math.min(currentOrder.steps.length, startIndex + visibleRange);
+  const visibleSteps = currentOrder.steps.slice(startIndex, endIndex);
+
   const progressPercent = ((currentStepIndex + 1) / currentOrder.steps.length) * 100;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="p-3 border-b border-white/10">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-white font-semibold truncate">{currentOrder.name}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <CivBadge civilization={currentOrder.civilization} />
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">
-                {currentOrder.difficulty}
-              </span>
-            </div>
-          </div>
-        </div>
+    <div className="flex flex-col">
+      {/* Header with progress */}
+      <div className="px-3 py-2 flex items-center gap-2">
+        <CivBadge civilization={currentOrder.civilization} size="md" glow />
 
-        {/* Progress bar */}
-        <div className="mt-3 h-1 bg-white/10 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 transition-all duration-300 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
+        {/* Title */}
+        <h2 className={cn(
+          "text-sm font-bold truncate flex-1",
+          floatingStyle ? "text-gradient-gold" : "text-white"
+        )}>
+          {currentOrder.name}
+        </h2>
+
+        {/* Progress indicator */}
+        <div className="flex items-center gap-2">
+          <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <span className="text-xs font-mono text-amber-400">
+            {currentStepIndex + 1}/{currentOrder.steps.length}
+          </span>
         </div>
       </div>
 
-      {/* Steps */}
-      <ScrollArea className="flex-1 custom-scrollbar">
-        <div className="p-2 space-y-1.5">
-          {currentOrder.steps.map((step, index) => (
+      {/* Step list */}
+      <div className="px-2 pb-2 space-y-1">
+        {visibleSteps.map((step, idx) => {
+          const actualIndex = startIndex + idx;
+          return (
             <BuildOrderStep
               key={step.id}
               step={step}
-              stepNumber={index + 1}
-              isActive={index === currentStepIndex}
-              isPast={index < currentStepIndex}
-              onClick={() => goToStep(index)}
+              stepNumber={actualIndex + 1}
+              isActive={actualIndex === currentStepIndex}
+              isPast={actualIndex < currentStepIndex}
+              onClick={() => goToStep(actualIndex)}
+              compact
             />
-          ))}
-        </div>
-      </ScrollArea>
-
-      {/* Footer */}
-      <div className="p-2 border-t border-white/10 bg-black/20">
-        <div className="flex items-center justify-between text-[10px]">
-          <span className="text-white/50 font-mono">
-            {currentStepIndex + 1} / {currentOrder.steps.length}
-          </span>
-          <div className="flex items-center gap-2 text-white/30">
-            <kbd className="px-1 py-0.5 bg-white/10 rounded text-[9px]">F2</kbd>
-            <span>/</span>
-            <kbd className="px-1 py-0.5 bg-white/10 rounded text-[9px]">F3</kbd>
-            <span className="ml-1">navigate</span>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

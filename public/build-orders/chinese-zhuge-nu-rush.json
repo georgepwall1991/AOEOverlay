@@ -1,0 +1,82 @@
+{
+  "id": "chinese-zhuge-nu-rush",
+  "name": "Chinese Zhuge Nu Rush",
+  "civilization": "Chinese",
+  "description": "Fast Song Dynasty into Zhuge Nu spam. Exploits Chinese dynasty bonuses for early aggression.",
+  "difficulty": "Advanced",
+  "enabled": true,
+  "steps": [
+    {
+      "id": "step-1",
+      "description": "[icon:villager] Queue villagers, rally to [icon:sheep] sheep. IO supervises [icon:town_center] TC",
+      "timing": "0:00",
+      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-2",
+      "description": "[icon:villager] Villager to [icon:sheep] sheep",
+      "timing": "0:25",
+      "resources": { "food": 7, "wood": 0, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-3",
+      "description": "[icon:villager] Villager to [icon:wood] wood",
+      "timing": "0:50",
+      "resources": { "food": 7, "wood": 1, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-4",
+      "description": "[icon:lumber_camp] Build Lumber Camp, [icon:villager] villager to [icon:wood] wood",
+      "timing": "1:15",
+      "resources": { "food": 7, "wood": 2, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-5",
+      "description": "[icon:villager] Villager to [icon:gold] gold",
+      "timing": "1:40",
+      "resources": { "food": 7, "wood": 2, "gold": 1, "stone": 0 }
+    },
+    {
+      "id": "step-6",
+      "description": "[icon:mining_camp] Build Mining Camp, [icon:villager] villager to [icon:gold] gold",
+      "timing": "2:00",
+      "resources": { "food": 7, "wood": 2, "gold": 2, "stone": 0 }
+    },
+    {
+      "id": "step-7",
+      "description": "[icon:feudal_age] Build Barbican of the Sun (Landmark)",
+      "timing": "2:30",
+      "resources": { "food": 7, "wood": 2, "gold": 2, "stone": 0 }
+    },
+    {
+      "id": "step-8",
+      "description": "[icon:villager] Continue villagers to [icon:food] food, IO to [icon:gold] gold miners",
+      "timing": "3:00",
+      "resources": { "food": 9, "wood": 2, "gold": 3, "stone": 0 }
+    },
+    {
+      "id": "step-9",
+      "description": "[icon:feudal_age] Feudal Age! Build second Landmark for Song Dynasty",
+      "timing": "4:00",
+      "resources": { "food": 10, "wood": 3, "gold": 4, "stone": 0 }
+    },
+    {
+      "id": "step-10",
+      "description": "[icon:upgrade] Song Dynasty activated! [icon:villager] +35% faster production",
+      "timing": "5:00",
+      "resources": { "food": 12, "wood": 4, "gold": 5, "stone": 0 }
+    },
+    {
+      "id": "step-11",
+      "description": "[icon:archery_range] Build Archery Range, start [icon:crossbowman] Zhuge Nu production",
+      "timing": "5:30",
+      "resources": { "food": 12, "wood": 5, "gold": 6, "stone": 0 }
+    },
+    {
+      "id": "step-12",
+      "description": "[icon:attack] Mass [icon:crossbowman] Zhuge Nu, attack with groups of 15-20",
+      "timing": "6:30",
+      "resources": { "food": 10, "wood": 6, "gold": 8, "stone": 0 }
+    }
+  ]
+}

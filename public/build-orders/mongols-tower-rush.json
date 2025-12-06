@@ -1,0 +1,70 @@
+{
+  "id": "mongols-tower-rush",
+  "name": "Mongols Tower Rush",
+  "civilization": "Mongols",
+  "description": "Aggressive Dark Age tower rush exploiting Mongol mobility. High-risk, high-reward cheese strategy.",
+  "difficulty": "Advanced",
+  "enabled": true,
+  "steps": [
+    {
+      "id": "step-1",
+      "description": "[icon:town_center] Pack Ger immediately, move TC toward enemy base",
+      "timing": "0:00",
+      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-2",
+      "description": "[icon:villager] Queue villagers, rally to [icon:sheep] sheep (sheep follow TC)",
+      "timing": "0:20",
+      "resources": { "food": 7, "wood": 0, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-3",
+      "description": "[icon:town_center] Unpack TC in aggressive forward position",
+      "timing": "1:00",
+      "resources": { "food": 8, "wood": 0, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-4",
+      "description": "Send 3 [icon:villager] to [icon:wood] wood for tower",
+      "timing": "1:15",
+      "resources": { "food": 6, "wood": 3, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-5",
+      "description": "[icon:outpost] Build Outpost near enemy [icon:gold] gold or [icon:wood] woodline",
+      "timing": "1:45",
+      "resources": { "food": 6, "wood": 2, "gold": 0, "stone": 0 }
+    },
+    {
+      "id": "step-6",
+      "description": "Send [icon:villager] to [icon:stone] stone for more [icon:outpost] towers",
+      "timing": "2:15",
+      "resources": { "food": 6, "wood": 2, "gold": 0, "stone": 2 }
+    },
+    {
+      "id": "step-7",
+      "description": "[icon:outpost] Build second tower, deny enemy resources",
+      "timing": "2:45",
+      "resources": { "food": 6, "wood": 2, "gold": 0, "stone": 3 }
+    },
+    {
+      "id": "step-8",
+      "description": "[icon:spearman] Produce Spearmen from Ger to protect [icon:outpost] towers",
+      "timing": "3:15",
+      "resources": { "food": 8, "wood": 3, "gold": 0, "stone": 2 }
+    },
+    {
+      "id": "step-9",
+      "description": "[icon:attack] Continue [icon:outpost] tower pressure, expand denial",
+      "timing": "4:00",
+      "resources": { "food": 8, "wood": 3, "gold": 0, "stone": 3 }
+    },
+    {
+      "id": "step-10",
+      "description": "[icon:feudal_age] If enemy contained, transition to Feudal Age",
+      "timing": "5:00",
+      "resources": { "food": 10, "wood": 4, "gold": 2, "stone": 2 }
+    }
+  ]
+}
