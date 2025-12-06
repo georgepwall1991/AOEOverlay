@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/select";
 import { Keyboard } from "lucide-react";
 import { useConfigStore } from "@/stores";
-import { saveConfig } from "@/lib/tauri";
+import { saveConfig, reloadHotkeys } from "@/lib/tauri";
 import type { HotkeyConfig } from "@/types";
 
 const AVAILABLE_HOTKEYS = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"];
@@ -46,6 +46,7 @@ export function HotkeySettings() {
     updateConfig({ hotkeys: newHotkeys });
     try {
       await saveConfig({ ...config, hotkeys: newHotkeys });
+      await reloadHotkeys();
     } catch (error) {
       console.error("Failed to save hotkey config:", error);
     }
@@ -59,7 +60,7 @@ export function HotkeySettings() {
       </h2>
 
       <p className="text-sm text-muted-foreground mb-4">
-        These hotkeys work even when the game has focus. Changes require app restart.
+        These hotkeys work even when the game has focus.
       </p>
 
       <div className="space-y-3">

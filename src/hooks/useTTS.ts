@@ -30,10 +30,6 @@ export function useTTS() {
 
       try {
         await tauriSpeak(text, voiceConfig.rate);
-        // Estimate speech duration (rough: ~150 words per minute at rate 1.0)
-        const wordCount = text.split(/\s+/).length;
-        const durationMs = (wordCount / (2.5 * voiceConfig.rate)) * 1000;
-        await new Promise((resolve) => setTimeout(resolve, durationMs + 200));
       } catch (error) {
         console.error("TTS speak failed:", error);
       } finally {

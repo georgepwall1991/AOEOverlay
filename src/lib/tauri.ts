@@ -10,6 +10,10 @@ export async function saveConfig(config: AppConfig): Promise<void> {
   return invoke("save_config", { config });
 }
 
+export async function reloadHotkeys(): Promise<void> {
+  return invoke("reload_hotkeys");
+}
+
 // Build order commands
 export async function getBuildOrders(): Promise<BuildOrder[]> {
   return invoke<BuildOrder[]>("get_build_orders");

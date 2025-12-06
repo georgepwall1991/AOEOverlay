@@ -11,8 +11,8 @@ pub fn speak_native(text: &str, rate: f32) -> Result<(), String> {
 
     Command::new("say")
         .args(["-r", &wpm.to_string(), text])
-        .spawn()
-        .map_err(|e| format!("Failed to spawn say command: {}", e))?;
+        .status()
+        .map_err(|e| format!("Failed to execute say command: {}", e))?;
 
     Ok(())
 }
@@ -36,8 +36,8 @@ pub fn speak_native(text: &str, rate: f32) -> Result<(), String> {
 
     Command::new("powershell")
         .args(["-Command", &script])
-        .spawn()
-        .map_err(|e| format!("Failed to spawn PowerShell: {}", e))?;
+        .status()
+        .map_err(|e| format!("Failed to execute PowerShell: {}", e))?;
 
     Ok(())
 }
@@ -78,7 +78,8 @@ pub fn stop_speaking() -> Result<(), String> {
 // Tauri commands
 
 #[tauri::command]
-pub fn speak(text: String, rate: f32) -> Result<(), String> {
+pub async fn speak(text: String, rate: f32) -> Result<(), String> {
+    // This runs on a thread pool, so blocking is fine
     speak_native(&text, rate)
 }
 
