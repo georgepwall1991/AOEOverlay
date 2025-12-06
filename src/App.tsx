@@ -3,9 +3,11 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Overlay, AnimatedOverlay } from "@/components/overlay";
 import { SettingsWindow } from "@/components/settings";
 import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize } from "@/hooks";
+import { useConfigStore } from "@/stores";
 
 function App() {
   const [windowLabel, setWindowLabel] = useState<string | null>(null);
+  const { config } = useConfigStore();
 
   // Initialize hooks
   useGlobalHotkeys();
@@ -20,6 +22,28 @@ function App() {
     };
     initWindow();
   }, []);
+
+  // Apply theme to document (runs on mount and theme change)
+  useEffect(() => {
+    const root = document.documentElement;
+    if (config.theme === "light") {
+      root.classList.remove("dark");
+      root.classList.add("light");
+    } else if (config.theme === "dark") {
+      root.classList.remove("light");
+      root.classList.add("dark");
+    } else {
+      // System preference
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) {
+        root.classList.add("dark");
+        root.classList.remove("light");
+      } else {
+        root.classList.add("light");
+        root.classList.remove("dark");
+      }
+    }
+  }, [config.theme]);
 
   if (!windowLabel) {
     return null;
