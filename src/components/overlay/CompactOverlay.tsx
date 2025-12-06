@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { GripVertical, ChevronLeft, ChevronRight, MousePointer2Off, Settings } from "lucide-react";
-import { useWindowDrag, useAutoResize } from "@/hooks";
+import { useWindowDrag, useAutoResize, useTimer } from "@/hooks";
 import { useOpacity, useConfigStore, useBuildOrderStore, useCurrentBuildOrder } from "@/stores";
 import { ResourceIndicator } from "./ResourceIndicator";
+import { TimerBar } from "./TimerBar";
 import { showSettings } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ export function CompactOverlay() {
   const [animateStep, setAnimateStep] = useState(false);
   const prevStepIndex = useRef(currentStepIndex);
   const containerRef = useAutoResize();
+  const { isRunning } = useTimer();
 
   const currentStep = currentBuildOrder?.steps[currentStepIndex];
   const nextStepPreview = currentBuildOrder?.steps[currentStepIndex + 1];
@@ -78,7 +80,7 @@ export function CompactOverlay() {
         {/* Current step display */}
         {currentStep ? (
           <div className={cn("p-2", animateStep && "compact-step-animate")}>
-            {/* Navigation and step counter */}
+            {/* Navigation, step counter, and timer */}
             <div className="flex items-center justify-between mb-1">
               <button
                 onClick={previousStep}
@@ -88,9 +90,15 @@ export function CompactOverlay() {
                 <ChevronLeft className="w-4 h-4 text-white/70" />
               </button>
 
-              <span className="text-xs font-mono font-bold text-amber-400">
-                {currentStepIndex + 1}<span className="text-white/40">/{totalSteps}</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold text-amber-400">
+                  {currentStepIndex + 1}<span className="text-white/40">/{totalSteps}</span>
+                </span>
+                {/* Compact timer display */}
+                {(isRunning || currentStep?.timing) && (
+                  <TimerBar compact targetTiming={currentStep?.timing} />
+                )}
+              </div>
 
               <button
                 onClick={nextStep}

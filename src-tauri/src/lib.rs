@@ -9,6 +9,8 @@ use tauri::{
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState};
 
+mod tts;
+
 // Configuration types
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
@@ -23,6 +25,10 @@ pub struct AppConfig {
     pub auto_advance: AutoAdvanceConfig,
     pub filter_civilization: Option<String>,
     pub filter_difficulty: Option<String>,
+    #[serde(default)]
+    pub voice: Option<VoiceConfig>,
+    #[serde(default)]
+    pub reminders: Option<ReminderConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -54,6 +60,56 @@ pub struct AutoAdvanceConfig {
     pub delay_seconds: u32,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VoiceConfig {
+    pub enabled: bool,
+    pub rate: f32,
+    pub speak_steps: bool,
+    pub speak_reminders: bool,
+    pub speak_delta: bool,
+}
+
+impl Default for VoiceConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            rate: 1.0,
+            speak_steps: true,
+            speak_reminders: true,
+            speak_delta: true,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ReminderItemConfig {
+    pub enabled: bool,
+    pub interval_seconds: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ReminderConfig {
+    pub enabled: bool,
+    pub villager_queue: ReminderItemConfig,
+    pub scout: ReminderItemConfig,
+    pub houses: ReminderItemConfig,
+    pub military: ReminderItemConfig,
+    pub map_control: ReminderItemConfig,
+}
+
+impl Default for ReminderConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            villager_queue: ReminderItemConfig { enabled: true, interval_seconds: 25 },
+            scout: ReminderItemConfig { enabled: true, interval_seconds: 45 },
+            houses: ReminderItemConfig { enabled: true, interval_seconds: 40 },
+            military: ReminderItemConfig { enabled: true, interval_seconds: 60 },
+            map_control: ReminderItemConfig { enabled: true, interval_seconds: 90 },
+        }
+    }
+}
+
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
@@ -79,6 +135,8 @@ impl Default for AppConfig {
             },
             filter_civilization: None,
             filter_difficulty: None,
+            voice: Some(VoiceConfig::default()),
+            reminders: Some(ReminderConfig::default()),
         }
     }
 }
@@ -505,6 +563,8 @@ pub fn run() {
             toggle_compact_mode,
             import_build_order,
             export_build_order,
+            tts::speak,
+            tts::tts_stop,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

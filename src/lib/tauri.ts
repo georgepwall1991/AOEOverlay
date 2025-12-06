@@ -68,3 +68,12 @@ export async function toggleClickThrough(): Promise<boolean> {
 export async function toggleCompactMode(): Promise<boolean> {
   return invoke<boolean>("toggle_compact_mode");
 }
+
+// TTS commands
+export async function speak(text: string, rate: number = 1.0): Promise<void> {
+  return invoke("speak", { text, rate });
+}
+
+export async function stopSpeaking(): Promise<void> {
+  return invoke("tts_stop");
+}

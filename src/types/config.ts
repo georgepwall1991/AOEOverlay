@@ -23,6 +23,28 @@ export interface AutoAdvanceConfig {
   delay_seconds: number; // Extra delay after timing before auto-advance
 }
 
+export interface VoiceConfig {
+  enabled: boolean;
+  rate: number; // 0.5 - 2.0 (1.0 = normal)
+  speakSteps: boolean; // Read step descriptions aloud
+  speakReminders: boolean; // Speak periodic reminders
+  speakDelta: boolean; // Announce when behind pace
+}
+
+export interface ReminderItemConfig {
+  enabled: boolean;
+  intervalSeconds: number;
+}
+
+export interface ReminderConfig {
+  enabled: boolean; // Master toggle
+  villagerQueue: ReminderItemConfig;
+  scout: ReminderItemConfig;
+  houses: ReminderItemConfig;
+  military: ReminderItemConfig;
+  mapControl: ReminderItemConfig;
+}
+
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
 
 export interface AppConfig {
@@ -39,10 +61,29 @@ export interface AppConfig {
   filter_difficulty?: string;
   overlay_position: OverlayPosition;
   floating_style: boolean; // minimal background, floating look
+  voice?: VoiceConfig;
+  reminders?: ReminderConfig;
 }
 
 export type FontSize = "small" | "medium" | "large";
 export type Theme = "dark" | "light" | "system";
+
+export const DEFAULT_VOICE_CONFIG: VoiceConfig = {
+  enabled: false,
+  rate: 1.0,
+  speakSteps: true,
+  speakReminders: true,
+  speakDelta: true,
+};
+
+export const DEFAULT_REMINDER_CONFIG: ReminderConfig = {
+  enabled: false,
+  villagerQueue: { enabled: true, intervalSeconds: 25 },
+  scout: { enabled: true, intervalSeconds: 45 },
+  houses: { enabled: true, intervalSeconds: 40 },
+  military: { enabled: true, intervalSeconds: 60 },
+  mapControl: { enabled: true, intervalSeconds: 90 },
+};
 
 export const DEFAULT_CONFIG: AppConfig = {
   overlay_opacity: 0.95,
@@ -65,4 +106,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   overlay_position: "top-right",
   floating_style: true, // Default to floating/minimal style
+  voice: DEFAULT_VOICE_CONFIG,
+  reminders: DEFAULT_REMINDER_CONFIG,
 };

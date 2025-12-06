@@ -34,11 +34,24 @@ import {
   Upload,
   Filter,
   User,
+  Volume2,
+  Bell,
 } from "lucide-react";
 import { BuildOrderManager } from "./BuildOrderManager";
 import { PlayerStats } from "./PlayerStats";
-import { CIVILIZATIONS, DIFFICULTIES } from "@/types";
-import type { Theme, FontSize, HotkeyConfig } from "@/types";
+import {
+  CIVILIZATIONS,
+  DIFFICULTIES,
+  DEFAULT_VOICE_CONFIG,
+  DEFAULT_REMINDER_CONFIG,
+} from "@/types";
+import type {
+  Theme,
+  FontSize,
+  HotkeyConfig,
+  VoiceConfig,
+  ReminderConfig,
+} from "@/types";
 
 const AVAILABLE_HOTKEYS = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"];
 
@@ -136,6 +149,81 @@ export function SettingsWindow() {
       await saveConfig({ ...config, auto_advance: newAutoAdvance });
     } catch (error) {
       console.error("Failed to save config:", error);
+    }
+  };
+
+  // Voice settings handlers
+  const voiceConfig = config.voice ?? DEFAULT_VOICE_CONFIG;
+  const reminderConfig = config.reminders ?? DEFAULT_REMINDER_CONFIG;
+
+  const handleVoiceToggle = async () => {
+    const newVoice: VoiceConfig = { ...voiceConfig, enabled: !voiceConfig.enabled };
+    updateConfig({ voice: newVoice });
+    try {
+      await saveConfig({ ...config, voice: newVoice });
+    } catch (error) {
+      console.error("Failed to save voice config:", error);
+    }
+  };
+
+  const handleVoiceRateChange = async (value: number[]) => {
+    const rate = value[0];
+    const newVoice: VoiceConfig = { ...voiceConfig, rate };
+    updateConfig({ voice: newVoice });
+    try {
+      await saveConfig({ ...config, voice: newVoice });
+    } catch (error) {
+      console.error("Failed to save voice config:", error);
+    }
+  };
+
+  const handleVoiceOptionToggle = async (option: keyof Pick<VoiceConfig, "speakSteps" | "speakReminders" | "speakDelta">) => {
+    const newVoice: VoiceConfig = { ...voiceConfig, [option]: !voiceConfig[option] };
+    updateConfig({ voice: newVoice });
+    try {
+      await saveConfig({ ...config, voice: newVoice });
+    } catch (error) {
+      console.error("Failed to save voice config:", error);
+    }
+  };
+
+  const handleRemindersToggle = async () => {
+    const newReminders: ReminderConfig = { ...reminderConfig, enabled: !reminderConfig.enabled };
+    updateConfig({ reminders: newReminders });
+    try {
+      await saveConfig({ ...config, reminders: newReminders });
+    } catch (error) {
+      console.error("Failed to save reminders config:", error);
+    }
+  };
+
+  const handleReminderItemToggle = async (item: keyof Pick<ReminderConfig, "villagerQueue" | "scout" | "houses" | "military" | "mapControl">) => {
+    const newReminders: ReminderConfig = {
+      ...reminderConfig,
+      [item]: { ...reminderConfig[item], enabled: !reminderConfig[item].enabled },
+    };
+    updateConfig({ reminders: newReminders });
+    try {
+      await saveConfig({ ...config, reminders: newReminders });
+    } catch (error) {
+      console.error("Failed to save reminders config:", error);
+    }
+  };
+
+  const handleReminderIntervalChange = async (
+    item: keyof Pick<ReminderConfig, "villagerQueue" | "scout" | "houses" | "military" | "mapControl">,
+    value: string
+  ) => {
+    const interval = parseInt(value, 10) || 30;
+    const newReminders: ReminderConfig = {
+      ...reminderConfig,
+      [item]: { ...reminderConfig[item], intervalSeconds: interval },
+    };
+    updateConfig({ reminders: newReminders });
+    try {
+      await saveConfig({ ...config, reminders: newReminders });
+    } catch (error) {
+      console.error("Failed to save reminders config:", error);
     }
   };
 
@@ -238,7 +326,7 @@ export function SettingsWindow() {
       <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
       <Tabs defaultValue="build-orders" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="grid w-full grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-6 mb-6">
           <TabsTrigger value="build-orders" className="flex items-center gap-2">
             <List className="w-4 h-4" />
             Build Orders
@@ -250,6 +338,10 @@ export function SettingsWindow() {
           <TabsTrigger value="gameplay" className="flex items-center gap-2">
             <Gamepad2 className="w-4 h-4" />
             Gameplay
+          </TabsTrigger>
+          <TabsTrigger value="voice" className="flex items-center gap-2">
+            <Volume2 className="w-4 h-4" />
+            Voice
           </TabsTrigger>
           <TabsTrigger value="appearance" className="flex items-center gap-2">
             <Palette className="w-4 h-4" />
@@ -411,6 +503,261 @@ export function SettingsWindow() {
                     <p className="text-xs text-muted-foreground">
                       Wait this many seconds after the step's timing before advancing
                     </p>
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        </TabsContent>
+
+        {/* Voice Tab */}
+        <TabsContent value="voice" className="overflow-auto">
+          <div className="space-y-6 max-w-lg">
+            {/* Voice Coaching Section */}
+            <section>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Volume2 className="w-5 h-5" />
+                Voice Coaching
+              </h2>
+
+              <div className="space-y-4">
+                {/* Master toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="voice-enabled">Enable Voice Coaching</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use text-to-speech to read step descriptions
+                    </p>
+                  </div>
+                  <Switch
+                    id="voice-enabled"
+                    checked={voiceConfig.enabled}
+                    onCheckedChange={handleVoiceToggle}
+                  />
+                </div>
+
+                {voiceConfig.enabled && (
+                  <>
+                    {/* Speech rate */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="voice-rate">Speech Rate</Label>
+                        <span className="text-sm text-muted-foreground">
+                          {voiceConfig.rate.toFixed(1)}x
+                        </span>
+                      </div>
+                      <Slider
+                        id="voice-rate"
+                        min={0.5}
+                        max={2.0}
+                        step={0.1}
+                        value={[voiceConfig.rate]}
+                        onValueChange={handleVoiceRateChange}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    {/* Speak options */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="speak-steps">Speak Step Descriptions</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Read the description when you advance steps
+                          </p>
+                        </div>
+                        <Switch
+                          id="speak-steps"
+                          checked={voiceConfig.speakSteps}
+                          onCheckedChange={() => handleVoiceOptionToggle("speakSteps")}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="speak-reminders">Speak Reminders</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Announce periodic coaching reminders
+                          </p>
+                        </div>
+                        <Switch
+                          id="speak-reminders"
+                          checked={voiceConfig.speakReminders}
+                          onCheckedChange={() => handleVoiceOptionToggle("speakReminders")}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label htmlFor="speak-delta">Speak Pacing Warnings</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Warn when you fall behind pace (30+ seconds)
+                          </p>
+                        </div>
+                        <Switch
+                          id="speak-delta"
+                          checked={voiceConfig.speakDelta}
+                          onCheckedChange={() => handleVoiceOptionToggle("speakDelta")}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* Reminders Section */}
+            <section>
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Periodic Reminders
+              </h2>
+
+              <div className="space-y-4">
+                {/* Master toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="reminders-enabled">Enable Reminders</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Periodic coaching reminders while timer is running
+                    </p>
+                  </div>
+                  <Switch
+                    id="reminders-enabled"
+                    checked={reminderConfig.enabled}
+                    onCheckedChange={handleRemindersToggle}
+                  />
+                </div>
+
+                {reminderConfig.enabled && (
+                  <div className="space-y-3 pt-2">
+                    {/* Villager Queue */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={reminderConfig.villagerQueue.enabled}
+                            onCheckedChange={() => handleReminderItemToggle("villagerQueue")}
+                          />
+                          <Label>Keep queuing villagers</Label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="10"
+                          max="120"
+                          value={reminderConfig.villagerQueue.intervalSeconds}
+                          onChange={(e) => handleReminderIntervalChange("villagerQueue", e.target.value)}
+                          className="w-16 h-8"
+                          disabled={!reminderConfig.villagerQueue.enabled}
+                        />
+                        <span className="text-xs text-muted-foreground">sec</span>
+                      </div>
+                    </div>
+
+                    {/* Scout */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={reminderConfig.scout.enabled}
+                            onCheckedChange={() => handleReminderItemToggle("scout")}
+                          />
+                          <Label>Check your scout</Label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="10"
+                          max="120"
+                          value={reminderConfig.scout.intervalSeconds}
+                          onChange={(e) => handleReminderIntervalChange("scout", e.target.value)}
+                          className="w-16 h-8"
+                          disabled={!reminderConfig.scout.enabled}
+                        />
+                        <span className="text-xs text-muted-foreground">sec</span>
+                      </div>
+                    </div>
+
+                    {/* Houses */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={reminderConfig.houses.enabled}
+                            onCheckedChange={() => handleReminderItemToggle("houses")}
+                          />
+                          <Label>Don't get supply blocked</Label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="10"
+                          max="120"
+                          value={reminderConfig.houses.intervalSeconds}
+                          onChange={(e) => handleReminderIntervalChange("houses", e.target.value)}
+                          className="w-16 h-8"
+                          disabled={!reminderConfig.houses.enabled}
+                        />
+                        <span className="text-xs text-muted-foreground">sec</span>
+                      </div>
+                    </div>
+
+                    {/* Military */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={reminderConfig.military.enabled}
+                            onCheckedChange={() => handleReminderItemToggle("military")}
+                          />
+                          <Label>Build more military</Label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="10"
+                          max="120"
+                          value={reminderConfig.military.intervalSeconds}
+                          onChange={(e) => handleReminderIntervalChange("military", e.target.value)}
+                          className="w-16 h-8"
+                          disabled={!reminderConfig.military.enabled}
+                        />
+                        <span className="text-xs text-muted-foreground">sec</span>
+                      </div>
+                    </div>
+
+                    {/* Map Control */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={reminderConfig.mapControl.enabled}
+                            onCheckedChange={() => handleReminderItemToggle("mapControl")}
+                          />
+                          <Label>Control the map</Label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="10"
+                          max="120"
+                          value={reminderConfig.mapControl.intervalSeconds}
+                          onChange={(e) => handleReminderIntervalChange("mapControl", e.target.value)}
+                          className="w-16 h-8"
+                          disabled={!reminderConfig.mapControl.enabled}
+                        />
+                        <span className="text-xs text-muted-foreground">sec</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

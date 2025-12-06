@@ -4,3 +4,6 @@ export * from "./useBuildOrders";
 export * from "./useWindowDrag";
 export * from "./useWindowSize";
 export * from "./useAutoResize";
+export * from "./useTTS";
+export * from "./useTimer";
+export * from "./useReminders";

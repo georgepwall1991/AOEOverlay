@@ -6,3 +6,4 @@ export * from "./BuildOrderStep";
 export * from "./ResourceIndicator";
 export * from "./ResourceIcons";
 export * from "./CivBadge";
+export * from "./TimerBar";

@@ -1,8 +1,9 @@
 import { GripVertical, MousePointer2Off, Settings } from "lucide-react";
-import { useWindowDrag, useAutoResize } from "@/hooks";
-import { useOpacity, useConfigStore } from "@/stores";
+import { useWindowDrag, useAutoResize, useTimer } from "@/hooks";
+import { useOpacity, useConfigStore, useCurrentStep } from "@/stores";
 import { BuildOrderDisplay } from "./BuildOrderDisplay";
 import { CompactOverlay } from "./CompactOverlay";
+import { TimerBar } from "./TimerBar";
 import { showSettings } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +12,8 @@ export function Overlay() {
   const opacity = useOpacity();
   const { config } = useConfigStore();
   const containerRef = useAutoResize();
+  const currentStep = useCurrentStep();
+  const { isRunning } = useTimer();
 
   // Show compact view if enabled
   if (config.compact_mode) {
@@ -59,6 +62,11 @@ export function Overlay() {
             )}
           </div>
         </div>
+
+        {/* Timer bar - shows when timer is running or has delta */}
+        {(isRunning || currentStep?.timing) && (
+          <TimerBar targetTiming={currentStep?.timing} />
+        )}
 
         {/* Content */}
         <BuildOrderDisplay />
