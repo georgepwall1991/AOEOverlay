@@ -2,9 +2,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { MousePointer2Off, Minimize2, Gamepad2, Timer } from "lucide-react";
+import { MousePointer2Off, Minimize2, Gamepad2, Timer, TrendingUp } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig, toggleClickThrough, toggleCompactMode } from "@/lib/tauri";
+import { DEFAULT_TIMER_DRIFT_CONFIG } from "@/types";
+import type { TimerDriftConfig } from "@/types";
 
 export function GameplaySettings() {
   const { config, updateConfig } = useConfigStore();
@@ -51,6 +53,21 @@ export function GameplaySettings() {
       await saveConfig({ ...config, auto_advance: newAutoAdvance });
     } catch (error) {
       console.error("Failed to save config:", error);
+    }
+  };
+
+  const timerDriftConfig = config.timerDrift ?? DEFAULT_TIMER_DRIFT_CONFIG;
+
+  const handleTimerDriftToggle = async () => {
+    const newConfig: TimerDriftConfig = {
+      ...timerDriftConfig,
+      enabled: !timerDriftConfig.enabled,
+    };
+    updateConfig({ timerDrift: newConfig });
+    try {
+      await saveConfig({ ...config, timerDrift: newConfig });
+    } catch (error) {
+      console.error("Failed to save timer drift config:", error);
     }
   };
 
@@ -142,6 +159,26 @@ export function GameplaySettings() {
               </p>
             </div>
           )}
+
+          <Separator className="my-4" />
+
+          {/* Smart Timer Drift */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <Label htmlFor="timer-drift">Smart Timer Drift</Label>
+                <p className="text-xs text-muted-foreground">
+                  Adjust future step timings when you fall behind pace
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="timer-drift"
+              checked={timerDriftConfig.enabled}
+              onCheckedChange={handleTimerDriftToggle}
+            />
+          </div>
         </div>
       </section>
     </div>

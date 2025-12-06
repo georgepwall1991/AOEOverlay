@@ -48,6 +48,24 @@ export interface ReminderConfig {
   sacredSites: { enabled: boolean }; // One-time alerts at 4:30 and 5:00
 }
 
+// Upgrade badge that appears at a specific game time
+export interface UpgradeBadgeConfig {
+  id: string;
+  name: string;
+  shortName: string; // For compact display
+  triggerSeconds: number; // Game time to show badge
+  enabled: boolean;
+}
+
+export interface UpgradeBadgesConfig {
+  enabled: boolean;
+  badges: UpgradeBadgeConfig[];
+}
+
+export interface TimerDriftConfig {
+  enabled: boolean; // Auto-adjust step timings when behind pace
+}
+
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
 
 export interface AppConfig {
@@ -66,6 +84,8 @@ export interface AppConfig {
   floating_style: boolean; // minimal background, floating look
   voice?: VoiceConfig;
   reminders?: ReminderConfig;
+  upgradeBadges?: UpgradeBadgesConfig;
+  timerDrift?: TimerDriftConfig;
 }
 
 export type FontSize = "small" | "medium" | "large";
@@ -88,6 +108,20 @@ export const DEFAULT_REMINDER_CONFIG: ReminderConfig = {
   mapControl: { enabled: true, intervalSeconds: 90 },
   macroCheck: { enabled: false, intervalSeconds: 20 }, // Pro-level macro cycle
   sacredSites: { enabled: true }, // Sacred site spawn alerts
+};
+
+export const DEFAULT_UPGRADE_BADGES_CONFIG: UpgradeBadgesConfig = {
+  enabled: true,
+  badges: [
+    { id: "wheelbarrow", name: "Wheelbarrow", shortName: "Wheel", triggerSeconds: 180, enabled: true }, // 3:00
+    { id: "blacksmith_attack", name: "Blacksmith +1 Attack", shortName: "+1 Atk", triggerSeconds: 300, enabled: true }, // 5:00
+    { id: "double_broadaxe", name: "Double Broadaxe", shortName: "Broadaxe", triggerSeconds: 360, enabled: true }, // 6:00
+    { id: "textiles", name: "Textiles", shortName: "Textiles", triggerSeconds: 480, enabled: true }, // 8:00
+  ],
+};
+
+export const DEFAULT_TIMER_DRIFT_CONFIG: TimerDriftConfig = {
+  enabled: true, // Default to enabled - adjust timings when behind
 };
 
 export const DEFAULT_CONFIG: AppConfig = {
@@ -114,4 +148,5 @@ export const DEFAULT_CONFIG: AppConfig = {
   floating_style: true, // Default to floating/minimal style
   voice: DEFAULT_VOICE_CONFIG,
   reminders: DEFAULT_REMINDER_CONFIG,
+  timerDrift: DEFAULT_TIMER_DRIFT_CONFIG,
 };

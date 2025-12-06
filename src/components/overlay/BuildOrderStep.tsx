@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type { BuildOrderStep as StepType } from "@/types";
+import { DEFAULT_TIMER_DRIFT_CONFIG } from "@/types";
 import { ResourceIndicator } from "./ResourceIndicator";
-import { useConfigStore } from "@/stores";
+import { useConfigStore, useAccumulatedDrift } from "@/stores";
+import { parseTimingToSeconds, formatTime } from "@/stores/timerStore";
 import { renderIconText } from "./GameIcons";
 
 interface BuildOrderStepProps {
@@ -26,6 +28,33 @@ export function BuildOrderStep({
   const wasActive = useRef(isActive);
   const { config } = useConfigStore();
   const floatingStyle = config.floating_style;
+  const accumulatedDrift = useAccumulatedDrift();
+
+  // Calculate adjusted timing when drift is enabled and there's drift
+  const driftConfig = config.timerDrift ?? DEFAULT_TIMER_DRIFT_CONFIG;
+  const adjustedTiming = useMemo(() => {
+    if (!step.timing || !driftConfig.enabled || accumulatedDrift === 0) {
+      return null;
+    }
+    // Only adjust for future steps (not current or past)
+    if (isActive || isPast) {
+      return null;
+    }
+    const timingSeconds = parseTimingToSeconds(step.timing);
+    if (timingSeconds === null) {
+      return null;
+    }
+    // Add drift to timing (positive drift = behind, so add to timing)
+    const adjustedSeconds = timingSeconds + accumulatedDrift;
+    if (adjustedSeconds <= 0) {
+      return null;
+    }
+    return formatTime(adjustedSeconds);
+  }, [step.timing, driftConfig.enabled, accumulatedDrift, isActive, isPast]);
+
+  // Display timing (adjusted or original)
+  const displayTiming = adjustedTiming || step.timing;
+  const showDriftIndicator = adjustedTiming !== null;
 
   // Trigger animation when step becomes active
   useEffect(() => {
@@ -74,11 +103,14 @@ export function BuildOrderStep({
                   "flex-shrink-0 text-xs px-2 py-0.5 rounded font-mono font-bold",
                   isActive
                     ? "bg-amber-500/40 text-amber-200 border border-amber-400/50"
-                    : "bg-black/40 text-white/60 border border-white/20"
+                    : showDriftIndicator
+                      ? "bg-amber-500/20 text-amber-300/80 border border-amber-400/30"
+                      : "bg-black/40 text-white/60 border border-white/20"
                 )}
                 style={isActive ? { textShadow: '0 0 8px rgba(251, 191, 36, 0.8)' } : undefined}
+                title={showDriftIndicator ? `Adjusted from ${step.timing}` : undefined}
                 >
-                  {step.timing}
+                  {showDriftIndicator ? "~" : ""}{displayTiming}
                 </span>
               )}
               {step.resources && (
@@ -141,8 +173,14 @@ export function BuildOrderStep({
 
           <div className="flex items-center gap-3 mt-1.5 flex-wrap">
             {step.timing && (
-              <span className={isActive ? "timing-badge-glow" : "timing-badge"}>
-                {step.timing}
+              <span
+                className={cn(
+                  isActive ? "timing-badge-glow" : "timing-badge",
+                  showDriftIndicator && !isActive && "!bg-amber-500/20 !text-amber-300/80 !border-amber-400/30"
+                )}
+                title={showDriftIndicator ? `Adjusted from ${step.timing}` : undefined}
+              >
+                {showDriftIndicator ? "~" : ""}{displayTiming}
               </span>
             )}
             <ResourceIndicator resources={step.resources} glow={isActive} />

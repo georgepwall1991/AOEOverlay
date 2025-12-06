@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload, Link, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ import {
 import { useBuildOrderStore } from "@/stores";
 import { saveBuildOrder, deleteBuildOrder } from "@/lib/tauri";
 import { importAge4Builder } from "@/lib/age4builder";
+import { importAoe4WorldBuild } from "@/lib/aoe4world";
 import type { BuildOrder } from "@/types";
 import { BuildOrderEditor } from "./BuildOrderEditor";
 import { CivBadge } from "@/components/overlay/CivBadge";
@@ -52,6 +54,10 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importJson, setImportJson] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
+  const [showUrlImportDialog, setShowUrlImportDialog] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
+  const [urlImportError, setUrlImportError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleToggleEnabled = async (order: BuildOrder) => {
     const updated = { ...order, enabled: !order.enabled };
@@ -120,6 +126,27 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     }
   };
 
+  const handleUrlImport = async () => {
+    setUrlImportError(null);
+    setIsImporting(true);
+    try {
+      const imported = await importAoe4WorldBuild(importUrl);
+      // Make sure ID is unique
+      const existingIds = new Set(buildOrders.map(o => o.id));
+      if (existingIds.has(imported.id)) {
+        imported.id = `${imported.id}-${Date.now()}`;
+      }
+      await saveBuildOrder(imported);
+      setBuildOrders([...buildOrders, imported]);
+      setShowUrlImportDialog(false);
+      setImportUrl("");
+    } catch (error) {
+      setUrlImportError(error instanceof Error ? error.message : "Failed to import from URL");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   // Show editor if editing or creating
   if (editingOrder) {
     return (
@@ -140,9 +167,13 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Build Orders</h2>
         <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowUrlImportDialog(true)}>
+            <Link className="w-4 h-4 mr-1" />
+            Import URL
+          </Button>
           <Button size="sm" variant="outline" onClick={() => setShowImportDialog(true)}>
             <Upload className="w-4 h-4 mr-1" />
-            Import
+            Import JSON
           </Button>
           <Button size="sm" onClick={handleCreateNew}>
             <Plus className="w-4 h-4 mr-1" />
@@ -307,6 +338,71 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
             <Button onClick={handleImport} disabled={!importJson.trim()}>
               <Upload className="w-4 h-4 mr-1" />
               Import Build Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import from AoE4World URL dialog */}
+      <Dialog open={showUrlImportDialog} onOpenChange={(open) => {
+        setShowUrlImportDialog(open);
+        if (!open) {
+          setImportUrl("");
+          setUrlImportError(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import from AoE4World</DialogTitle>
+            <DialogDescription>
+              Paste a build order URL from{" "}
+              <a
+                href="https://aoe4world.com/builds"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline"
+              >
+                aoe4world.com/builds
+              </a>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Input
+              placeholder="https://aoe4world.com/builds/123"
+              value={importUrl}
+              onChange={(e) => {
+                setImportUrl(e.target.value);
+                setUrlImportError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && importUrl.trim() && !isImporting) {
+                  handleUrlImport();
+                }
+              }}
+            />
+
+            {urlImportError && (
+              <p className="text-sm text-destructive">{urlImportError}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowUrlImportDialog(false)} disabled={isImporting}>
+              Cancel
+            </Button>
+            <Button onClick={handleUrlImport} disabled={!importUrl.trim() || isImporting}>
+              {isImporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Link className="w-4 h-4 mr-1" />
+                  Import Build Order
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

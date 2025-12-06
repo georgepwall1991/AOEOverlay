@@ -8,6 +8,7 @@ interface TimerState {
   elapsedSeconds: number;
   lastStepTime: number | null;
   lastDelta: number | null; // Seconds ahead (-) or behind (+)
+  accumulatedDrift: number; // Total drift for adjusting future step timings
 
   // Actions
   startTimer: () => void;
@@ -21,7 +22,7 @@ interface TimerState {
 }
 
 // Parse timing string like "3:30" or "10:45" to seconds
-function parseTimingToSeconds(timing: string | undefined): number | null {
+export function parseTimingToSeconds(timing: string | undefined): number | null {
   if (!timing) return null;
   const parts = timing.split(":");
   if (parts.length !== 2) return null;
@@ -61,6 +62,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   elapsedSeconds: 0,
   lastStepTime: null,
   lastDelta: null,
+  accumulatedDrift: 0,
 
   startTimer: () => {
     const { isRunning, accumulatedTime } = get();
@@ -134,6 +136,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       elapsedSeconds: 0,
       lastStepTime: null,
       lastDelta: null,
+      accumulatedDrift: 0,
     }),
 
   tick: () => {
@@ -152,7 +155,11 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     if (suggestedSeconds !== null) {
       // Delta: positive means behind, negative means ahead
       const delta = elapsedSeconds - suggestedSeconds;
-      set({ lastDelta: delta });
+      set({
+        lastDelta: delta,
+        // Update accumulated drift to track total time behind/ahead
+        accumulatedDrift: delta,
+      });
     }
   },
 }));
@@ -176,3 +183,6 @@ export const useDeltaDisplay = () =>
   useTimerStore((state) =>
     state.lastDelta !== null ? formatDelta(state.lastDelta) : null
   );
+
+export const useAccumulatedDrift = () =>
+  useTimerStore((state) => state.accumulatedDrift);
