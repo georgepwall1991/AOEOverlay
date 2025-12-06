@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,8 +14,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useBuildOrderStore } from "@/stores";
 import { saveBuildOrder, deleteBuildOrder } from "@/lib/tauri";
+import { importAge4Builder } from "@/lib/age4builder";
 import type { BuildOrder } from "@/types";
 import { BuildOrderEditor } from "./BuildOrderEditor";
 import { CivBadge } from "@/components/overlay/CivBadge";
@@ -39,6 +49,9 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
   const [editingOrder, setEditingOrder] = useState<BuildOrder | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importJson, setImportJson] = useState("");
+  const [importError, setImportError] = useState<string | null>(null);
 
   const handleToggleEnabled = async (order: BuildOrder) => {
     const updated = { ...order, enabled: !order.enabled };
@@ -89,6 +102,24 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     });
   };
 
+  const handleImport = async () => {
+    setImportError(null);
+    try {
+      const imported = importAge4Builder(importJson);
+      // Make sure ID is unique
+      const existingIds = new Set(buildOrders.map(o => o.id));
+      if (existingIds.has(imported.id)) {
+        imported.id = `${imported.id}-${Date.now()}`;
+      }
+      await saveBuildOrder(imported);
+      setBuildOrders([...buildOrders, imported]);
+      setShowImportDialog(false);
+      setImportJson("");
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "Failed to import");
+    }
+  };
+
   // Show editor if editing or creating
   if (editingOrder) {
     return (
@@ -108,10 +139,16 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Build Orders</h2>
-        <Button size="sm" onClick={handleCreateNew}>
-          <Plus className="w-4 h-4 mr-1" />
-          New
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowImportDialog(true)}>
+            <Upload className="w-4 h-4 mr-1" />
+            Import
+          </Button>
+          <Button size="sm" onClick={handleCreateNew}>
+            <Plus className="w-4 h-4 mr-1" />
+            New
+          </Button>
+        </div>
       </div>
 
       {filteredOrders.length === 0 ? (
@@ -221,6 +258,59 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import from age4builder.com dialog */}
+      <Dialog open={showImportDialog} onOpenChange={(open) => {
+        setShowImportDialog(open);
+        if (!open) {
+          setImportJson("");
+          setImportError(null);
+        }
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import from age4builder.com</DialogTitle>
+            <DialogDescription>
+              Go to{" "}
+              <a
+                href="https://age4builder.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline"
+              >
+                age4builder.com
+              </a>
+              , open a build order, click the export/share button to get JSON, and paste it below.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Textarea
+              placeholder='Paste JSON here... (starts with { "civilization": ...})'
+              value={importJson}
+              onChange={(e) => {
+                setImportJson(e.target.value);
+                setImportError(null);
+              }}
+              className="min-h-[200px] font-mono text-xs"
+            />
+
+            {importError && (
+              <p className="text-sm text-destructive">{importError}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImportDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleImport} disabled={!importJson.trim()}>
+              <Upload className="w-4 h-4 mr-1" />
+              Import Build Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

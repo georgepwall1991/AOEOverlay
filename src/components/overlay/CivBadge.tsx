@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 interface CivBadgeProps {
   civilization: string;
   className?: string;
+  size?: "sm" | "md";
+  glow?: boolean;
 }
 
 // Civilization colors based on AoE4 theme
@@ -110,18 +112,25 @@ const DEFAULT_COLORS = {
   border: "border-white/20",
 };
 
-export function CivBadge({ civilization, className }: CivBadgeProps) {
+export function CivBadge({ civilization, className, size = "md", glow = false }: CivBadgeProps) {
   const colors = CIV_COLORS[civilization] || DEFAULT_COLORS;
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border font-medium",
+        "inline-flex items-center gap-1 rounded font-bold transition-all duration-200",
+        size === "sm" ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-1",
         colors.bg,
         colors.text,
-        colors.border,
+        glow ? "border-0" : `border ${colors.border}`,
         className
       )}
+      style={glow ? {
+        boxShadow: `0 0 8px currentColor, 0 0 16px currentColor`,
+        textShadow: `0 0 8px currentColor, 0 1px 2px rgba(0,0,0,0.8)`
+      } : {
+        textShadow: `0 1px 2px rgba(0,0,0,0.8)`
+      }}
     >
       {civilization}
     </span>

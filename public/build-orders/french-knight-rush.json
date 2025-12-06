@@ -8,85 +8,85 @@
   "steps": [
     {
       "id": "step-1",
-      "description": "Queue 2 villagers, rally to sheep",
+      "description": "[icon:villager] Queue 2 villagers, rally to [icon:sheep] sheep",
       "timing": "0:00",
       "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-2",
-      "description": "Build house with scout, villager to sheep",
+      "description": "[icon:house] Build house with [icon:scout] scout, [icon:villager] villager to [icon:sheep] sheep",
       "timing": "0:25",
       "resources": { "food": 7, "wood": 0, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-3",
-      "description": "Villager to wood",
+      "description": "[icon:villager] Villager to [icon:wood] wood",
       "timing": "0:50",
       "resources": { "food": 7, "wood": 1, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-4",
-      "description": "Villager to wood",
+      "description": "[icon:villager] Villager to [icon:wood] wood",
       "timing": "1:15",
       "resources": { "food": 7, "wood": 2, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-5",
-      "description": "Villager to gold",
+      "description": "[icon:villager] Villager to [icon:gold] gold",
       "timing": "1:40",
       "resources": { "food": 7, "wood": 2, "gold": 1, "stone": 0 }
     },
     {
       "id": "step-6",
-      "description": "Build Mining Camp, villager to gold",
+      "description": "[icon:mining_camp] Build Mining Camp, [icon:villager] villager to [icon:gold] gold",
       "timing": "2:00",
       "resources": { "food": 7, "wood": 2, "gold": 2, "stone": 0 }
     },
     {
       "id": "step-7",
-      "description": "Villager to gold",
+      "description": "[icon:villager] Villager to [icon:gold] gold",
       "timing": "2:25",
       "resources": { "food": 7, "wood": 2, "gold": 3, "stone": 0 }
     },
     {
       "id": "step-8",
-      "description": "Build Lumber Camp, villager to wood",
+      "description": "[icon:lumber_camp] Build Lumber Camp, [icon:villager] villager to [icon:wood] wood",
       "timing": "2:50",
       "resources": { "food": 7, "wood": 3, "gold": 3, "stone": 0 }
     },
     {
       "id": "step-9",
-      "description": "Build School of Cavalry (Landmark) - use 2 villagers",
+      "description": "[icon:feudal_age] Build School of Cavalry - use 2 [icon:villager] villagers",
       "timing": "3:15",
       "resources": { "food": 7, "wood": 1, "gold": 3, "stone": 0 }
     },
     {
       "id": "step-10",
-      "description": "Continue villagers to food during age up",
+      "description": "[icon:villager] Continue villagers to [icon:food] food during age up",
       "timing": "3:45",
       "resources": { "food": 9, "wood": 1, "gold": 3, "stone": 0 }
     },
     {
       "id": "step-11",
-      "description": "Feudal Age! Queue knights from School of Cavalry",
+      "description": "[icon:feudal_age] Feudal Age! [icon:knight] Queue knights from School of Cavalry",
       "timing": "4:30",
       "resources": { "food": 9, "wood": 3, "gold": 3, "stone": 0 }
     },
     {
       "id": "step-12",
-      "description": "Build Stable for double knight production",
+      "description": "[icon:stable] Build Stable for double [icon:knight] knight production",
       "timing": "5:00",
       "resources": { "food": 8, "wood": 4, "gold": 4, "stone": 0 }
     },
     {
       "id": "step-13",
-      "description": "Harass with 2-3 knights, target villagers and trade",
+      "description": "[icon:attack] Harass with 2-3 [icon:knight] knights, target [icon:villager] villagers",
       "timing": "5:30",
       "resources": { "food": 8, "wood": 4, "gold": 5, "stone": 0 }
     },
     {
       "id": "step-14",
-      "description": "Maintain knight pressure while booming behind it",
+      "description": "[icon:knight] Maintain knight pressure while booming behind it",
       "timing": "6:30",
       "resources": { "food": 10, "wood": 5, "gold": 6, "stone": 0 }
     }

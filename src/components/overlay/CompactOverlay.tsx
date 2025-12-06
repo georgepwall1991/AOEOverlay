@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { GripVertical, ChevronLeft, ChevronRight, MousePointer2Off, Settings } from "lucide-react";
-import { useWindowDrag } from "@/hooks";
+import { useWindowDrag, useAutoResize } from "@/hooks";
 import { useOpacity, useConfigStore, useBuildOrderStore, useCurrentBuildOrder } from "@/stores";
 import { ResourceIndicator } from "./ResourceIndicator";
 import { showSettings } from "@/lib/tauri";
@@ -14,8 +14,10 @@ export function CompactOverlay() {
   const currentBuildOrder = useCurrentBuildOrder();
   const [animateStep, setAnimateStep] = useState(false);
   const prevStepIndex = useRef(currentStepIndex);
+  const containerRef = useAutoResize();
 
   const currentStep = currentBuildOrder?.steps[currentStepIndex];
+  const nextStepPreview = currentBuildOrder?.steps[currentStepIndex + 1];
   const totalSteps = currentBuildOrder?.steps.length ?? 0;
 
   // Animate step change
@@ -28,14 +30,20 @@ export function CompactOverlay() {
     }
   }, [currentStepIndex]);
 
+  const floatingStyle = config.floating_style;
+
   return (
-    <div className="w-full h-full p-2" style={{ opacity }}>
-      <div className="glass-panel w-full flex flex-col overflow-hidden">
+    <div ref={containerRef} className="inline-block p-1" style={{ opacity, minWidth: 320, maxWidth: 600 }}>
+      <div className={cn(
+        "flex flex-col overflow-hidden",
+        floatingStyle ? "floating-panel" : "glass-panel"
+      )}>
         {/* Compact drag handle */}
         <div
           className={cn(
-            "flex items-center gap-1 px-1 py-1 border-b border-white/10 transition-colors",
-            config.click_through && "border-amber-500/30"
+            "flex items-center gap-1 px-1 py-1 transition-colors",
+            !floatingStyle && "border-b border-white/10",
+            config.click_through && !floatingStyle && "border-amber-500/30"
           )}
         >
           {/* Settings button */}
@@ -80,8 +88,8 @@ export function CompactOverlay() {
                 <ChevronLeft className="w-4 h-4 text-white/70" />
               </button>
 
-              <span className="text-xs text-white/50 font-mono">
-                {currentStepIndex + 1}/{totalSteps}
+              <span className="text-xs font-mono font-bold text-amber-400">
+                {currentStepIndex + 1}<span className="text-white/40">/{totalSteps}</span>
               </span>
 
               <button
@@ -111,7 +119,19 @@ export function CompactOverlay() {
             {/* Resources */}
             {currentStep.resources && (
               <div className="flex gap-2 mt-1.5">
-                <ResourceIndicator resources={currentStep.resources} compact />
+                <ResourceIndicator resources={currentStep.resources} compact glow />
+              </div>
+            )}
+
+            {/* Next step preview */}
+            {nextStepPreview && (
+              <div className="mt-2 pt-2 border-t border-white/10 opacity-50">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-white/40 font-mono">Next:</span>
+                  <span className="text-[11px] text-white/50 truncate flex-1">
+                    {nextStepPreview.description}
+                  </span>
+                </div>
               </div>
             )}
           </div>

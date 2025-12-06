@@ -8,85 +8,85 @@
   "steps": [
     {
       "id": "step-1",
-      "description": "Queue 2 villagers, rally to sheep",
+      "description": "[icon:villager] Queue 2 villagers, rally to [icon:sheep] sheep",
       "timing": "0:00",
       "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-2",
-      "description": "Send new villager to build house, then to wood",
+      "description": "[icon:villager] Build [icon:house] house, then to [icon:wood] wood",
       "timing": "0:25",
       "resources": { "food": 6, "wood": 1, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-3",
-      "description": "Villager to wood",
+      "description": "[icon:villager] Villager to [icon:wood] wood",
       "timing": "0:50",
       "resources": { "food": 6, "wood": 2, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-4",
-      "description": "Villager to wood",
+      "description": "[icon:villager] Villager to [icon:wood] wood",
       "timing": "1:15",
       "resources": { "food": 6, "wood": 3, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-5",
-      "description": "Villager to gold",
+      "description": "[icon:villager] Villager to [icon:gold] gold",
       "timing": "1:40",
       "resources": { "food": 6, "wood": 3, "gold": 1, "stone": 0 }
     },
     {
       "id": "step-6",
-      "description": "Build Mining Camp at gold, villager to gold",
+      "description": "[icon:mining_camp] Build Mining Camp, [icon:villager] villager to [icon:gold] gold",
       "timing": "2:05",
       "resources": { "food": 6, "wood": 3, "gold": 2, "stone": 0 }
     },
     {
       "id": "step-7",
-      "description": "Build Lumber Camp, villager to wood",
+      "description": "[icon:lumber_camp] Build Lumber Camp, [icon:villager] villager to [icon:wood] wood",
       "timing": "2:30",
       "resources": { "food": 6, "wood": 4, "gold": 2, "stone": 0 }
     },
     {
       "id": "step-8",
-      "description": "Villager to food",
+      "description": "[icon:villager] Villager to [icon:food] food",
       "timing": "2:55",
       "resources": { "food": 7, "wood": 4, "gold": 2, "stone": 0 }
     },
     {
       "id": "step-9",
-      "description": "Villager to food",
+      "description": "[icon:villager] Villager to [icon:food] food",
       "timing": "3:10",
       "resources": { "food": 8, "wood": 4, "gold": 2, "stone": 0 }
     },
     {
       "id": "step-10",
-      "description": "Build Council Hall (Landmark) - age up to Feudal. Use 2 wood villagers to build.",
+      "description": "[icon:feudal_age] Build Council Hall - age up! Use 2 [icon:wood] wood villagers",
       "timing": "3:30",
       "resources": { "food": 8, "wood": 2, "gold": 2, "stone": 0 }
     },
     {
       "id": "step-11",
-      "description": "Queue villagers to food during age up",
+      "description": "[icon:villager] Queue villagers to [icon:food] food during age up",
       "timing": "4:00",
       "resources": { "food": 10, "wood": 2, "gold": 2, "stone": 0 }
     },
     {
       "id": "step-12",
-      "description": "Feudal Age reached! Start producing Longbowmen from Council Hall",
+      "description": "[icon:feudal_age] Feudal Age! [icon:longbowman] Produce Longbowmen from Council Hall",
       "timing": "5:00",
       "resources": { "food": 10, "wood": 4, "gold": 2, "stone": 0 }
     },
     {
       "id": "step-13",
-      "description": "Build Archery Range, move 2 villagers to gold",
+      "description": "[icon:archery_range] Build Archery Range, move 2 [icon:villager] to [icon:gold] gold",
       "timing": "5:30",
       "resources": { "food": 8, "wood": 4, "gold": 4, "stone": 0 }
     },
     {
       "id": "step-14",
-      "description": "Constant Longbow production, attack with 6-8 Longbows. Target enemy gold/wood villagers.",
+      "description": "[icon:attack] Constant [icon:longbowman] Longbow production! Attack with 6-8 [icon:longbowman]",
       "timing": "6:00",
       "resources": { "food": 8, "wood": 4, "gold": 4, "stone": 0 }
     }

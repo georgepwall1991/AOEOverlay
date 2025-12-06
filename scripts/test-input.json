@@ -1,0 +1,139 @@
+{
+    "civilization": "Rus",
+    "name": "Early Second TC on Boar",
+    "author": "Anonymous",
+    "source": "unknown",
+    "build_order": [
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "4-5 @unit_worker/villager.png@ on sheep 1-2 vills build @building_rus/hunting-cabin.png@ @building_economy/house.png@ @building_economy/lumber-camp.png@ then go back to sheep"
+            ]
+        },
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "Immediatly queue @unit_cavalry/scout.png@@unit_worker/villager.png@@unit_worker/villager.png@ don't let your TC go idle!"
+            ]
+        },
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "make another @unit_cavalry/scout.png@ from the @building_rus/hunting-cabin.png@"
+            ]
+        },
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "use your scouts to collect/kill as many huntables as possible@resource/sheep.png@@resource/wolf.png@@resource/deer.png@"
+            ]
+        },
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "@landmark_rus/the-golden-gate.png@age up as soon as possible with 4 villagersduring age up keep 4 @unit_worker/villager.png@ on @resource/sheep.png@send the rest to @resource/resource_wood.png@ for your second TC"
+            ]
+        },
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "in transition either research@technology_economy/wheelbarrow.png@ or go for a Stable to produce a @unit_cavalry/knight-2.png@for map control.",
+                "This depends on your opponents civ, strategy and the amount of gold you have (WB costs 50 Gold more than a Knight)"
+            ]
+        },
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "after aging up send 8 @unit_worker/villager.png@ and your 3 @unit_cavalry/scout.png@ to the boar.",
+                "you should have at least 125 gold at this point."
+            ]
+        },
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "kill the boar.",
+                "At this point you should have 200 gold and 2 tickets in your Golden Gate.",
+                "Exchange the Gold for 300 stone and build your second @building_economy/town-center.png@next to the boar"
+            ]
+        },
+        {
+            "age": -1,
+            "population_count": -1,
+            "villager_count": -1,
+            "resources": {
+                "food": -1,
+                "wood": -1,
+                "gold": -1,
+                "stone": -1
+            },
+            "notes": [
+                "From here on out produce military.",
+                "Try to grab @technology_economy/double-broadaxe.png@ early on for an insane Wood income to outproduce your opponent."
+            ]
+        }
+    ]
+}

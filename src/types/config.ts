@@ -23,6 +23,8 @@ export interface AutoAdvanceConfig {
   delay_seconds: number; // Extra delay after timing before auto-advance
 }
 
+export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
+
 export interface AppConfig {
   overlay_opacity: number;
   font_size: FontSize;
@@ -35,13 +37,15 @@ export interface AppConfig {
   auto_advance: AutoAdvanceConfig;
   filter_civilization?: string;
   filter_difficulty?: string;
+  overlay_position: OverlayPosition;
+  floating_style: boolean; // minimal background, floating look
 }
 
 export type FontSize = "small" | "medium" | "large";
 export type Theme = "dark" | "light" | "system";
 
 export const DEFAULT_CONFIG: AppConfig = {
-  overlay_opacity: 0.8,
+  overlay_opacity: 0.95,
   font_size: "medium",
   theme: "dark",
   hotkeys: {
@@ -54,9 +58,11 @@ export const DEFAULT_CONFIG: AppConfig = {
     reset_build_order: "F7",
   },
   click_through: false,
-  compact_mode: false,
+  compact_mode: false, // Default to expanded mode (more info visible)
   auto_advance: {
     enabled: false,
     delay_seconds: 0,
   },
+  overlay_position: "top-right",
+  floating_style: true, // Default to floating/minimal style
 };

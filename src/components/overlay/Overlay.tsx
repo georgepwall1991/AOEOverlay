@@ -1,5 +1,5 @@
 import { GripVertical, MousePointer2Off, Settings } from "lucide-react";
-import { useWindowDrag } from "@/hooks";
+import { useWindowDrag, useAutoResize } from "@/hooks";
 import { useOpacity, useConfigStore } from "@/stores";
 import { BuildOrderDisplay } from "./BuildOrderDisplay";
 import { CompactOverlay } from "./CompactOverlay";
@@ -10,46 +10,52 @@ export function Overlay() {
   const { startDrag } = useWindowDrag();
   const opacity = useOpacity();
   const { config } = useConfigStore();
+  const containerRef = useAutoResize();
 
   // Show compact view if enabled
   if (config.compact_mode) {
     return <CompactOverlay />;
   }
 
+  const floatingStyle = config.floating_style;
+
   return (
     <div
-      className="w-full h-full p-2"
-      style={{ opacity }}
+      ref={containerRef}
+      className="inline-block p-1"
+      style={{ opacity, minWidth: 320, maxWidth: 600 }}
     >
-      <div className="glass-panel w-full h-full flex flex-col overflow-hidden">
-        {/* Drag handle with status indicators */}
+      <div className={cn(
+        "flex flex-col overflow-hidden",
+        floatingStyle ? "floating-panel-pro" : "glass-panel"
+      )}>
+        {/* Draggable header */}
         <div
           className={cn(
-            "flex items-center justify-between px-2 py-1 border-b border-white/10 transition-colors relative",
-            config.click_through && "border-amber-500/30"
+            "flex items-center px-2 py-1 transition-colors cursor-move",
+            !floatingStyle && "border-b border-white/5",
+            config.click_through && !floatingStyle && "border-amber-500/20"
           )}
+          onMouseDown={startDrag}
         >
           {/* Settings button */}
           <button
-            onClick={() => showSettings()}
-            className="p-1 rounded hover:bg-white/10 transition-colors"
+            onClick={(e) => { e.stopPropagation(); showSettings(); }}
+            className="p-1 rounded hover:bg-white/10 transition-all duration-200 settings-icon-hover"
             title="Open Settings"
           >
-            <Settings className="w-4 h-4 text-white/60 hover:text-white/90" />
+            <Settings className="w-4 h-4 text-white/50 hover:text-white/80" />
           </button>
 
-          {/* Drag handle */}
-          <div
-            className="flex-1 flex items-center justify-center cursor-move hover:bg-white/5 py-1"
-            onMouseDown={startDrag}
-          >
-            <GripVertical className="w-4 h-4 text-white/40" />
+          {/* Drag indicator in center */}
+          <div className="flex-1 flex items-center justify-center">
+            <GripVertical className="w-4 h-4 text-white/25" />
           </div>
 
           {/* Click-through indicator */}
           <div className="w-6 flex justify-end" title={config.click_through ? "Click-Through Mode" : undefined}>
             {config.click_through && (
-              <MousePointer2Off className="w-4 h-4 text-amber-500" />
+              <MousePointer2Off className="w-4 h-4 text-amber-500 animate-pulse" />
             )}
           </div>
         </div>

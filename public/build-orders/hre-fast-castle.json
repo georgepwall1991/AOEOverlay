@@ -8,85 +8,85 @@
   "steps": [
     {
       "id": "step-1",
-      "description": "Queue villagers, rally to sheep. Put Prelate on sheep.",
+      "description": "[icon:villager] Queue villagers, rally to [icon:sheep] sheep. [icon:monk] Prelate on sheep",
       "timing": "0:00",
       "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-2",
-      "description": "Villager to sheep (Prelate provides +40% gather rate)",
+      "description": "[icon:villager] Villager to [icon:sheep] sheep ([icon:monk] Prelate +40% gather rate)",
       "timing": "0:25",
       "resources": { "food": 7, "wood": 0, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-3",
-      "description": "Villager to wood",
+      "description": "[icon:villager] Villager to [icon:wood] wood",
       "timing": "0:50",
       "resources": { "food": 7, "wood": 1, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-4",
-      "description": "Villager to wood",
+      "description": "[icon:villager] Villager to [icon:wood] wood",
       "timing": "1:10",
       "resources": { "food": 7, "wood": 2, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-5",
-      "description": "Build Lumber Camp, villager to wood",
+      "description": "[icon:lumber_camp] Build Lumber Camp, [icon:villager] villager to [icon:wood] wood",
       "timing": "1:30",
       "resources": { "food": 7, "wood": 3, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-6",
-      "description": "Villager to wood",
+      "description": "[icon:villager] Villager to [icon:wood] wood",
       "timing": "1:50",
       "resources": { "food": 7, "wood": 4, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-7",
-      "description": "Build Meinwerk Palace (Landmark) with 2 villagers",
+      "description": "[icon:feudal_age] Build Meinwerk Palace with 2 [icon:villager] villagers",
       "timing": "2:15",
       "resources": { "food": 7, "wood": 2, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-8",
-      "description": "Continue villagers to food",
+      "description": "[icon:villager] Continue villagers to [icon:food] food",
       "timing": "2:45",
       "resources": { "food": 9, "wood": 2, "gold": 0, "stone": 0 }
     },
     {
       "id": "step-9",
-      "description": "Feudal Age! Send 4 villagers to gold",
+      "description": "[icon:feudal_age] Feudal Age! Send 4 [icon:villager] to [icon:gold] gold",
       "timing": "3:30",
       "resources": { "food": 9, "wood": 4, "gold": 4, "stone": 0 }
     },
     {
       "id": "step-10",
-      "description": "Build Mining Camp at gold, Prelate to gold miners",
+      "description": "[icon:mining_camp] Build Mining Camp, [icon:monk] Prelate to [icon:gold] gold miners",
       "timing": "4:00",
       "resources": { "food": 9, "wood": 4, "gold": 5, "stone": 0 }
     },
     {
       "id": "step-11",
-      "description": "Queue more villagers, balance food and gold",
+      "description": "[icon:villager] Queue more villagers, balance [icon:food] food and [icon:gold] gold",
       "timing": "4:30",
       "resources": { "food": 10, "wood": 4, "gold": 6, "stone": 0 }
     },
     {
       "id": "step-12",
-      "description": "Build Regnitz Cathedral (Castle Landmark) - use 3 villagers",
+      "description": "[icon:castle_age] Build Regnitz Cathedral - use 3 [icon:villager] villagers",
       "timing": "5:30",
       "resources": { "food": 10, "wood": 3, "gold": 6, "stone": 0 }
     },
     {
       "id": "step-13",
-      "description": "Castle Age! Place 3 relics in Regnitz for +900 gold/min",
+      "description": "[icon:castle_age] Castle Age! Place 3 [icon:relic] relics in Regnitz (+900 [icon:gold]/min)",
       "timing": "7:00",
       "resources": { "food": 12, "wood": 5, "gold": 8, "stone": 0 }
     },
     {
       "id": "step-14",
-      "description": "Build Barracks and Archery Range, mass MAA + Crossbows",
+      "description": "[icon:barracks] Barracks + [icon:archery_range] Archery Range, mass [icon:man_at_arms] MAA + [icon:crossbowman] Crossbows",
       "timing": "7:30",
       "resources": { "food": 12, "wood": 6, "gold": 10, "stone": 0 }
     }

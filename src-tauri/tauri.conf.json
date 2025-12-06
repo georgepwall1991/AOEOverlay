@@ -15,7 +15,7 @@
       {
         "label": "overlay",
         "title": "AoE4 Overlay",
-        "width": 400,
+        "width": 500,
         "height": 600,
         "resizable": true,
         "decorations": false,
