@@ -56,6 +56,7 @@ function BadgeRow({ badge, onToggle, onTimeChange }: BadgeRowProps) {
       <Input
         type="text"
         className="w-20 text-center text-sm"
+        key={badge.triggerSeconds}
         defaultValue={formatTime(badge.triggerSeconds)}
         onBlur={handleTimeChange}
         placeholder="m:ss"

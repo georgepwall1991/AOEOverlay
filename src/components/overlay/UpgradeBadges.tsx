@@ -1,5 +1,5 @@
 import { X, AlertTriangle } from "lucide-react";
-import { useConfigStore, useBadgeStore, useElapsedSeconds, useIsTimerRunning } from "@/stores";
+import { useConfigStore, useBadgeStore, useElapsedSeconds } from "@/stores";
 import { DEFAULT_UPGRADE_BADGES_CONFIG } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -41,12 +41,12 @@ export function UpgradeBadges() {
   const { config } = useConfigStore();
   const { dismissBadge, isBadgeDismissed } = useBadgeStore();
   const elapsedSeconds = useElapsedSeconds();
-  const isTimerRunning = useIsTimerRunning();
 
   const badgesConfig = config.upgradeBadges ?? DEFAULT_UPGRADE_BADGES_CONFIG;
 
-  // Don't show if badges are disabled or timer isn't running
-  if (!badgesConfig.enabled || !isTimerRunning) {
+  // Don't show if badges are disabled or timer hasn't started yet
+  // Show even when paused so player can see reminders
+  if (!badgesConfig.enabled || elapsedSeconds === 0) {
     return null;
   }
 
