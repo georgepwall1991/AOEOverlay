@@ -2,7 +2,9 @@ import { create } from "zustand";
 
 interface TimerState {
   isRunning: boolean;
+  isPaused: boolean;
   startedAt: number | null;
+  accumulatedTime: number; // Track time from previous sessions (for pause/resume)
   elapsedSeconds: number;
   lastStepTime: number | null;
   lastDelta: number | null; // Seconds ahead (-) or behind (+)
@@ -10,6 +12,9 @@ interface TimerState {
   // Actions
   startTimer: () => void;
   stopTimer: () => void;
+  pauseTimer: () => void;
+  resumeTimer: () => void;
+  togglePause: () => void;
   resetTimer: () => void;
   tick: () => void;
   recordStepTime: (suggestedTiming: string | undefined) => void;
@@ -50,38 +55,91 @@ export function formatDeltaCompact(deltaSeconds: number): string {
 
 export const useTimerStore = create<TimerState>((set, get) => ({
   isRunning: false,
+  isPaused: false,
   startedAt: null,
+  accumulatedTime: 0,
   elapsedSeconds: 0,
   lastStepTime: null,
   lastDelta: null,
 
-  startTimer: () =>
-    set({
-      isRunning: true,
-      startedAt: Date.now(),
-      elapsedSeconds: 0,
-      lastStepTime: null,
-      lastDelta: null,
-    }),
+  startTimer: () => {
+    const { isRunning, accumulatedTime } = get();
+    if (isRunning) return;
+
+    // If starting fresh (not resuming from pause), reset everything
+    if (accumulatedTime === 0) {
+      set({
+        isRunning: true,
+        isPaused: false,
+        startedAt: Date.now(),
+        elapsedSeconds: 0,
+        lastStepTime: null,
+        lastDelta: null,
+      });
+    } else {
+      // Resuming from pause
+      set({
+        isRunning: true,
+        isPaused: false,
+        startedAt: Date.now(),
+      });
+    }
+  },
 
   stopTimer: () =>
     set({
       isRunning: false,
     }),
 
+  pauseTimer: () => {
+    const { isRunning, startedAt, accumulatedTime } = get();
+    if (!isRunning || !startedAt) return;
+
+    // Save accumulated time and mark as paused
+    set({
+      isRunning: false,
+      isPaused: true,
+      startedAt: null,
+      accumulatedTime: accumulatedTime + (Date.now() - startedAt),
+    });
+  },
+
+  resumeTimer: () => {
+    const { isPaused } = get();
+    if (!isPaused) return;
+
+    set({
+      isRunning: true,
+      isPaused: false,
+      startedAt: Date.now(),
+    });
+  },
+
+  togglePause: () => {
+    const { isRunning, isPaused } = get();
+    if (isRunning) {
+      get().pauseTimer();
+    } else if (isPaused) {
+      get().resumeTimer();
+    }
+    // If not running and not paused, do nothing (timer hasn't started)
+  },
+
   resetTimer: () =>
     set({
       isRunning: false,
+      isPaused: false,
       startedAt: null,
+      accumulatedTime: 0,
       elapsedSeconds: 0,
       lastStepTime: null,
       lastDelta: null,
     }),
 
   tick: () => {
-    const { isRunning, startedAt } = get();
+    const { isRunning, startedAt, accumulatedTime } = get();
     if (!isRunning || !startedAt) return;
-    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    const elapsed = Math.floor((accumulatedTime + (Date.now() - startedAt)) / 1000);
     set({ elapsedSeconds: elapsed });
   },
 
@@ -102,6 +160,9 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 // Selectors
 export const useIsTimerRunning = () =>
   useTimerStore((state) => state.isRunning);
+
+export const useIsTimerPaused = () =>
+  useTimerStore((state) => state.isPaused);
 
 export const useElapsedSeconds = () =>
   useTimerStore((state) => state.elapsedSeconds);

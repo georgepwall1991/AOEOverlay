@@ -1,4 +1,4 @@
-import { Clock, Volume2, VolumeX, ChevronUp, ChevronDown } from "lucide-react";
+import { Clock, Volume2, VolumeX, ChevronUp, ChevronDown, Pause } from "lucide-react";
 import { useTimer, useTTS } from "@/hooks";
 import { useConfigStore } from "@/stores";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ interface DeltaStyles {
 }
 
 export function TimerBar({ compact = false, targetTiming }: TimerBarProps) {
-  const { isRunning, timerDisplay, deltaDisplay, deltaStatus } = useTimer();
+  const { isRunning, isPaused, timerDisplay, deltaDisplay, deltaStatus } = useTimer();
   const { stopSpeaking } = useTTS();
   const { config, updateConfig } = useConfigStore();
   const voiceConfig = config.voice ?? DEFAULT_VOICE_CONFIG;
@@ -62,9 +62,15 @@ export function TimerBar({ compact = false, targetTiming }: TimerBarProps) {
   if (compact) {
     return (
       <div className="flex items-center gap-2 text-xs">
-        <Clock className="w-3 h-3 text-white/60" />
-        <span className="font-mono text-white/80">{timerDisplay}</span>
-        {deltaDisplay && (
+        {isPaused ? (
+          <Pause className="w-3 h-3 text-amber-400" />
+        ) : (
+          <Clock className="w-3 h-3 text-white/60" />
+        )}
+        <span className={cn("font-mono", isPaused ? "text-amber-400" : "text-white/80")}>
+          {isPaused ? "PAUSED" : timerDisplay}
+        </span>
+        {!isPaused && deltaDisplay && (
           <span className={cn("flex items-center font-mono", deltaStyles.colorClass)}>
             {deltaStyles.icon}
             {deltaDisplay}
@@ -79,20 +85,24 @@ export function TimerBar({ compact = false, targetTiming }: TimerBarProps) {
       {/* Timer display */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5">
-          <Clock className={cn(
-            "w-4 h-4",
-            isRunning ? "text-amber-400" : "text-white/40"
-          )} />
+          {isPaused ? (
+            <Pause className="w-4 h-4 text-amber-400 animate-pulse" />
+          ) : (
+            <Clock className={cn(
+              "w-4 h-4",
+              isRunning ? "text-amber-400" : "text-white/40"
+            )} />
+          )}
           <span className={cn(
             "font-mono font-bold text-sm",
-            isRunning ? "text-white" : "text-white/60"
+            isPaused ? "text-amber-400 animate-pulse" : isRunning ? "text-white" : "text-white/60"
           )}>
-            {timerDisplay}
+            {isPaused ? `PAUSED ${timerDisplay}` : timerDisplay}
           </span>
         </div>
 
         {/* Delta indicator */}
-        {deltaDisplay && (
+        {!isPaused && deltaDisplay && (
           <div className={cn(
             "flex items-center gap-0.5 font-mono text-sm font-medium",
             deltaStyles.colorClass

@@ -14,7 +14,7 @@ export function useGlobalHotkeys() {
     useBuildOrderStore();
   const { toggleVisibility } = useOverlayStore();
   const { updateConfig } = useConfigStore();
-  const { startTimer, resetTimer, recordStepTime } = useTimerStore();
+  const { startTimer, resetTimer, recordStepTime, togglePause } = useTimerStore();
 
   // Convert icon markers to readable text for TTS (e.g., "[icon:town_center]" -> "town center")
   const convertIconMarkersForTTS = useCallback((text: string): string => {
@@ -108,6 +108,9 @@ export function useGlobalHotkeys() {
       listen("hotkey-reset-build-order", () => {
         handleReset();
       }),
+      listen("hotkey-toggle-pause", () => {
+        togglePause();
+      }),
     ];
 
     return () => {
@@ -123,5 +126,6 @@ export function useGlobalHotkeys() {
     toggleVisibility,
     updateConfig,
     resetTimer,
+    togglePause,
   ]);
 }

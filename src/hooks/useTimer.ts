@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef } from "react";
 import {
   useTimerStore,
   useIsTimerRunning,
+  useIsTimerPaused,
   useElapsedSeconds,
   useLastDelta,
   formatTime,
@@ -11,6 +12,7 @@ import {
 
 export function useTimer() {
   const isRunning = useIsTimerRunning();
+  const isPaused = useIsTimerPaused();
   const elapsedSeconds = useElapsedSeconds();
   const lastDelta = useLastDelta();
   const intervalRef = useRef<number | null>(null);
@@ -75,6 +77,7 @@ export function useTimer() {
 
   return {
     isRunning,
+    isPaused,
     elapsedSeconds,
     lastDelta,
     timerDisplay,
