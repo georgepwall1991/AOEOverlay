@@ -7,6 +7,7 @@ import { DEFAULT_TIMER_DRIFT_CONFIG, DEFAULT_VOICE_CONFIG } from "@/types";
 import type { VoiceConfig } from "@/types";
 import type { ReactNode } from "react";
 import { parseTimingToSeconds, formatTime } from "@/stores/timerStore";
+import { saveConfig } from "@/lib/tauri";
 
 interface TimerBarProps {
   compact?: boolean;
@@ -32,7 +33,13 @@ export function TimerBar({ compact = false, targetTiming }: TimerBarProps) {
       ...voiceConfig,
       enabled: !voiceEnabled,
     };
+    const nextConfig = { ...config, voice: newVoiceConfig };
     updateConfig({ voice: newVoiceConfig });
+    try {
+      await saveConfig(nextConfig);
+    } catch (error) {
+      console.error("Failed to persist voice toggle:", error);
+    }
     logTelemetryEvent("action:voice:toggle", {
       source: "timer-bar",
       meta: { enabled: newVoiceConfig.enabled },

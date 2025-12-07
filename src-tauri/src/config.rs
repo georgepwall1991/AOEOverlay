@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::io::Write;
+use std::io::{ErrorKind, Write};
 use std::path::PathBuf;
+
+pub const MAX_BUILD_ORDER_STEPS: usize = 200;
 
 // Configuration types
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -262,6 +264,10 @@ pub struct BuildOrder {
     pub steps: Vec<BuildOrderStep>,
     pub enabled: bool,
     #[serde(default)]
+    pub pinned: bool,
+    #[serde(default)]
+    pub favorite: bool,
+    #[serde(default)]
     pub branches: Option<Vec<BuildOrderBranch>>,
 }
 
@@ -279,6 +285,73 @@ pub struct Resources {
     pub wood: Option<i32>,
     pub gold: Option<i32>,
     pub stone: Option<i32>,
+}
+
+pub fn validate_build_order_id(id: &str) -> Result<(), String> {
+    const MAX_ID_LEN: usize = 64;
+    if id.is_empty() {
+        return Err("Build order id is required".to_string());
+    }
+    if id.len() > MAX_ID_LEN {
+        return Err(format!(
+            "Build order id exceeds max length of {} characters",
+            MAX_ID_LEN
+        ));
+    }
+    if !id
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err("Build order id may only contain letters, numbers, '-' or '_'".to_string());
+    }
+    Ok(())
+}
+
+pub fn validate_build_order(order: &BuildOrder) -> Result<(), String> {
+    validate_build_order_id(&order.id)?;
+
+    let step_count = order.steps.len();
+    if step_count == 0 {
+        return Err("Build order must contain at least one step".to_string());
+    }
+    if step_count > MAX_BUILD_ORDER_STEPS {
+        return Err(format!(
+            "Build order exceeds maximum of {} steps (has {})",
+            MAX_BUILD_ORDER_STEPS, step_count
+        ));
+    }
+
+    for (idx, step) in order.steps.iter().enumerate() {
+        if step.id.trim().is_empty() {
+            return Err(format!("Step {} is missing an id", idx + 1));
+        }
+        if step.description.trim().is_empty() {
+            return Err(format!("Step {} is missing a description", idx + 1));
+        }
+    }
+
+    if let Some(branches) = &order.branches {
+        for branch in branches {
+            if branch.steps.len() > MAX_BUILD_ORDER_STEPS {
+                return Err(format!(
+                    "Branch \"{}\" exceeds maximum of {} steps (has {})",
+                    branch.name,
+                    MAX_BUILD_ORDER_STEPS,
+                    branch.steps.len()
+                ));
+            }
+            for (idx, step) in branch.steps.iter().enumerate() {
+                if step.id.trim().is_empty() {
+                    return Err(format!("Branch {} step {} is missing an id", branch.name, idx + 1));
+                }
+                if step.description.trim().is_empty() {
+                    return Err(format!("Branch {} step {} is missing a description", branch.name, idx + 1));
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
 
 fn default_branch_start() -> u32 {
@@ -324,9 +397,26 @@ pub fn atomic_write<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(path: P, content:
         file.write_all(content.as_ref())?;
         file.sync_all()?; // Ensure data is on disk
     }
-    
-    fs::rename(&tmp_path, path)?;
-    Ok(())
+
+    // On Windows, rename fails if the destination exists; remove it first.
+    let rename_result = fs::rename(&tmp_path, path);
+    if rename_result.is_ok() {
+        return Ok(());
+    }
+
+    let err = rename_result.unwrap_err();
+    if cfg!(target_os = "windows") && (err.kind() == ErrorKind::AlreadyExists || err.kind() == ErrorKind::PermissionDenied) {
+        // Best-effort cleanup before retry
+        if path.exists() {
+            fs::remove_file(path)?;
+        }
+        fs::rename(&tmp_path, path)?;
+        return Ok(());
+    }
+
+    // Cleanup temp file on failure
+    let _ = fs::remove_file(&tmp_path);
+    Err(err)
 }
 
 pub fn load_build_orders() -> Vec<BuildOrder> {
@@ -337,9 +427,22 @@ pub fn load_build_orders() -> Vec<BuildOrder> {
         for entry in entries.flatten() {
             if entry.path().extension().is_some_and(|e| e == "json") {
                 if let Ok(content) = fs::read_to_string(entry.path()) {
-                    if let Ok(order) = serde_json::from_str::<BuildOrder>(&content) {
-                        orders.push(order);
-                    }
+                    match serde_json::from_str::<BuildOrder>(&content) {
+                        Ok(order) => {
+                            if let Err(err) = validate_build_order(&order) {
+                                eprintln!(
+                                    "Skipping invalid build order {:?}: {}",
+                                    entry.path(),
+                                    err
+                                );
+                                continue;
+                            }
+                            orders.push(order);
+                        }
+                        Err(err) => {
+                            eprintln!("Skipping invalid build order {:?}: {}", entry.path(), err);
+                        }
+                    };
                 }
             }
         }
@@ -368,5 +471,14 @@ mod tests {
         assert!(voice.enabled); // Default is now true
         assert_eq!(voice.rate, 1.0);
         assert!(voice.speak_steps);
+    }
+
+    #[test]
+    fn test_validate_build_order_id() {
+        assert!(validate_build_order_id("valid-id_123").is_ok());
+        assert!(validate_build_order_id("").is_err());
+        assert!(validate_build_order_id("bad id").is_err());
+        let long_id = "a".repeat(65);
+        assert!(validate_build_order_id(&long_id).is_err());
     }
 }

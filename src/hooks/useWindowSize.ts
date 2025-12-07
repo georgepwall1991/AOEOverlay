@@ -5,7 +5,7 @@ import { useConfigStore } from "@/stores";
 import { getWindowSize, setWindowSize, saveConfig } from "@/lib/tauri";
 
 export function useWindowSize() {
-  const { config, updateConfig } = useConfigStore();
+  const { config, updateConfig, isLoading } = useConfigStore();
   const saveTimeoutRef = useRef<number | null>(null);
   const hasRestoredRef = useRef(false);
 
@@ -29,7 +29,7 @@ export function useWindowSize() {
     };
 
     restoreSize();
-  }, [config.window_size]);
+  }, [config.window_size, isLoading]);
 
   // Listen for resize events and save
   useEffect(() => {
@@ -37,6 +37,7 @@ export function useWindowSize() {
     if (win.label !== "overlay") return;
 
     const handleResize = async () => {
+      if (isLoading) return;
       // Debounce saving
       if (saveTimeoutRef.current) {
         window.clearTimeout(saveTimeoutRef.current);
@@ -66,5 +67,5 @@ export function useWindowSize() {
           console.error("Failed to clean up window resize listener:", error)
         );
     };
-  }, [config, updateConfig]);
+  }, [config, updateConfig, isLoading]);
 }

@@ -1,59 +1,23 @@
 use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager, State, Window, WebviewUrl, WebviewWindowBuilder, Emitter};
-use crate::config::{AppConfig, BuildOrder, WindowPosition, WindowSize, get_config_path, get_build_orders_dir, atomic_write};
+use crate::config::{
+    AppConfig,
+    BuildOrder,
+    WindowPosition,
+    WindowSize,
+    atomic_write,
+    get_build_orders_dir,
+    get_config_path,
+    validate_build_order,
+    validate_build_order_id,
+};
 use crate::state::AppState;
 use crate::hotkeys::register_hotkeys;
 
 const MAX_IMPORT_SIZE: u64 = 1024 * 1024; // 1MB limit
-const MAX_BUILD_ORDER_STEPS: usize = 200;
 const CONFIG_CHANGED_EVENT: &str = "config-changed";
 const BUILD_ORDERS_CHANGED_EVENT: &str = "build-orders-changed";
-
-fn validate_build_order(order: &BuildOrder) -> Result<(), String> {
-    let step_count = order.steps.len();
-    if step_count == 0 {
-        return Err("Build order must contain at least one step".to_string());
-    }
-    if step_count > MAX_BUILD_ORDER_STEPS {
-        return Err(format!(
-            "Build order exceeds maximum of {} steps (has {})",
-            MAX_BUILD_ORDER_STEPS, step_count
-        ));
-    }
-
-    for (idx, step) in order.steps.iter().enumerate() {
-        if step.id.trim().is_empty() {
-            return Err(format!("Step {} is missing an id", idx + 1));
-        }
-        if step.description.trim().is_empty() {
-            return Err(format!("Step {} is missing a description", idx + 1));
-        }
-    }
-
-    if let Some(branches) = &order.branches {
-        for branch in branches {
-            if branch.steps.len() > MAX_BUILD_ORDER_STEPS {
-                return Err(format!(
-                    "Branch \"{}\" exceeds maximum of {} steps (has {})",
-                    branch.name,
-                    MAX_BUILD_ORDER_STEPS,
-                    branch.steps.len()
-                ));
-            }
-            for (idx, step) in branch.steps.iter().enumerate() {
-                if step.id.trim().is_empty() {
-                    return Err(format!("Branch {} step {} is missing an id", branch.name, idx + 1));
-                }
-                if step.description.trim().is_empty() {
-                    return Err(format!("Branch {} step {} is missing a description", branch.name, idx + 1));
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
 
 #[tauri::command]
 pub fn get_config(state: State<AppState>) -> Result<AppConfig, String> {
@@ -89,6 +53,7 @@ pub fn get_build_orders(state: State<AppState>) -> Result<Vec<BuildOrder>, Strin
 #[tauri::command]
 pub fn save_build_order(order: BuildOrder, state: State<AppState>, app: AppHandle) -> Result<(), String> {
     validate_build_order(&order)?;
+    validate_build_order_id(&order.id)?;
 
     // Save to file
     let dir = get_build_orders_dir();
@@ -112,6 +77,8 @@ pub fn save_build_order(order: BuildOrder, state: State<AppState>, app: AppHandl
 
 #[tauri::command]
 pub fn delete_build_order(id: String, state: State<AppState>, app: AppHandle) -> Result<(), String> {
+    validate_build_order_id(&id)?;
+
     // Delete from file
     let dir = get_build_orders_dir();
     let path = dir.join(format!("{}.json", id));
@@ -158,10 +125,11 @@ pub fn show_settings(app: AppHandle) -> Result<(), String> {
     }
 
     // Window doesn't exist, create it
+    // The app is a single-page bundle; load the SPA root for settings as well.
     let url = if cfg!(debug_assertions) {
-        WebviewUrl::External("http://localhost:1420/settings.html".parse().unwrap())
+        WebviewUrl::External("http://localhost:1420/".parse().unwrap())
     } else {
-        WebviewUrl::App("settings.html".into())
+        WebviewUrl::App("index.html".into())
     };
 
     let window = WebviewWindowBuilder::new(&app, "settings", url)
@@ -270,6 +238,7 @@ pub fn import_build_order(path: String, state: State<AppState>, app: AppHandle) 
     let order: BuildOrder = serde_json::from_str(&content)
         .map_err(|e| format!("Invalid build order format: {}", e))?;
 
+    validate_build_order_id(&order.id)?;
     validate_build_order(&order)?;
 
     // Validate duplicate against in-memory cache before writing to disk

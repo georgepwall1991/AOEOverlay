@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SkipBack, ChevronLeft, Play, Pause, ChevronRight, RefreshCw, Lock, Unlock } from "lucide-react";
-import { useBuildOrderStore, useConfigStore, useActiveSteps } from "@/stores";
+import { useBuildOrderStore, useConfigStore, useActiveSteps, useBadgeStore } from "@/stores";
 import { useTimer } from "@/hooks";
 import { cn, logTelemetryEvent } from "@/lib/utils";
 
@@ -38,8 +38,9 @@ function ActionButton({ onClick, disabled, hotkey, label, children, active }: Ac
 export function QuickActionBar() {
   const { currentStepIndex, nextStep, previousStep, resetSteps, cycleBuildOrder } = useBuildOrderStore();
   const { config } = useConfigStore();
-  const { isRunning, isPaused, start, pause, resume } = useTimer();
+  const { isRunning, isPaused, start, pause, resume, reset } = useTimer();
   const activeSteps = useActiveSteps();
+  const { resetBadges } = useBadgeStore();
   const totalSteps = activeSteps.length;
   const [resetLocked, setResetLocked] = useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
@@ -89,6 +90,8 @@ export function QuickActionBar() {
     clearConfirm("reset");
     setResetConfirm(false);
     resetSteps();
+    reset();
+    resetBadges();
     logTelemetryEvent("action:build:reset", { source: "quick-action-bar" });
   };
 
@@ -113,6 +116,8 @@ export function QuickActionBar() {
     clearConfirm("cycle");
     setCycleConfirm(false);
     cycleBuildOrder();
+    reset();
+    resetBadges();
     logTelemetryEvent("action:build:cycle", { source: "quick-action-bar" });
   };
 
