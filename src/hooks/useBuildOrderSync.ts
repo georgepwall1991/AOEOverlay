@@ -41,7 +41,11 @@ export function useBuildOrderSync() {
     });
 
     return () => {
-      unlistenPromise.then((unlisten) => unlisten());
+      unlistenPromise
+        .then((unlisten) => unlisten())
+        .catch((error) =>
+          console.error("Failed to clean up build order sync listener:", error)
+        );
     };
   }, [setBuildOrders, currentOrderIndex, buildOrders]);
 }

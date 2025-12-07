@@ -60,7 +60,11 @@ export function useWindowSize() {
       if (saveTimeoutRef.current) {
         window.clearTimeout(saveTimeoutRef.current);
       }
-      unlistenPromise.then((unlisten) => unlisten());
+      unlistenPromise
+        .then((unlisten) => unlisten())
+        .catch((error) =>
+          console.error("Failed to clean up window resize listener:", error)
+        );
     };
   }, [config, updateConfig]);
 }

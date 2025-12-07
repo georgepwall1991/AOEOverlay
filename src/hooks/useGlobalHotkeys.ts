@@ -140,7 +140,11 @@ export function useGlobalHotkeys() {
 
     return () => {
       unlistenPromises.forEach((promise) => {
-        promise.then((unlisten) => unlisten());
+        promise
+          .then((unlisten) => unlisten())
+          .catch((error) =>
+            console.error("Failed to clean up hotkey listener:", error)
+          );
       });
     };
   }, [
