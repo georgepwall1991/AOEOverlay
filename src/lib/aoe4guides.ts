@@ -57,21 +57,26 @@ const Aoe4GuidesBuildSchema = z.object({
   isDraft: z.boolean().default(false),
 });
 
-// Lenient schema for browse endpoint - only requires minimal fields
+// Helper to handle null/undefined and provide default
+const stringOrNull = (defaultVal = "") => z.string().nullish().transform(v => v ?? defaultVal);
+const numberOrNull = (defaultVal = 0) => z.number().nullish().transform(v => v ?? defaultVal);
+const boolOrNull = (defaultVal = false) => z.boolean().nullish().transform(v => v ?? defaultVal);
+
+// Lenient schema for browse endpoint - handles null values from API
 const Aoe4GuidesBuildSummarySchema = z.object({
   id: z.string(),
-  title: z.string().default(""),
-  description: z.string().default(""),
-  author: z.string().default(""),
-  civ: z.string().default(""),
-  strategy: z.string().default(""),
-  season: z.string().default(""),
-  views: z.number().default(0),
-  likes: z.number().default(0),
-  upvotes: z.number().default(0),
-  downvotes: z.number().default(0),
-  score: z.number().default(0),
-  isDraft: z.boolean().default(false),
+  title: stringOrNull(),
+  description: stringOrNull(),
+  author: stringOrNull(),
+  civ: stringOrNull(),
+  strategy: stringOrNull(),
+  season: stringOrNull(),
+  views: numberOrNull(),
+  likes: numberOrNull(),
+  upvotes: numberOrNull(),
+  downvotes: numberOrNull(),
+  score: numberOrNull(),
+  isDraft: boolOrNull(),
 });
 
 type Aoe4GuidesBuild = z.infer<typeof Aoe4GuidesBuildSchema>;
