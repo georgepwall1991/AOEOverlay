@@ -1,6 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+@source "../../index.html";
+@source "../../src/**/*.{js,ts,jsx,tsx}";
 
 @layer base {
   :root {
@@ -51,10 +52,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -85,8 +87,17 @@ html, body, #root {
 }
 
 /* Glassmorphism panel */
+.glass-panel,
+.glass-panel-accent {
+  border-radius: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
 .glass-panel {
-  @apply rounded-xl bg-black/70 backdrop-blur-lg border border-white/10 shadow-2xl;
   background: linear-gradient(
     135deg,
     rgba(0, 0, 0, 0.75) 0%,
@@ -96,7 +107,7 @@ html, body, #root {
 
 /* Floating panel - minimal, almost transparent */
 .floating-panel {
-  @apply rounded-lg;
+  border-radius: 0.5rem;
   background: transparent;
   border: none;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.8);
@@ -104,7 +115,6 @@ html, body, #root {
 
 /* AoE4 themed accent border */
 .glass-panel-accent {
-  @apply glass-panel;
   border-image: linear-gradient(
     135deg,
     rgba(212, 175, 55, 0.4) 0%,
@@ -115,43 +125,58 @@ html, body, #root {
 
 /* Step card styling */
 .step-card {
-  @apply rounded-lg bg-white/5 border border-white/5 p-2 transition-all duration-200;
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  transition: all 200ms ease;
 }
 
 .step-card:hover {
-  @apply bg-white/10 border-white/10;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .step-card-active {
-  @apply rounded-lg bg-gradient-to-r from-amber-500/20 to-yellow-500/10 border border-amber-500/30 p-2;
+  border-radius: 0.5rem;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.2) 0%, rgba(253, 224, 71, 0.1) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 0.5rem;
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
 }
 
 /* Smooth transitions */
 .step-transition {
-  @apply transition-all duration-300 ease-out;
+  transition: all 300ms ease-out;
 }
 
 /* Timing badge */
 .timing-badge {
-  @apply text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-mono font-medium;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 500;
 }
 
 /* Resource indicator colors */
 .resource-food {
-  @apply text-red-400;
+  color: #f87171;
 }
 
 .resource-wood {
-  @apply text-green-400;
+  color: #4ade80;
 }
 
 .resource-gold {
-  @apply text-yellow-400;
+  color: #facc15;
 }
 
 .resource-stone {
-  @apply text-gray-400;
+  color: #9ca3af;
 }
 
 /* Civilization colors */
@@ -491,7 +516,7 @@ html, body, #root {
 
 /* Sleek floating panel with subtle border */
 .floating-panel-pro {
-  @apply rounded-lg;
+  border-radius: 0.5rem;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -502,7 +527,11 @@ html, body, #root {
 
 /* Timing badge with glow */
 .timing-badge-glow {
-  @apply text-[10px] px-2 py-0.5 rounded-full font-mono font-bold;
+  font-size: 10px;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 700;
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(245, 158, 11, 0.2) 100%);
   color: #fcd34d;
   border: 1px solid rgba(251, 191, 36, 0.4);
@@ -544,14 +573,18 @@ html, body, #root {
 
 /* Civ badge with glow */
 .civ-badge-glow {
-  @apply rounded-md font-bold text-[10px] px-1.5 py-0.5;
+  border-radius: 0.375rem;
+  font-weight: 700;
+  font-size: 10px;
+  padding: 0.125rem 0.375rem;
   text-shadow: 0 0 8px currentColor;
   box-shadow: 0 0 10px currentColor;
 }
 
 /* Step counter pulse */
 .step-counter {
-  @apply font-mono font-bold;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 700;
   text-shadow:
     0 0 10px rgba(255, 255, 255, 0.5),
     0 2px 4px rgba(0, 0, 0, 0.8);
