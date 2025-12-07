@@ -5,6 +5,7 @@ import { DEFAULT_CONFIG } from "@/types";
 
 // Event names for cross-window sync
 export const BUILD_ORDERS_CHANGED_EVENT = "build-orders-changed";
+export const CONFIG_CHANGED_EVENT = "config-changed";
 
 const MOCK_BUILD_ORDERS: BuildOrder[] = [
   {

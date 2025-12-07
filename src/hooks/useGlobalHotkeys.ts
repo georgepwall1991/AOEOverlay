@@ -6,9 +6,11 @@ import {
   useConfigStore,
   useTimerStore,
   useBadgeStore,
+  resolveActiveSteps,
 } from "@/stores";
 import { toggleClickThrough, toggleCompactMode, speak, toggleOverlay } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
+import { logTelemetryEvent } from "@/lib/utils";
 
 export function useGlobalHotkeys() {
   const { nextStep, previousStep, cycleBuildOrder, resetSteps } =
@@ -57,7 +59,11 @@ export function useGlobalHotkeys() {
 
     // Get next step info before advancing
     const nextStepIndex = currentStepIndex + 1;
-    const nextStepData = currentOrder.steps[nextStepIndex];
+    const activeSteps = resolveActiveSteps(
+      currentOrder,
+      buildOrderStore.activeBranchId
+    );
+    const nextStepData = activeSteps[nextStepIndex];
 
     // Advance to next step
     nextStep();
@@ -83,6 +89,7 @@ export function useGlobalHotkeys() {
     resetSteps();
     resetTimer();
     resetBadges();
+    logTelemetryEvent("hotkey:build:reset", { source: "hotkey" });
   }, [resetSteps, resetTimer, resetBadges]);
 
   useEffect(() => {
@@ -90,31 +97,44 @@ export function useGlobalHotkeys() {
       listen("hotkey-toggle-overlay", () => {
         toggleVisibility();
         toggleOverlay();
+        logTelemetryEvent("hotkey:overlay:toggle", { source: "hotkey" });
       }),
       listen("hotkey-previous-step", () => {
         previousStep();
+        logTelemetryEvent("hotkey:step:previous", { source: "hotkey" });
       }),
       listen("hotkey-next-step", () => {
         handleNextStep();
+        logTelemetryEvent("hotkey:step:next", { source: "hotkey" });
       }),
       listen("hotkey-cycle-build-order", () => {
         cycleBuildOrder();
         resetTimer();
         resetBadges();
+        logTelemetryEvent("hotkey:build:cycle", { source: "hotkey" });
       }),
       listen("hotkey-toggle-click-through", async () => {
         const newState = await toggleClickThrough();
         updateConfig({ click_through: newState });
+        logTelemetryEvent("hotkey:overlay:click-through", {
+          source: "hotkey",
+          meta: { enabled: newState },
+        });
       }),
       listen("hotkey-toggle-compact", async () => {
         const newState = await toggleCompactMode();
         updateConfig({ compact_mode: newState });
+        logTelemetryEvent("hotkey:overlay:compact", {
+          source: "hotkey",
+          meta: { enabled: newState },
+        });
       }),
       listen("hotkey-reset-build-order", () => {
         handleReset();
       }),
       listen("hotkey-toggle-pause", () => {
         togglePause();
+        logTelemetryEvent("hotkey:timer:toggle-pause", { source: "hotkey" });
       }),
     ];
 

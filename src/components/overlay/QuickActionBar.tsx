@@ -1,7 +1,8 @@
-import { SkipBack, ChevronLeft, Play, Pause, ChevronRight, RefreshCw } from "lucide-react";
-import { useBuildOrderStore, useConfigStore } from "@/stores";
+import { useEffect, useState } from "react";
+import { SkipBack, ChevronLeft, Play, Pause, ChevronRight, RefreshCw, Lock, Unlock } from "lucide-react";
+import { useBuildOrderStore, useConfigStore, useActiveSteps } from "@/stores";
 import { useTimer } from "@/hooks";
-import { cn } from "@/lib/utils";
+import { cn, logTelemetryEvent } from "@/lib/utils";
 
 interface ActionButtonProps {
   onClick: () => void;
@@ -37,36 +38,138 @@ function ActionButton({ onClick, disabled, hotkey, label, children, active }: Ac
 export function QuickActionBar() {
   const { currentStepIndex, nextStep, previousStep, resetSteps, cycleBuildOrder } = useBuildOrderStore();
   const { config } = useConfigStore();
-  const { isRunning, start, stop } = useTimer();
-  const totalSteps = useBuildOrderStore((s) => {
-    const order = s.buildOrders[s.currentOrderIndex];
-    return order?.steps.length ?? 0;
-  });
+  const { isRunning, isPaused, start, pause, resume } = useTimer();
+  const activeSteps = useActiveSteps();
+  const totalSteps = activeSteps.length;
+  const [resetLocked, setResetLocked] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState(false);
+  const [cycleConfirm, setCycleConfirm] = useState(false);
+  const [resetTimeoutId, setResetTimeoutId] = useState<number | null>(null);
+  const [cycleTimeoutId, setCycleTimeoutId] = useState<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutId) clearTimeout(resetTimeoutId);
+      if (cycleTimeoutId) clearTimeout(cycleTimeoutId);
+    };
+  }, [resetTimeoutId, cycleTimeoutId]);
+
+  const clearConfirm = (type: "reset" | "cycle") => {
+    if (type === "reset" && resetTimeoutId) {
+      clearTimeout(resetTimeoutId);
+      setResetTimeoutId(null);
+    }
+    if (type === "cycle" && cycleTimeoutId) {
+      clearTimeout(cycleTimeoutId);
+      setCycleTimeoutId(null);
+    }
+  };
+
+  const armConfirm = (type: "reset" | "cycle") => {
+    clearConfirm(type);
+    const id = window.setTimeout(() => {
+      if (type === "reset") setResetConfirm(false);
+      if (type === "cycle") setCycleConfirm(false);
+    }, 3000);
+    if (type === "reset") {
+      setResetConfirm(true);
+      setResetTimeoutId(id);
+    } else {
+      setCycleConfirm(true);
+      setCycleTimeoutId(id);
+    }
+  };
+
+  const handleReset = () => {
+    if (resetLocked) return;
+    if (!resetConfirm) {
+      armConfirm("reset");
+      return;
+    }
+    clearConfirm("reset");
+    setResetConfirm(false);
+    resetSteps();
+    logTelemetryEvent("action:build:reset", { source: "quick-action-bar" });
+  };
+
+  const handlePrevious = () => {
+    previousStep();
+    logTelemetryEvent("action:step:previous", { source: "quick-action-bar", meta: { step: currentStepIndex } });
+  };
+
+  const handleNext = () => {
+    if (!isRunning && !isPaused) {
+      start();
+    }
+    nextStep();
+    logTelemetryEvent("action:step:next", { source: "quick-action-bar", meta: { step: currentStepIndex + 1 } });
+  };
+
+  const handleCycleBuild = () => {
+    if (!cycleConfirm) {
+      armConfirm("cycle");
+      return;
+    }
+    clearConfirm("cycle");
+    setCycleConfirm(false);
+    cycleBuildOrder();
+    logTelemetryEvent("action:build:cycle", { source: "quick-action-bar" });
+  };
+
+  const playPauseLabel = isRunning ? "Pause Timer" : isPaused ? "Resume Timer" : "Start Timer";
 
   const toggleTimer = () => {
     if (isRunning) {
-      stop();
-    } else {
-      start();
+      pause();
+      logTelemetryEvent("action:timer:pause", { source: "quick-action-bar" });
+      return;
     }
+    if (isPaused) {
+      resume();
+      logTelemetryEvent("action:timer:resume", { source: "quick-action-bar" });
+      return;
+    }
+    start();
+    logTelemetryEvent("action:timer:start", { source: "quick-action-bar" });
   };
 
   const hotkeys = config.hotkeys;
 
   return (
     <div className="flex items-center justify-center gap-1 px-2 py-1 border-t border-white/5">
+      {/* Reset lock */}
+      <ActionButton
+        onClick={() => setResetLocked((prev) => !prev)}
+        hotkey=""
+        label={resetLocked ? "Unlock reset" : "Lock reset"}
+        active={resetLocked}
+      >
+        {resetLocked ? (
+          <Lock className="w-3.5 h-3.5 text-amber-400" />
+        ) : (
+          <Unlock className="w-3.5 h-3.5 text-white/60 group-hover:text-white/90" />
+        )}
+      </ActionButton>
+
       {/* Reset */}
       <ActionButton
-        onClick={resetSteps}
+        onClick={handleReset}
         hotkey={hotkeys.reset_build_order}
-        label="Reset"
+        label={
+          resetLocked
+            ? "Reset (locked)"
+            : resetConfirm
+              ? "Confirm reset"
+              : "Reset"
+        }
+        disabled={resetLocked}
       >
         <SkipBack className="w-3.5 h-3.5 text-white/60 group-hover:text-white/90" />
       </ActionButton>
 
       {/* Previous */}
       <ActionButton
-        onClick={previousStep}
+        onClick={handlePrevious}
         disabled={currentStepIndex === 0}
         hotkey={hotkeys.previous_step}
         label="Previous Step"
@@ -78,8 +181,8 @@ export function QuickActionBar() {
       <ActionButton
         onClick={toggleTimer}
         hotkey={hotkeys.toggle_pause}
-        label={isRunning ? "Pause Timer" : "Start Timer"}
-        active={isRunning}
+        label={playPauseLabel}
+        active={isRunning || isPaused}
       >
         {isRunning ? (
           <Pause className="w-4 h-4 text-amber-400" />
@@ -90,7 +193,7 @@ export function QuickActionBar() {
 
       {/* Next */}
       <ActionButton
-        onClick={nextStep}
+        onClick={handleNext}
         disabled={currentStepIndex >= totalSteps - 1}
         hotkey={hotkeys.next_step}
         label="Next Step"
@@ -100,9 +203,9 @@ export function QuickActionBar() {
 
       {/* Cycle Build */}
       <ActionButton
-        onClick={cycleBuildOrder}
+        onClick={handleCycleBuild}
         hotkey={hotkeys.cycle_build_order}
-        label="Cycle Build Order"
+        label={cycleConfirm ? "Confirm cycle" : "Cycle Build Order"}
       >
         <RefreshCw className="w-3.5 h-3.5 text-white/60 group-hover:text-white/90" />
       </ActionButton>

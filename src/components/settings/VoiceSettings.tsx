@@ -2,6 +2,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { Volume2 } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig } from "@/lib/tauri";
@@ -43,6 +44,19 @@ export function VoiceSettings() {
     }
   };
 
+  const applyVoiceProfile = async (profile: "step-only" | "full") => {
+    const profileConfig: VoiceConfig =
+      profile === "step-only"
+        ? { ...voiceConfig, speakSteps: true, speakReminders: false, speakDelta: false }
+        : { ...voiceConfig, speakSteps: true, speakReminders: true, speakDelta: true };
+    updateConfig({ voice: profileConfig });
+    try {
+      await saveConfig({ ...config, voice: profileConfig });
+    } catch (error) {
+      console.error("Failed to save voice profile:", error);
+    }
+  };
+
   return (
     <section>
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -68,6 +82,16 @@ export function VoiceSettings() {
 
         {voiceConfig.enabled && (
           <>
+            {/* Quick profiles */}
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => applyVoiceProfile("step-only")}>
+                Step-only (silent reminders)
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => applyVoiceProfile("full")}>
+                Steps + reminders
+              </Button>
+            </div>
+
             {/* Speech rate */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">

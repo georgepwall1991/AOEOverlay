@@ -32,6 +32,7 @@ interface SacredSiteState {
 export function useReminders() {
   const isTimerRunning = useIsTimerRunning();
   const { speakReminder, isSpeaking } = useTTS();
+  const busyCooldownUntil = useRef<number>(0);
 
   const reminderStates = useRef<Record<ReminderKey, ReminderState>>({
     villagerQueue: { lastSpoken: 0 },
@@ -57,6 +58,9 @@ export function useReminders() {
   const checkReminders = useCallback(async () => {
     const reminderConfig = getReminderConfig();
     const { isRunning, elapsedSeconds } = useTimerStore.getState();
+    const calmMode = reminderConfig.calmMode ?? { enabled: false, untilSeconds: 180 };
+    const isCalmWindow = calmMode.enabled && elapsedSeconds < calmMode.untilSeconds;
+    const now = Date.now();
 
     // Don't run if reminders are disabled or timer isn't running
     // Read isRunning from store directly to avoid stale closure
@@ -64,8 +68,13 @@ export function useReminders() {
       return;
     }
 
-    // Don't speak if TTS is already speaking
+    // Don't speak if TTS is already speaking; add short backoff to reduce contention
+    if (busyCooldownUntil.current > now) {
+      return;
+    }
+
     if (isSpeaking()) {
+      busyCooldownUntil.current = now + 1500;
       return;
     }
 
@@ -75,6 +84,7 @@ export function useReminders() {
       if (elapsedSeconds >= 270 && elapsedSeconds < 275 && !sacredSiteState.current.spawnWarningSpoken) {
         await speakReminder("Sacred sites spawn in 30 seconds");
         sacredSiteState.current.spawnWarningSpoken = true;
+        busyCooldownUntil.current = Date.now() + 1500;
         return; // Don't speak other reminders this tick
       }
 
@@ -82,12 +92,12 @@ export function useReminders() {
       if (elapsedSeconds >= 300 && elapsedSeconds < 305 && !sacredSiteState.current.activeSpoken) {
         await speakReminder("Sacred sites are active!");
         sacredSiteState.current.activeSpoken = true;
+        busyCooldownUntil.current = Date.now() + 1500;
         return; // Don't speak other reminders this tick
       }
     }
 
     // Regular interval-based reminders
-    const now = Date.now();
     const reminderKeys: ReminderKey[] = [
       "villagerQueue",
       "scout",
@@ -100,6 +110,9 @@ export function useReminders() {
     for (const key of reminderKeys) {
       const itemConfig = reminderConfig[key];
       if (!itemConfig?.enabled) continue;
+      if (isCalmWindow && (key === "military" || key === "mapControl" || key === "macroCheck")) {
+        continue; // hold off on non-critical reminders during calm window
+      }
 
       const state = reminderStates.current[key];
       const intervalMs = itemConfig.intervalSeconds * 1000;
@@ -108,6 +121,7 @@ export function useReminders() {
         // Speak the reminder
         await speakReminder(REMINDER_MESSAGES[key]);
         reminderStates.current[key].lastSpoken = now;
+        busyCooldownUntil.current = Date.now() + 1500;
         // Only speak one reminder per interval check
         break;
       }
@@ -117,11 +131,18 @@ export function useReminders() {
   // Start/stop the reminder interval based on timer state
   useEffect(() => {
     if (isTimerRunning) {
-      // Reset lastSpoken times when timer starts
+      // Only reset cadence on a fresh run (not resume)
       const now = Date.now();
-      Object.keys(reminderStates.current).forEach((key) => {
-        reminderStates.current[key as ReminderKey].lastSpoken = now;
-      });
+      const { elapsedSeconds } = useTimerStore.getState();
+      if (elapsedSeconds === 0) {
+        Object.keys(reminderStates.current).forEach((key) => {
+          reminderStates.current[key as ReminderKey].lastSpoken = now;
+        });
+        sacredSiteState.current = {
+          spawnWarningSpoken: false,
+          activeSpoken: false,
+        };
+      }
 
       // Check reminders every second
       intervalRef.current = window.setInterval(checkReminders, 1000);
@@ -130,12 +151,14 @@ export function useReminders() {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      busyCooldownUntil.current = 0;
     }
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      busyCooldownUntil.current = 0;
     };
   }, [isTimerRunning, checkReminders]);
 

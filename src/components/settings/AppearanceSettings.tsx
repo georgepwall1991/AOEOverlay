@@ -1,5 +1,6 @@
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Palette, Eye } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig } from "@/lib/tauri";
-import type { Theme, FontSize } from "@/types";
+import type { Theme, FontSize, OverlayPreset } from "@/types";
 
 export function AppearanceSettings() {
   const { config, updateConfig } = useConfigStore();
@@ -41,6 +42,34 @@ export function AppearanceSettings() {
       await saveConfig({ ...config, overlay_opacity: opacity });
     } catch (error) {
       console.error("Failed to save config:", error);
+    }
+  };
+
+  const handleScaleChange = async (value: number[]) => {
+    const ui_scale = value[0];
+    updateConfig({ ui_scale });
+    try {
+      await saveConfig({ ...config, ui_scale });
+    } catch (error) {
+      console.error("Failed to save config:", error);
+    }
+  };
+
+  const handlePresetChange = async (value: OverlayPreset) => {
+    updateConfig({ overlay_preset: value });
+    try {
+      await saveConfig({ ...config, overlay_preset: value });
+    } catch (error) {
+      console.error("Failed to save preset:", error);
+    }
+  };
+
+  const handleCoachOnlyToggle = async (enabled: boolean) => {
+    updateConfig({ coach_only_mode: enabled });
+    try {
+      await saveConfig({ ...config, coach_only_mode: enabled });
+    } catch (error) {
+      console.error("Failed to save coach-only mode:", error);
     }
   };
 
@@ -107,6 +136,61 @@ export function AppearanceSettings() {
               value={[config.overlay_opacity]}
               onValueChange={handleOpacityChange}
             />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="scale">UI Scale</Label>
+              <span className="text-sm text-muted-foreground">
+                {Math.round((config.ui_scale ?? 1) * 100)}%
+              </span>
+            </div>
+            <Slider
+              id="scale"
+              min={0.85}
+              max={1.2}
+              step={0.05}
+              value={[config.ui_scale ?? 1]}
+              onValueChange={handleScaleChange}
+            />
+            <p className="text-xs text-muted-foreground">
+              Quick presets: 0.9 (1080p), 1.0 (1440p), 1.1 (4K)
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>Overlay Preset</Label>
+              <Select
+                value={config.overlay_preset ?? "info_dense"}
+                onValueChange={(v) => handlePresetChange(v as OverlayPreset)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="info_dense">Info dense</SelectItem>
+                  <SelectItem value="minimal">Minimal</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Minimal trims chrome; info-dense keeps all panels.
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="coach-mode">Coach-only mode</Label>
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">
+                  Hide overlay UI, keep voice + timers
+                </p>
+                <Switch
+                  id="coach-mode"
+                  checked={config.coach_only_mode ?? false}
+                  onCheckedChange={handleCoachOnlyToggle}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>

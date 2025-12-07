@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Keyboard } from "lucide-react";
+import { X, Keyboard, Lightbulb } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,7 @@ function ShortcutRow({ hotkey, description }: ShortcutRowProps) {
 
 export function KeyboardShortcutsOverlay() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showHints, setShowHints] = useState(true);
   const { config } = useConfigStore();
   const hotkeys = config.hotkeys;
 
@@ -42,18 +43,74 @@ export function KeyboardShortcutsOverlay() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
+  // Auto-hide practice hints after 60s or on first keypress
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowHints(false), 60_000);
+    const handleFirstKey = () => setShowHints(false);
+    window.addEventListener("keydown", handleFirstKey, { once: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("keydown", handleFirstKey);
+    };
+  }, []);
+
   if (!isOpen) {
     return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="p-1 rounded hover:bg-white/10 transition-colors group relative"
-        title="Keyboard Shortcuts (?)"
-      >
-        <Keyboard className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70" />
-        <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-1 py-0.5 rounded bg-black/90 text-[9px] text-white/70 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          ?
-        </span>
-      </button>
+      <>
+        {/* Practice hints bubble */}
+        {showHints && (
+          <div className="fixed right-3 top-14 z-40 max-w-xs rounded-lg border border-white/10 bg-black/80 backdrop-blur-sm shadow-lg p-3 space-y-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+              <Lightbulb className="w-4 h-4 text-amber-400" />
+              <span>Practice hints</span>
+            </div>
+            <div className="space-y-1 text-[11px] text-white/80">
+              <div className="flex items-center justify-between">
+                <span>Next step</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-amber-300">{hotkeys.next_step}</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Previous step</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-amber-300">{hotkeys.previous_step}</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Pause timer</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-amber-300">{hotkeys.toggle_pause}</kbd>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Click-through</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-amber-300">{hotkeys.toggle_click_through}</kbd>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-white/60">
+              <button
+                className="underline decoration-dotted hover:text-white"
+                onClick={() => setShowHints(false)}
+              >
+                Got it
+              </button>
+              <button
+                className="underline decoration-dotted hover:text-white"
+                onClick={() => setShowHints(true)}
+                title="Hints will reappear next launch automatically"
+              >
+                Keep visible
+              </button>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setIsOpen(true)}
+          className="p-1 rounded hover:bg-white/10 transition-colors group relative"
+          title="Keyboard Shortcuts (?)"
+        >
+          <Keyboard className="w-3.5 h-3.5 text-white/40 group-hover:text-white/70" />
+          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-1 py-0.5 rounded bg-black/90 text-[9px] text-white/70 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            ?
+          </span>
+        </button>
+      </>
     );
   }
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/stores";
-import { getConfig, saveConfig } from "@/lib/tauri";
+import { CONFIG_CHANGED_EVENT, getConfig, saveConfig } from "@/lib/tauri";
 import type { AppConfig } from "@/types";
 
 export function useConfig() {
@@ -17,6 +18,21 @@ export function useConfig() {
     };
 
     loadConfig();
+  }, [setConfig]);
+
+  useEffect(() => {
+    // Keep config in sync across overlay/settings windows
+    const unlistenPromise = listen<AppConfig>(CONFIG_CHANGED_EVENT, (event) => {
+      setConfig(event.payload);
+    });
+
+    return () => {
+      unlistenPromise
+        .then((unlisten) => unlisten())
+        .catch((error) =>
+          console.error("Failed to clean up config change listener:", error)
+        );
+    };
   }, [setConfig]);
 
   const updateAndSave = async (updates: Partial<AppConfig>) => {

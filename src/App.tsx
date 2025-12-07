@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Overlay, AnimatedOverlay } from "@/components/overlay";
 import { SettingsWindow } from "@/components/settings";
-import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize } from "@/hooks";
+import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize, useReminders } from "@/hooks";
 import { useConfigStore } from "@/stores";
 
 function App() {
@@ -14,6 +14,7 @@ function App() {
   useBuildOrders();
   useConfig();
   useWindowSize();
+  useReminders(); // Run reminders even when overlay UI is hidden
 
   useEffect(() => {
     const initWindow = async () => {

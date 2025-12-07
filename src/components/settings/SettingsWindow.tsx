@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -11,7 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useConfigStore, useBuildOrderStore } from "@/stores";
-import { saveConfig, importBuildOrder, exportBuildOrder } from "@/lib/tauri";
+import { saveConfig, importBuildOrder, exportBuildOrder, saveBuildOrder } from "@/lib/tauri";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   Gamepad2,
@@ -31,13 +31,49 @@ import { UpgradeBadgesSettings } from "./UpgradeBadgesSettings";
 import { HotkeySettings } from "./HotkeySettings";
 import { AppearanceSettings } from "./AppearanceSettings";
 import { GameplaySettings } from "./GameplaySettings";
-import { CIVILIZATIONS, DIFFICULTIES } from "@/types";
+import { TelemetryToggle } from "./TelemetryToggle";
+import { CIVILIZATIONS, DIFFICULTIES, type BuildOrder } from "@/types";
+
+type StarterTemplate = Omit<BuildOrder, "id" | "enabled">;
+
+const STARTER_BUILDS: StarterTemplate[] = [
+  {
+    name: "English Fast Feudal (Safe Longbows)",
+    civilization: "English",
+    description: "Stable macro opener with early longbows for map control.",
+    difficulty: "Beginner",
+    steps: [
+      { id: "s1", description: "Queue 2 villagers to sheep; build house with starting vill", timing: "0:00", resources: { food: 50 } },
+      { id: "s2", description: "Send 2 to gold, 6 to food; build mining camp", timing: "0:35" },
+      { id: "s3", description: "Age up with Council Hall; rally next vills to wood", timing: "2:30" },
+      { id: "s4", description: "Queue longbows; add house + second production building", timing: "4:30" },
+    ],
+  },
+  {
+    name: "French Knight Pressure",
+    civilization: "French",
+    description: "Fast School of Cavalry into early knight map pressure.",
+    difficulty: "Intermediate",
+    steps: [
+      { id: "f1", description: "Queue 2 villagers to sheep; build house", timing: "0:00" },
+      { id: "f2", description: "3 on gold, rest on food; build mining camp", timing: "0:40" },
+      { id: "f3", description: "Age up with School of Cavalry; shift villagers to wood", timing: "2:20" },
+      { id: "f4", description: "Queue first knight; scout for weak spots and relics", timing: "4:20" },
+    ],
+  },
+];
 
 export function SettingsWindow() {
   const { config, updateConfig } = useConfigStore();
   const { buildOrders, setBuildOrders } = useBuildOrderStore();
   const [filterCiv, setFilterCiv] = useState<string>(config.filter_civilization || "all");
   const [filterDiff, setFilterDiff] = useState<string>(config.filter_difficulty || "all");
+  const [starterCiv, setStarterCiv] = useState<string>(STARTER_BUILDS[0].civilization);
+
+  const starterBuild = useMemo(
+    () => STARTER_BUILDS.find((b) => b.civilization === starterCiv) ?? STARTER_BUILDS[0],
+    [starterCiv]
+  );
 
   const handleFilterCivChange = async (value: string) => {
     setFilterCiv(value);
@@ -73,6 +109,22 @@ export function SettingsWindow() {
       }
     } catch (error) {
       console.error("Failed to import build order:", error);
+    }
+  };
+
+  const handleStarterLoad = async () => {
+    if (!starterBuild) return;
+    const newOrder: BuildOrder = {
+      ...starterBuild,
+      id: `starter-${starterBuild.civilization.toLowerCase()}-${Date.now()}`,
+      enabled: true,
+    };
+    const next = [...buildOrders, newOrder];
+    setBuildOrders(next);
+    try {
+      await saveBuildOrder(newOrder);
+    } catch (error) {
+      console.error("Failed to save starter build:", error);
     }
   };
 
@@ -128,6 +180,66 @@ export function SettingsWindow() {
         {/* Build Orders Tab */}
         <TabsContent value="build-orders" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <div className="space-y-4">
+            {buildOrders.length === 0 && starterBuild && (
+              <div className="p-4 rounded-lg border bg-muted/40 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">First-launch wizard</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pick a civ and start with a recommended ladder-safe build. You can import more later.
+                    </p>
+                  </div>
+                  <div className="w-48">
+                    <Label className="text-xs">Civilization</Label>
+                    <Select value={starterCiv} onValueChange={setStarterCiv}>
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STARTER_BUILDS.map((b) => (
+                          <SelectItem key={b.civilization} value={b.civilization}>
+                            {b.civilization}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="rounded-md bg-background/60 border border-dashed border-white/10 p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">{starterBuild.name}</p>
+                      <p className="text-xs text-muted-foreground">{starterBuild.description}</p>
+                    </div>
+                    <span className="text-[11px] px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                      {starterBuild.difficulty}
+                    </span>
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {starterBuild.steps.slice(0, 3).map((step) => (
+                      <div key={step.id} className="flex items-start gap-2 text-xs text-foreground/80">
+                        <span className="text-[10px] font-mono text-amber-300">{step.timing ?? "—"}</span>
+                        <span className="flex-1">{step.description}</span>
+                      </div>
+                    ))}
+                    {starterBuild.steps.length > 3 && (
+                      <p className="text-[11px] text-muted-foreground">…more steps included</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button onClick={handleStarterLoad} size="sm">
+                    Load starter build
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground">
+                    Hotkeys keep the current defaults; you can customize them later.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Import/Export */}
             <div className="flex items-center gap-2 mb-4">
               <Button variant="outline" size="sm" onClick={handleImport}>
@@ -193,6 +305,8 @@ export function SettingsWindow() {
           <GameplaySettings />
           <Separator className="my-6" />
           <UpgradeBadgesSettings />
+          <Separator className="my-6" />
+          <TelemetryToggle />
         </TabsContent>
 
         {/* Voice Tab */}

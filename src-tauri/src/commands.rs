@@ -1,11 +1,12 @@
 use std::fs;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager, State, Window, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, State, Window, WebviewUrl, WebviewWindowBuilder, Emitter};
 use crate::config::{AppConfig, BuildOrder, WindowPosition, WindowSize, get_config_path, get_build_orders_dir, atomic_write};
 use crate::state::AppState;
 use crate::hotkeys::register_hotkeys;
 
 const MAX_IMPORT_SIZE: u64 = 1024 * 1024; // 1MB limit
+const CONFIG_CHANGED_EVENT: &str = "config-changed";
 
 #[tauri::command]
 pub fn get_config(state: State<AppState>) -> Result<AppConfig, String> {
@@ -14,13 +15,16 @@ pub fn get_config(state: State<AppState>) -> Result<AppConfig, String> {
 }
 
 #[tauri::command]
-pub fn save_config(config: AppConfig, state: State<AppState>) -> Result<(), String> {
+pub fn save_config(config: AppConfig, state: State<AppState>, app: AppHandle) -> Result<(), String> {
     let config_path = get_config_path();
     let json = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
     atomic_write(&config_path, json).map_err(|e| e.to_string())?;
 
     let mut current = state.config.lock().map_err(|e| e.to_string())?;
     *current = config;
+
+    // Notify all windows that config changed so they can refresh state
+    app.emit(CONFIG_CHANGED_EVENT, &*current).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -156,11 +160,14 @@ pub fn toggle_click_through(app: AppHandle, state: State<AppState>) -> Result<bo
     let json = serde_json::to_string_pretty(&*config).map_err(|e| e.to_string())?;
     atomic_write(&config_path, json).map_err(|e| e.to_string())?;
 
+    // Broadcast config change
+    app.emit(CONFIG_CHANGED_EVENT, &*config).map_err(|e| e.to_string())?;
+
     Ok(new_state)
 }
 
 #[tauri::command]
-pub fn toggle_compact_mode(state: State<AppState>) -> Result<bool, String> {
+pub fn toggle_compact_mode(app: AppHandle, state: State<AppState>) -> Result<bool, String> {
     let mut config = state.config.lock().map_err(|e| e.to_string())?;
     config.compact_mode = !config.compact_mode;
     let new_state = config.compact_mode;
@@ -169,6 +176,9 @@ pub fn toggle_compact_mode(state: State<AppState>) -> Result<bool, String> {
     let config_path = get_config_path();
     let json = serde_json::to_string_pretty(&*config).map_err(|e| e.to_string())?;
     atomic_write(&config_path, json).map_err(|e| e.to_string())?;
+
+    // Broadcast config change
+    app.emit(CONFIG_CHANGED_EVENT, &*config).map_err(|e| e.to_string())?;
 
     Ok(new_state)
 }

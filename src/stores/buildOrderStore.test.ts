@@ -4,6 +4,7 @@ import {
   useBuildOrderStore,
   useCurrentBuildOrder,
   useCurrentStep,
+  resolveActiveSteps,
 } from "./buildOrderStore";
 import type { BuildOrder } from "@/types";
 
@@ -44,6 +45,32 @@ describe("buildOrderStore", () => {
       steps: [{ id: "s3-1", description: "Test step" }],
     },
   ];
+
+  const branchyOrder: BuildOrder = {
+    id: "branched",
+    name: "Branch Demo",
+    civilization: "English",
+    description: "Has branches",
+    difficulty: "Beginner",
+    enabled: true,
+    steps: [
+      { id: "b1", description: "Step 1" },
+      { id: "b2", description: "Step 2" },
+      { id: "b3", description: "Step 3" },
+    ],
+    branches: [
+      {
+        id: "defense",
+        name: "Defense",
+        trigger: "rushed",
+        startStepIndex: 2,
+        steps: [
+          { id: "d1", description: "Drop tower" },
+          { id: "d2", description: "Mass spears" },
+        ],
+      },
+    ],
+  };
 
   beforeEach(() => {
     // Reset store state before each test
@@ -201,6 +228,38 @@ describe("buildOrderStore", () => {
       });
 
       expect(result.current.currentStepIndex).toBe(0);
+    });
+  });
+
+  describe("branches", () => {
+    it("merges branch steps starting at startStepIndex", () => {
+      const storeHook = renderHook(() => useBuildOrderStore());
+
+      act(() => {
+        storeHook.result.current.setBuildOrders([branchyOrder]);
+        storeHook.result.current.setActiveBranch("defense");
+      });
+
+      const activeSteps = resolveActiveSteps(
+        storeHook.result.current.buildOrders[storeHook.result.current.currentOrderIndex],
+        storeHook.result.current.activeBranchId
+      );
+
+      expect(activeSteps.length).toBe(4); // two base steps + two branch steps
+      expect(activeSteps[1].description).toBe("Step 2");
+      expect(activeSteps[2].description).toBe("Drop tower");
+    });
+
+    it("clamps current step when branch shortens path", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+
+      act(() => {
+        result.current.setBuildOrders([branchyOrder]);
+        result.current.goToStep(2);
+        result.current.setActiveBranch("defense");
+      });
+
+      expect(result.current.currentStepIndex).toBeLessThanOrEqual(3);
     });
   });
 

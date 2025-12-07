@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GripVertical, ChevronLeft, ChevronRight, MousePointer2Off, Settings } from "lucide-react";
 import { useWindowDrag, useAutoResize, useTimer } from "@/hooks";
-import { useOpacity, useConfigStore, useBuildOrderStore, useCurrentBuildOrder } from "@/stores";
+import { useOpacity, useConfigStore, useBuildOrderStore, useCurrentBuildOrder, useActiveSteps, useActiveBranchId } from "@/stores";
 import { ResourceIndicator } from "./ResourceIndicator";
 import { TimerBar } from "./TimerBar";
 import { showSettings } from "@/lib/tauri";
@@ -13,14 +13,24 @@ export function CompactOverlay() {
   const { config } = useConfigStore();
   const { currentStepIndex, nextStep, previousStep } = useBuildOrderStore();
   const currentBuildOrder = useCurrentBuildOrder();
+  const activeSteps = useActiveSteps();
+  const activeBranchId = useActiveBranchId();
+  const activeBranchName = currentBuildOrder?.branches?.find((b) => b.id === activeBranchId)?.name;
   const [animateStep, setAnimateStep] = useState(false);
   const prevStepIndex = useRef(currentStepIndex);
   const containerRef = useAutoResize();
-  const { isRunning } = useTimer();
+  const { isRunning, isPaused, start, deltaStatus, deltaCompact } = useTimer();
+  const scale = config.ui_scale ?? 1;
+  const fontSize =
+    config.font_size === "large"
+      ? "text-sm"
+      : config.font_size === "small"
+        ? "text-[11px]"
+        : "text-xs";
 
-  const currentStep = currentBuildOrder?.steps[currentStepIndex];
-  const nextStepPreview = currentBuildOrder?.steps[currentStepIndex + 1];
-  const totalSteps = currentBuildOrder?.steps.length ?? 0;
+  const currentStep = activeSteps[currentStepIndex];
+  const nextStepPreview = activeSteps[currentStepIndex + 1];
+  const totalSteps = activeSteps.length;
 
   // Animate step change
   useEffect(() => {
@@ -32,10 +42,27 @@ export function CompactOverlay() {
     }
   }, [currentStepIndex]);
 
+  const paceDotClass = (() => {
+    if (deltaStatus === "behind") return "bg-red-400";
+    if (deltaStatus === "ahead") return "bg-emerald-400";
+    if (deltaStatus === "on-pace") return "bg-amber-300";
+    return "bg-white/30";
+  })();
+
   const floatingStyle = config.floating_style;
 
   return (
-    <div ref={containerRef} className="inline-block p-1" style={{ opacity, minWidth: 320, maxWidth: 600 }}>
+    <div
+      ref={containerRef}
+      className="inline-block p-1"
+      style={{
+        opacity,
+        minWidth: 320,
+        maxWidth: 600,
+        transform: `scale(${scale})`,
+        transformOrigin: "top left",
+      }}
+    >
       <div className={cn(
         "flex flex-col overflow-hidden",
         floatingStyle ? "floating-panel" : "glass-panel"
@@ -68,6 +95,11 @@ export function CompactOverlay() {
                 {currentBuildOrder.name}
               </span>
             )}
+            {activeBranchName && (
+              <span className="text-[9px] text-amber-300 truncate">
+                • {activeBranchName}
+              </span>
+            )}
           </div>
 
           {config.click_through && (
@@ -85,14 +117,25 @@ export function CompactOverlay() {
               <button
                 onClick={previousStep}
                 disabled={currentStepIndex === 0}
-                className="p-0.5 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4 text-white/70" />
               </button>
 
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-amber-400">
+                <span className="text-xs font-mono font-bold text-amber-400 flex items-center gap-1">
                   {currentStepIndex + 1}<span className="text-white/40">/{totalSteps}</span>
+                  <span
+                    className={cn(
+                      "inline-block w-2 h-2 rounded-full",
+                      paceDotClass
+                    )}
+                    title={
+                      deltaCompact
+                        ? `Pace: ${deltaCompact}`
+                        : "Pace status"
+                    }
+                  />
                 </span>
                 {/* Compact timer display */}
                 {(isRunning || currentStep?.timing) && (
@@ -101,9 +144,14 @@ export function CompactOverlay() {
               </div>
 
               <button
-                onClick={nextStep}
+                onClick={() => {
+                  if (!isRunning && !isPaused) {
+                    start();
+                  }
+                  nextStep();
+                }}
                 disabled={currentStepIndex >= totalSteps - 1}
-                className="p-0.5 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-4 h-4 text-white/70" />
               </button>
@@ -119,7 +167,7 @@ export function CompactOverlay() {
               )}
 
               {/* Description */}
-              <p className="text-xs text-white leading-tight flex-1">
+              <p className={cn(fontSize, "text-white leading-tight flex-1")}>
                 {currentStep.description}
               </p>
             </div>

@@ -127,6 +127,7 @@ describe("timerStore utilities", () => {
 describe("timerStore state management", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.spyOn(performance, "now").mockImplementation(() => Date.now());
     // Reset store state before each test
     const { result } = renderHook(() => useTimerStore());
     act(() => {
@@ -135,6 +136,7 @@ describe("timerStore state management", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.useRealTimers();
   });
 

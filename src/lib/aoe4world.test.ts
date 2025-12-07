@@ -154,9 +154,7 @@ describe("aoe4world API", () => {
         }),
       });
 
-      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow(
-        "Build has no steps"
-      );
+      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow();
     });
 
     it("throws error when steps array is missing", async () => {
@@ -169,9 +167,25 @@ describe("aoe4world API", () => {
         }),
       });
 
-      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow(
-        "Build has no steps"
-      );
+      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow();
+    });
+
+    it("rejects malformed API payloads", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 123,
+          title: "Malformed",
+          civilization: "english",
+          steps: [
+            {
+              description: "", // invalid: empty description
+            },
+          ],
+        }),
+      });
+
+      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow();
     });
 
     it("handles timing as number (seconds)", async () => {

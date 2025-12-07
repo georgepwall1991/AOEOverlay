@@ -12,6 +12,14 @@ export interface BuildOrderStep {
   resources?: Resources;
 }
 
+export interface BuildOrderBranch {
+  id: string;
+  name: string;
+  trigger?: string;
+  startStepIndex: number; // 0-based index in the base build where this branch begins
+  steps: BuildOrderStep[];
+}
+
 export interface BuildOrder {
   id: string;
   name: string;
@@ -20,6 +28,9 @@ export interface BuildOrder {
   difficulty: Difficulty;
   steps: BuildOrderStep[];
   enabled: boolean;
+  pinned?: boolean;
+  favorite?: boolean;
+  branches?: BuildOrderBranch[];
 }
 
 export type Civilization =

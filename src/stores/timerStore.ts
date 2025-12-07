@@ -3,7 +3,7 @@ import { create } from "zustand";
 interface TimerState {
   isRunning: boolean;
   isPaused: boolean;
-  startedAt: number | null;
+  startedAt: number | null; // Monotonic ms (performance.now fallback)
   accumulatedTime: number; // Track time from previous sessions (for pause/resume)
   elapsedSeconds: number;
   lastStepTime: number | null;
@@ -69,6 +69,9 @@ export function formatDeltaCompact(deltaSeconds: number): string {
   return `${sign}${deltaSeconds}s`;
 }
 
+const nowMs = (): number =>
+  typeof performance !== "undefined" ? performance.now() : Date.now();
+
 export const useTimerStore = create<TimerState>((set, get) => ({
   isRunning: false,
   isPaused: false,
@@ -88,7 +91,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       set({
         isRunning: true,
         isPaused: false,
-        startedAt: Date.now(),
+        startedAt: nowMs(),
         elapsedSeconds: 0,
         lastStepTime: null,
         lastDelta: null,
@@ -98,7 +101,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       set({
         isRunning: true,
         isPaused: false,
-        startedAt: Date.now(),
+        startedAt: nowMs(),
       });
     }
   },
@@ -106,6 +109,8 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   stopTimer: () =>
     set({
       isRunning: false,
+      isPaused: false,
+      startedAt: null,
     }),
 
   pauseTimer: () => {
@@ -117,7 +122,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       isRunning: false,
       isPaused: true,
       startedAt: null,
-      accumulatedTime: accumulatedTime + (Date.now() - startedAt),
+      accumulatedTime: accumulatedTime + (nowMs() - startedAt),
     });
   },
 
@@ -128,7 +133,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     set({
       isRunning: true,
       isPaused: false,
-      startedAt: Date.now(),
+      startedAt: nowMs(),
     });
   },
 
@@ -157,7 +162,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   tick: () => {
     const { isRunning, startedAt, accumulatedTime } = get();
     if (!isRunning || !startedAt) return;
-    const elapsed = Math.floor((accumulatedTime + (Date.now() - startedAt)) / 1000);
+    const elapsed = Math.floor((accumulatedTime + (nowMs() - startedAt)) / 1000);
     set({ elapsedSeconds: elapsed });
   },
 
@@ -172,8 +177,8 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       const delta = elapsedSeconds - suggestedSeconds;
       set({
         lastDelta: delta,
-        // Update accumulated drift to track total time behind/ahead
-        accumulatedDrift: delta,
+        // Update accumulated drift to track total time behind/ahead across steps
+        accumulatedDrift: (get().accumulatedDrift ?? 0) + delta,
       });
     }
   },

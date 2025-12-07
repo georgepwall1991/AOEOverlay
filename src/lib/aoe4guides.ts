@@ -4,11 +4,29 @@
  */
 
 import type { BuildOrder, BuildOrderStep, Civilization, Difficulty } from "@/types";
+import { BuildOrderSchema } from "@/types";
 
 const API_BASE = "https://aoe4guides.com/api";
 
 // Maximum allowed steps in a build order to prevent performance issues
 export const MAX_BUILD_ORDER_STEPS = 200;
+const guidesBuildCache = new Map<string, BuildOrder>();
+
+async function fetchWithTimeout(input: RequestInfo | URL, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(input, {
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+      },
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 // ============================================================================
 // Type Definitions for AOE4 Guides API
@@ -148,6 +166,11 @@ const STRATEGY_DIFFICULTY_MAP: Record<string, Difficulty> = {
  */
 export function extractAoe4GuidesId(url: string): string | null {
   const cleanUrl = url.trim();
+
+  // Reject clearly wrong domains to provide actionable feedback
+  if (/https?:\/\//i.test(cleanUrl) && !/aoe4guides\.com/i.test(cleanUrl)) {
+    return null;
+  }
 
   const patterns = [
     /aoe4guides\.com\/build\/([a-zA-Z0-9]+)/i,
@@ -795,15 +818,17 @@ function convertBuild(build: Aoe4GuidesBuild): BuildOrder {
     descParts.push(`Strategy: ${build.strategy}`);
   }
 
-  return {
+  const converted = BuildOrderSchema.parse({
     id: `aoe4guides-${build.id}`,
     name: build.title || "Imported Build",
-    civilization: normalizeCivilization(build.civ),
+    civilization: normalizeCivilization(build.civ) as Civilization,
     description: descParts.join(". "),
     difficulty: strategyToDifficulty(build.strategy),
     enabled: true,
     steps,
-  };
+  });
+
+  return converted as unknown as BuildOrder;
 }
 
 // ============================================================================
@@ -814,26 +839,43 @@ function convertBuild(build: Aoe4GuidesBuild): BuildOrder {
  * Fetch a single build by ID from AOE4 Guides
  */
 export async function fetchAoe4GuidesBuild(buildId: string): Promise<BuildOrder> {
-  const response = await fetch(`${API_BASE}/builds/${buildId}`, {
-    headers: {
-      Accept: "application/json",
-    },
-  });
+  let lastError: unknown = null;
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error(`Build "${buildId}" not found on aoe4guides.com`);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await fetchWithTimeout(`${API_BASE}/builds/${buildId}`, 5000);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Build "${buildId}" not found on aoe4guides.com`);
+        }
+        throw new Error(`Failed to fetch build: ${response.status} ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as Aoe4GuidesBuild;
+
+      if (!data || !data.steps || data.steps.length === 0) {
+        throw new Error("Build has no steps");
+      }
+
+      const converted = convertBuild(data);
+      guidesBuildCache.set(buildId, converted);
+      return converted;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) continue;
     }
-    throw new Error(`Failed to fetch build: ${response.status} ${response.statusText}`);
   }
 
-  const data = (await response.json()) as Aoe4GuidesBuild;
-
-  if (!data || !data.steps || data.steps.length === 0) {
-    throw new Error("Build has no steps");
+  if (guidesBuildCache.has(buildId)) {
+    console.warn(`Using cached aoe4guides build ${buildId} due to fetch failure.`);
+    return guidesBuildCache.get(buildId)!;
   }
 
-  return convertBuild(data);
+  if (lastError instanceof Error) {
+    throw lastError;
+  }
+  throw new Error("Failed to fetch build from aoe4guides.com");
 }
 
 /**
@@ -844,7 +886,7 @@ export async function importAoe4GuidesBuild(urlOrId: string): Promise<BuildOrder
 
   if (!buildId) {
     throw new Error(
-      "Invalid URL or ID. Please paste a link like: https://aoe4guides.com/build/ABC123"
+      "Invalid AOE4Guides link. Use a URL like https://aoe4guides.com/build/ABC123 or paste the alphanumeric ID."
     );
   }
 
@@ -869,11 +911,7 @@ export async function browseAoe4GuidesBuilds(options?: {
   const queryString = params.toString();
   const url = `${API_BASE}/builds${queryString ? `?${queryString}` : ""}`;
 
-  const response = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-    },
-  });
+  const response = await fetchWithTimeout(url, 5000);
 
   if (!response.ok) {
     throw new Error(`Failed to browse builds: ${response.status} ${response.statusText}`);

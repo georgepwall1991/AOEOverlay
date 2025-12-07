@@ -5,12 +5,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Keyboard } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig, reloadHotkeys } from "@/lib/tauri";
 import type { HotkeyConfig } from "@/types";
 
-const AVAILABLE_HOTKEYS = ["F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"];
+const AVAILABLE_HOTKEYS = [
+  "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+  "A", "Z", "E", "R", "T", "Y", "U", "I", "O", "P", "Q", "S", "D", "F", "G", "H", "J", "K", "L",
+];
+
+const PRESET_QWERTY: HotkeyConfig = {
+  toggle_overlay: "F1",
+  previous_step: "F2",
+  next_step: "F3",
+  cycle_build_order: "F4",
+  toggle_click_through: "F5",
+  toggle_compact: "F6",
+  reset_build_order: "F7",
+  toggle_pause: "F8",
+};
+
+const PRESET_AZERTY: HotkeyConfig = {
+  toggle_overlay: "F1",
+  previous_step: "A",
+  next_step: "Z",
+  cycle_build_order: "E",
+  toggle_click_through: "R",
+  toggle_compact: "T",
+  reset_build_order: "Y",
+  toggle_pause: "U",
+};
 
 interface HotkeyRowProps {
   label: string;
@@ -52,6 +78,16 @@ export function HotkeySettings() {
     }
   };
 
+  const applyPreset = async (preset: HotkeyConfig) => {
+    updateConfig({ hotkeys: preset });
+    try {
+      await saveConfig({ ...config, hotkeys: preset });
+      await reloadHotkeys();
+    } catch (error) {
+      console.error("Failed to apply hotkey preset:", error);
+    }
+  };
+
   return (
     <section>
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -62,6 +98,18 @@ export function HotkeySettings() {
       <p className="text-sm text-muted-foreground mb-4">
         These hotkeys work even when the game has focus.
       </p>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        <Button size="sm" variant="outline" onClick={() => applyPreset(PRESET_QWERTY)}>
+          Competitive defaults (QWERTY)
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => applyPreset(PRESET_AZERTY)}>
+          AZERTY-friendly
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => applyPreset(PRESET_QWERTY)}>
+          Restore defaults
+        </Button>
+      </div>
 
       <div className="space-y-3">
         <HotkeyRow

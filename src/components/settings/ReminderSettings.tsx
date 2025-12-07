@@ -46,6 +46,7 @@ function ReminderRow({ label, enabled, intervalSeconds, onToggle, onIntervalChan
 export function ReminderSettings() {
   const { config, updateConfig } = useConfigStore();
   const reminderConfig = config.reminders ?? DEFAULT_REMINDER_CONFIG;
+  const calmMode = reminderConfig.calmMode ?? { enabled: false, untilSeconds: 180 };
 
   const handleRemindersToggle = async () => {
     const newReminders: ReminderConfig = { ...reminderConfig, enabled: !reminderConfig.enabled };
@@ -97,6 +98,29 @@ export function ReminderSettings() {
     }
   };
 
+  const handleCalmModeToggle = async () => {
+    const nextCalm = { ...calmMode, enabled: !calmMode.enabled };
+    const newReminders: ReminderConfig = { ...reminderConfig, calmMode: nextCalm };
+    updateConfig({ reminders: newReminders });
+    try {
+      await saveConfig({ ...config, reminders: newReminders });
+    } catch (error) {
+      console.error("Failed to save calm mode:", error);
+    }
+  };
+
+  const handleCalmModeSeconds = async (value: string) => {
+    const untilSeconds = Math.max(30, parseInt(value, 10) || calmMode.untilSeconds);
+    const nextCalm = { ...calmMode, untilSeconds };
+    const newReminders: ReminderConfig = { ...reminderConfig, calmMode: nextCalm };
+    updateConfig({ reminders: newReminders });
+    try {
+      await saveConfig({ ...config, reminders: newReminders });
+    } catch (error) {
+      console.error("Failed to save calm window:", error);
+    }
+  };
+
   return (
     <section>
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -122,6 +146,30 @@ export function ReminderSettings() {
 
         {reminderConfig.enabled && (
           <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-muted/40">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={calmMode.enabled} onCheckedChange={handleCalmModeToggle} />
+                  <Label>Calm early game</Label>
+                </div>
+                <p className="text-xs text-muted-foreground ml-10">
+                  Delay non-critical reminders until the timer reaches this mark.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="30"
+                  max="600"
+                  value={calmMode.untilSeconds}
+                  onChange={(e) => handleCalmModeSeconds(e.target.value)}
+                  className="w-20 h-8"
+                  disabled={!calmMode.enabled}
+                />
+                <span className="text-xs text-muted-foreground">sec</span>
+              </div>
+            </div>
+
             <ReminderRow
               label="Keep queuing villagers"
               enabled={reminderConfig.villagerQueue.enabled}

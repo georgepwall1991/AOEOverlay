@@ -1,7 +1,7 @@
 {
   "name": "aoe4-overlay",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A build order overlay for Age of Empires IV",
   "author": "George Wall",
   "license": "MIT",
@@ -40,6 +40,7 @@
     "react-dom": "^19.1.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "zod": "^4.1.13",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

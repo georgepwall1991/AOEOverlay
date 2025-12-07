@@ -46,6 +46,10 @@ export interface ReminderConfig {
   mapControl: ReminderItemConfig;
   macroCheck: ReminderItemConfig; // "Check your production" metronome
   sacredSites: { enabled: boolean }; // One-time alerts at 4:30 and 5:00
+  calmMode?: {
+    enabled: boolean;
+    untilSeconds: number; // Delay non-critical reminders until this time
+  };
 }
 
 // Upgrade badge that appears at a specific game time
@@ -66,17 +70,29 @@ export interface TimerDriftConfig {
   enabled: boolean; // Auto-adjust step timings when behind pace
 }
 
+export type OverlayPreset = "minimal" | "info_dense";
+
+export interface TelemetryConfig {
+  enabled: boolean;
+  captureHotkeys: boolean;
+  captureActions: boolean;
+  maxEvents: number;
+}
+
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
 
 export interface AppConfig {
   overlay_opacity: number;
+  ui_scale?: number;
   font_size: FontSize;
   theme: Theme;
+  overlay_preset?: OverlayPreset;
   hotkeys: HotkeyConfig;
   window_position?: WindowPosition;
   window_size?: WindowSize;
   click_through: boolean;
   compact_mode: boolean;
+  coach_only_mode?: boolean;
   auto_advance: AutoAdvanceConfig;
   filter_civilization?: string;
   filter_difficulty?: string;
@@ -86,6 +102,7 @@ export interface AppConfig {
   reminders?: ReminderConfig;
   upgradeBadges?: UpgradeBadgesConfig;
   timerDrift?: TimerDriftConfig;
+  telemetry?: TelemetryConfig;
 }
 
 export type FontSize = "small" | "medium" | "large";
@@ -108,6 +125,7 @@ export const DEFAULT_REMINDER_CONFIG: ReminderConfig = {
   mapControl: { enabled: true, intervalSeconds: 90 },
   macroCheck: { enabled: false, intervalSeconds: 20 }, // Pro-level macro cycle
   sacredSites: { enabled: true }, // Sacred site spawn alerts
+  calmMode: { enabled: false, untilSeconds: 180 },
 };
 
 export const DEFAULT_UPGRADE_BADGES_CONFIG: UpgradeBadgesConfig = {
@@ -124,10 +142,19 @@ export const DEFAULT_TIMER_DRIFT_CONFIG: TimerDriftConfig = {
   enabled: true, // Default to enabled - adjust timings when behind
 };
 
+export const DEFAULT_TELEMETRY_CONFIG: TelemetryConfig = {
+  enabled: false,
+  captureHotkeys: true,
+  captureActions: true,
+  maxEvents: 200,
+};
+
 export const DEFAULT_CONFIG: AppConfig = {
   overlay_opacity: 0.95,
+  ui_scale: 1,
   font_size: "medium",
   theme: "dark",
+  overlay_preset: "info_dense",
   hotkeys: {
     toggle_overlay: "F1",
     previous_step: "F2",
@@ -140,6 +167,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   click_through: true,
   compact_mode: false, // Default to expanded mode (more info visible)
+  coach_only_mode: false,
   auto_advance: {
     enabled: false,
     delay_seconds: 0,
@@ -150,4 +178,5 @@ export const DEFAULT_CONFIG: AppConfig = {
   reminders: DEFAULT_REMINDER_CONFIG,
   timerDrift: DEFAULT_TIMER_DRIFT_CONFIG,
   upgradeBadges: DEFAULT_UPGRADE_BADGES_CONFIG,
+  telemetry: DEFAULT_TELEMETRY_CONFIG,
 };

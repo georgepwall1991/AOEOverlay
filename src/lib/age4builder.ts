@@ -4,6 +4,7 @@
  */
 
 import type { BuildOrder, BuildOrderStep, Civilization } from "@/types";
+import { BuildOrderSchema } from "@/types";
 
 // Maximum allowed steps in a build order to prevent performance issues
 export const MAX_BUILD_ORDER_STEPS = 200;
@@ -245,7 +246,7 @@ export function convertAge4Builder(input: Age4BuilderFormat): BuildOrder {
     descParts.push(`Source: ${input.source}`);
   }
 
-  return {
+  const converted: BuildOrder = {
     id: generateId(input.name),
     name: input.name,
     civilization: input.civilization as Civilization,
@@ -254,6 +255,8 @@ export function convertAge4Builder(input: Age4BuilderFormat): BuildOrder {
     enabled: true,
     steps,
   };
+
+  return BuildOrderSchema.parse(converted);
 }
 
 /**

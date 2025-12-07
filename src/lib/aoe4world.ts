@@ -9,19 +9,34 @@ import type {
   Civilization,
   Difficulty,
 } from "@/types";
+import { BuildOrderSchema } from "@/types";
+import { z } from "zod";
 
 const API_BASE = "https://aoe4world.com/api/v0";
 
 // Maximum allowed steps in a build order to prevent performance issues
 export const MAX_BUILD_ORDER_STEPS = 200;
+const buildCache = new Map<number, BuildOrder>();
+
+async function fetchWithTimeout(input: RequestInfo | URL, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(input, {
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+      },
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 class Aoe4WorldApi {
   private async fetch<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      headers: {
-        "Accept": "application/json",
-      },
-    });
+    const response = await fetchWithTimeout(`${API_BASE}${endpoint}`);
 
     if (!response.ok) {
       throw new Error(`AoE4World API error: ${response.status} ${response.statusText}`);
@@ -108,36 +123,35 @@ export const aoe4worldApi = new Aoe4WorldApi();
 // Build Order Import
 // ============================================================================
 
-// AoE4World Build API response types
-interface Aoe4WorldBuildStep {
-  id: number;
-  position: number;
-  description: string;
-  time?: string | number | null;
-  food?: number;
-  wood?: number;
-  gold?: number;
-  stone?: number;
-  population?: number;
-  villagers?: number;
-}
+// AoE4World Build API response schema
+const Aoe4WorldBuildStepSchema = z.object({
+  id: z.number().optional(),
+  position: z.number().optional(),
+  description: z.string().min(1),
+  time: z.union([z.string(), z.number()]).nullable().optional(),
+  food: z.number().optional(),
+  wood: z.number().optional(),
+  gold: z.number().optional(),
+  stone: z.number().optional(),
+  population: z.number().optional(),
+  villagers: z.number().optional(),
+});
 
-interface Aoe4WorldBuild {
-  id: number;
-  title: string;
-  description?: string;
-  civilization: string;
-  author?: {
-    name: string;
-    profile_id?: number;
-  };
-  difficulty?: string;
-  steps: Aoe4WorldBuildStep[];
-  created_at?: string;
-  updated_at?: string;
-  views?: number;
-  likes?: number;
-}
+const Aoe4WorldBuildSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  description: z.string().optional(),
+  civilization: z.string(),
+  author: z.object({ name: z.string().optional(), profile_id: z.number().optional() }).optional(),
+  difficulty: z.string().optional(),
+  steps: z.array(Aoe4WorldBuildStepSchema).min(1),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+  views: z.number().optional(),
+  likes: z.number().optional(),
+});
+
+type Aoe4WorldBuild = z.infer<typeof Aoe4WorldBuildSchema>;
 
 // Civilization name mapping from API format to our format
 const CIVILIZATION_MAP: Record<string, Civilization> = {
@@ -197,6 +211,11 @@ const DIFFICULTY_MAP: Record<string, Difficulty> = {
  */
 export function extractBuildId(url: string): number | null {
   const cleanUrl = url.trim();
+
+  // Reject clearly wrong domains to provide actionable feedback
+  if (/https?:\/\//i.test(cleanUrl) && !/aoe4world\.com/i.test(cleanUrl)) {
+    return null;
+  }
 
   // Match patterns for build URLs
   const patterns = [
@@ -322,15 +341,17 @@ function convertBuild(build: Aoe4WorldBuild): BuildOrder {
     descParts.push(`Author: ${build.author.name}`);
   }
 
-  return {
+  const converted = BuildOrderSchema.parse({
     id: `aoe4world-${build.id}`,
     name: build.title || "Imported Build",
-    civilization: normalizeCivilization(build.civilization),
+    civilization: normalizeCivilization(build.civilization) as Civilization,
     description: descParts.join(". "),
     difficulty: normalizeDifficulty(build.difficulty),
     enabled: true,
     steps,
-  };
+  });
+
+  return converted as unknown as BuildOrder;
 }
 
 /**
@@ -338,27 +359,40 @@ function convertBuild(build: Aoe4WorldBuild): BuildOrder {
  */
 export async function fetchAoe4WorldBuild(buildId: number): Promise<BuildOrder> {
   const apiUrl = `${API_BASE}/builds/${buildId}`;
+  let lastError: unknown = null;
 
-  const response = await fetch(apiUrl, {
-    headers: {
-      "Accept": "application/json",
-    },
-  });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await fetchWithTimeout(apiUrl, 5000);
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error(`Build #${buildId} not found on aoe4world.com`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Build #${buildId} not found on aoe4world.com`);
+        }
+        throw new Error(`Failed to fetch build: ${response.status} ${response.statusText}`);
+      }
+
+      const raw = await response.json();
+      const data = Aoe4WorldBuildSchema.parse(raw);
+      const converted = convertBuild(data);
+      buildCache.set(buildId, converted);
+      return converted;
+    } catch (error) {
+      lastError = error;
+      // Retry on network/timeouts, but break on abort/404 handled above
+      if (attempt < 2) continue;
     }
-    throw new Error(`Failed to fetch build: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json() as Aoe4WorldBuild;
-
-  if (!data || !data.steps || data.steps.length === 0) {
-    throw new Error("Build has no steps");
+  if (buildCache.has(buildId)) {
+    console.warn(`Using cached aoe4world build #${buildId} due to fetch failure.`);
+    return buildCache.get(buildId)!;
   }
 
-  return convertBuild(data);
+  if (lastError instanceof Error) {
+    throw lastError;
+  }
+  throw new Error("Failed to fetch build from aoe4world.com");
 }
 
 /**
@@ -369,9 +403,16 @@ export async function importAoe4WorldBuild(urlOrId: string): Promise<BuildOrder>
 
   if (!buildId) {
     throw new Error(
-      "Invalid URL or ID. Please paste a link like: https://aoe4world.com/builds/123"
+      "Invalid AoE4World link. Use a URL like https://aoe4world.com/builds/123 or just the numeric ID."
     );
   }
 
-  return fetchAoe4WorldBuild(buildId);
+  try {
+    return await fetchAoe4WorldBuild(buildId);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error("Received unexpected build data from aoe4world.com");
+    }
+    throw error;
+  }
 }

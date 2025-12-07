@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload, Link, Loader2, Library, Globe, Eye, ThumbsUp, Search, ChevronDown, Sparkles, TrendingUp, Clock, X, ArrowUpDown, User, Flame, Target, Zap, Shield } from "lucide-react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload, Link, Loader2, Library, Globe, Eye, ThumbsUp, Search, ChevronDown, Sparkles, TrendingUp, Clock, X, ArrowUpDown, User, Flame, Target, Zap, Shield, Star, StarOff, Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -145,6 +145,37 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
       setBuildOrders(buildOrders.map((o) => (o.id === order.id ? updated : o)));
     } catch (error) {
       console.error("Failed to toggle build order:", error);
+    }
+  };
+
+  const handleToggleFavorite = async (order: BuildOrder) => {
+    const updated = { ...order, favorite: !order.favorite };
+    try {
+      await saveBuildOrder(updated);
+      setBuildOrders(buildOrders.map((o) => (o.id === order.id ? updated : o)));
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+    }
+  };
+
+  const handleTogglePin = async (order: BuildOrder) => {
+    const willPin = !order.pinned;
+    const updatedOrders = buildOrders.map((o) => {
+      if (o.id === order.id) return { ...o, pinned: willPin, enabled: true };
+      if (willPin && o.pinned) return { ...o, pinned: false };
+      return o;
+    });
+
+    const changedOrders = updatedOrders.filter((updated) => {
+      const original = buildOrders.find((o) => o.id === updated.id);
+      return original?.pinned !== updated.pinned;
+    });
+
+    setBuildOrders(updatedOrders);
+    try {
+      await Promise.all(changedOrders.map((o) => saveBuildOrder(o)));
+    } catch (error) {
+      console.error("Failed to update pinned build:", error);
     }
   };
 
@@ -385,6 +416,16 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
                     >
                       {order.name || "Untitled"}
                     </span>
+                    {order.pinned && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Auto-load
+                      </Badge>
+                    )}
+                    {order.favorite && (
+                      <Badge variant="outline" className="text-[10px]">
+                        Favorite
+                      </Badge>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <CivBadge civilization={order.civilization} />
@@ -399,6 +440,28 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
 
                 {/* Actions */}
                 <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleTogglePin(order)}
+                    title={order.pinned ? "Unpin (stop auto-loading)" : "Pin (auto-load on start)"}
+                  >
+                    <Pin className={`w-4 h-4 ${order.pinned ? "text-amber-400" : "text-muted-foreground"}`} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleToggleFavorite(order)}
+                    title={order.favorite ? "Unfavorite" : "Favorite"}
+                  >
+                    {order.favorite ? (
+                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    ) : (
+                      <StarOff className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </Button>
                   {onExport && (
                     <Button
                       variant="ghost"

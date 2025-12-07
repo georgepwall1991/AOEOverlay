@@ -15,28 +15,68 @@ export function useTimer() {
   const isPaused = useIsTimerPaused();
   const elapsedSeconds = useElapsedSeconds();
   const lastDelta = useLastDelta();
-  const intervalRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const carryRef = useRef<number>(0);
+  const lastTsRef = useRef<number | null>(null);
 
-  const { startTimer, stopTimer, resetTimer, tick, recordStepTime } =
+  const { startTimer, stopTimer, resetTimer, pauseTimer, resumeTimer, togglePause, tick, recordStepTime } =
     useTimerStore();
 
-  // Start the 1-second interval when timer is running
+  // High-resolution, drift-corrected loop (guards against tab throttling)
   useEffect(() => {
-    if (isRunning) {
-      intervalRef.current = window.setInterval(() => {
-        tick();
-      }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+    const target = 1000; // 1s
+    const schedule =
+      typeof requestAnimationFrame === "function"
+        ? requestAnimationFrame
+        : ((cb: FrameRequestCallback) =>
+            (typeof window !== "undefined"
+              ? window.setTimeout(cb, 16)
+              : setTimeout(cb, 16)) as unknown as number);
+    const cancel =
+      typeof cancelAnimationFrame === "function"
+        ? cancelAnimationFrame
+        : ((id: number) => clearTimeout(id));
+
+    const loop = () => {
+      const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
+      if (lastTsRef.current === null) {
+        lastTsRef.current = now;
       }
+      const delta = now - lastTsRef.current;
+      lastTsRef.current = now;
+      carryRef.current += delta;
+
+      // Catch up if the tab was throttled
+      while (carryRef.current >= target) {
+        tick();
+        carryRef.current -= target;
+      }
+
+      if (useTimerStore.getState().isRunning) {
+        rafRef.current = schedule(loop);
+      }
+    };
+
+    if (isRunning) {
+      lastTsRef.current = null;
+      carryRef.current = 0;
+      rafRef.current = schedule(loop);
+    } else {
+      if (rafRef.current !== null) {
+        cancel(rafRef.current);
+        rafRef.current = null;
+      }
+      lastTsRef.current = null;
+      carryRef.current = 0;
     }
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (rafRef.current !== null) {
+        cancel(rafRef.current);
       }
+      rafRef.current = null;
+      lastTsRef.current = null;
+      carryRef.current = 0;
     };
   }, [isRunning, tick]);
 
@@ -47,6 +87,18 @@ export function useTimer() {
   const stop = useCallback(() => {
     stopTimer();
   }, [stopTimer]);
+
+  const pause = useCallback(() => {
+    pauseTimer();
+  }, [pauseTimer]);
+
+  const resume = useCallback(() => {
+    resumeTimer();
+  }, [resumeTimer]);
+
+  const toggle = useCallback(() => {
+    togglePause();
+  }, [togglePause]);
 
   const reset = useCallback(() => {
     resetTimer();
@@ -86,6 +138,9 @@ export function useTimer() {
     deltaStatus,
     start,
     stop,
+    pause,
+    resume,
+    toggle,
     reset,
     recordStep,
   };

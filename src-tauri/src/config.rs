@@ -7,13 +7,19 @@ use std::path::PathBuf;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
     pub overlay_opacity: f64,
+    #[serde(default = "default_ui_scale")]
+    pub ui_scale: f64,
     pub font_size: String,
     pub theme: String,
+    #[serde(default = "default_overlay_preset")]
+    pub overlay_preset: String,
     pub hotkeys: HotkeyConfig,
     pub window_position: Option<WindowPosition>,
     pub window_size: Option<WindowSize>,
     pub click_through: bool,
     pub compact_mode: bool,
+    #[serde(default)]
+    pub coach_only_mode: bool,
     pub auto_advance: AutoAdvanceConfig,
     pub filter_civilization: Option<String>,
     pub filter_difficulty: Option<String>,
@@ -29,6 +35,8 @@ pub struct AppConfig {
     pub upgrade_badges: Option<UpgradeBadgesConfig>,
     #[serde(default, rename = "timerDrift")]
     pub timer_drift: Option<TimerDriftConfig>,
+    #[serde(default)]
+    pub telemetry: Option<TelemetryConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -46,6 +54,14 @@ pub struct HotkeyConfig {
 
 fn default_toggle_pause() -> String {
     "F8".to_string()
+}
+
+fn default_ui_scale() -> f64 {
+    1.0
+}
+
+fn default_overlay_preset() -> String {
+    "info_dense".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -155,6 +171,15 @@ pub struct TimerDriftConfig {
     pub enabled: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TelemetryConfig {
+    pub enabled: bool,
+    pub capture_hotkeys: bool,
+    pub capture_actions: bool,
+    pub max_events: u32,
+}
+
 impl Default for ReminderConfig {
     fn default() -> Self {
         Self {
@@ -174,8 +199,10 @@ impl Default for AppConfig {
     fn default() -> Self {
         Self {
             overlay_opacity: 0.8,
+            ui_scale: default_ui_scale(),
             font_size: "medium".to_string(),
             theme: "dark".to_string(),
+            overlay_preset: default_overlay_preset(),
             hotkeys: HotkeyConfig {
                 toggle_overlay: "F1".to_string(),
                 previous_step: "F2".to_string(),
@@ -190,6 +217,7 @@ impl Default for AppConfig {
             window_size: None,
             click_through: true,
             compact_mode: false,
+            coach_only_mode: false,
             auto_advance: AutoAdvanceConfig {
                 enabled: false,
                 delay_seconds: 0,
@@ -202,11 +230,28 @@ impl Default for AppConfig {
             reminders: Some(ReminderConfig::default()),
             upgrade_badges: Some(UpgradeBadgesConfig::default()),
             timer_drift: Some(TimerDriftConfig { enabled: true }),
+            telemetry: Some(TelemetryConfig {
+                enabled: false,
+                capture_actions: true,
+                capture_hotkeys: true,
+                max_events: 200,
+            }),
         }
     }
 }
 
 // Build order types
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BuildOrderBranch {
+    pub id: String,
+    pub name: String,
+    pub trigger: Option<String>,
+    #[serde(default = "default_branch_start")]
+    pub start_step_index: u32,
+    pub steps: Vec<BuildOrderStep>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BuildOrder {
     pub id: String,
@@ -216,6 +261,8 @@ pub struct BuildOrder {
     pub difficulty: String,
     pub steps: Vec<BuildOrderStep>,
     pub enabled: bool,
+    #[serde(default)]
+    pub branches: Option<Vec<BuildOrderBranch>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -232,6 +279,10 @@ pub struct Resources {
     pub wood: Option<i32>,
     pub gold: Option<i32>,
     pub stone: Option<i32>,
+}
+
+fn default_branch_start() -> u32 {
+    0
 }
 
 pub fn get_config_path() -> PathBuf {
