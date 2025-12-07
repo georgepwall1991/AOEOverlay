@@ -24,19 +24,6 @@ function App() {
       }
       const win = getCurrentWindow();
       setWindowLabel(win.label);
-
-      // Windows-specific fix for transparent window white flash
-      // The window is configured as visible=true in tauri.conf.json
-      // On Windows, transparent windows show a white flash if not hidden initially
-      if (win.label === "overlay" && navigator.userAgent.includes("Windows")) {
-        await win.hide(); // Hide immediately to prevent flash
-        // Wait for React to render and styles to apply, then show
-        setTimeout(async () => {
-          await win.show();
-          // Ensure alwaysOnTop is set after showing, in case it was reset by hide/show cycle
-          await win.setAlwaysOnTop(true);
-        }, 100);
-      }
     };
     initWindow();
   }, []);
