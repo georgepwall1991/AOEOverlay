@@ -481,4 +481,386 @@ mod tests {
         let long_id = "a".repeat(65);
         assert!(validate_build_order_id(&long_id).is_err());
     }
+
+    // Edge case tests for validate_build_order_id
+    #[test]
+    fn test_validate_build_order_id_exact_max_length() {
+        let exact_max = "a".repeat(64);
+        assert!(validate_build_order_id(&exact_max).is_ok());
+    }
+
+    #[test]
+    fn test_validate_build_order_id_single_char() {
+        assert!(validate_build_order_id("a").is_ok());
+        assert!(validate_build_order_id("1").is_ok());
+        assert!(validate_build_order_id("-").is_ok());
+        assert!(validate_build_order_id("_").is_ok());
+    }
+
+    #[test]
+    fn test_validate_build_order_id_special_chars_rejected() {
+        assert!(validate_build_order_id("test@id").is_err());
+        assert!(validate_build_order_id("test#id").is_err());
+        assert!(validate_build_order_id("test.id").is_err());
+        assert!(validate_build_order_id("test/id").is_err());
+        assert!(validate_build_order_id("test\\id").is_err());
+        assert!(validate_build_order_id("test:id").is_err());
+    }
+
+    #[test]
+    fn test_validate_build_order_id_unicode_rejected() {
+        assert!(validate_build_order_id("テスト").is_err());
+        assert!(validate_build_order_id("test-émoji").is_err());
+        assert!(validate_build_order_id("test🎮").is_err());
+    }
+
+    #[test]
+    fn test_validate_build_order_id_whitespace() {
+        assert!(validate_build_order_id(" ").is_err());
+        assert!(validate_build_order_id("\t").is_err());
+        assert!(validate_build_order_id("\n").is_err());
+        assert!(validate_build_order_id("test id").is_err());
+        assert!(validate_build_order_id(" test").is_err());
+        assert!(validate_build_order_id("test ").is_err());
+    }
+
+    #[test]
+    fn test_validate_build_order_id_mixed_case() {
+        assert!(validate_build_order_id("TestID").is_ok());
+        assert!(validate_build_order_id("ALLCAPS").is_ok());
+        assert!(validate_build_order_id("alllower").is_ok());
+        assert!(validate_build_order_id("Mixed-Case_123").is_ok());
+    }
+
+    // Helper to create a minimal valid build order
+    fn create_valid_build_order() -> BuildOrder {
+        BuildOrder {
+            id: "test-order".to_string(),
+            name: "Test Order".to_string(),
+            civilization: "English".to_string(),
+            description: "A test build order".to_string(),
+            difficulty: "Easy".to_string(),
+            steps: vec![BuildOrderStep {
+                id: "step-1".to_string(),
+                description: "First step".to_string(),
+                timing: Some("0:00".to_string()),
+                resources: None,
+            }],
+            enabled: true,
+            pinned: false,
+            favorite: false,
+            branches: None,
+        }
+    }
+
+    #[test]
+    fn test_validate_build_order_valid() {
+        let order = create_valid_build_order();
+        assert!(validate_build_order(&order).is_ok());
+    }
+
+    #[test]
+    fn test_validate_build_order_empty_steps() {
+        let mut order = create_valid_build_order();
+        order.steps = vec![];
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("at least one step"));
+    }
+
+    #[test]
+    fn test_validate_build_order_max_steps() {
+        let mut order = create_valid_build_order();
+        order.steps = (0..MAX_BUILD_ORDER_STEPS)
+            .map(|i| BuildOrderStep {
+                id: format!("step-{}", i),
+                description: format!("Step {}", i),
+                timing: None,
+                resources: None,
+            })
+            .collect();
+        assert!(validate_build_order(&order).is_ok());
+    }
+
+    #[test]
+    fn test_validate_build_order_exceeds_max_steps() {
+        let mut order = create_valid_build_order();
+        order.steps = (0..=MAX_BUILD_ORDER_STEPS)
+            .map(|i| BuildOrderStep {
+                id: format!("step-{}", i),
+                description: format!("Step {}", i),
+                timing: None,
+                resources: None,
+            })
+            .collect();
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("exceeds maximum"));
+    }
+
+    #[test]
+    fn test_validate_build_order_step_empty_id() {
+        let mut order = create_valid_build_order();
+        order.steps[0].id = "".to_string();
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("missing an id"));
+    }
+
+    #[test]
+    fn test_validate_build_order_step_whitespace_id() {
+        let mut order = create_valid_build_order();
+        order.steps[0].id = "   ".to_string();
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("missing an id"));
+    }
+
+    #[test]
+    fn test_validate_build_order_step_empty_description() {
+        let mut order = create_valid_build_order();
+        order.steps[0].description = "".to_string();
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("missing a description"));
+    }
+
+    #[test]
+    fn test_validate_build_order_step_whitespace_description() {
+        let mut order = create_valid_build_order();
+        order.steps[0].description = "\t\n".to_string();
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("missing a description"));
+    }
+
+    #[test]
+    fn test_validate_build_order_invalid_id() {
+        let mut order = create_valid_build_order();
+        order.id = "invalid id with spaces".to_string();
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("only contain letters"));
+    }
+
+    #[test]
+    fn test_validate_build_order_with_branches() {
+        let mut order = create_valid_build_order();
+        order.branches = Some(vec![BuildOrderBranch {
+            id: "branch-1".to_string(),
+            name: "Branch One".to_string(),
+            trigger: Some("Age up".to_string()),
+            start_step_index: 0,
+            steps: vec![BuildOrderStep {
+                id: "branch-step-1".to_string(),
+                description: "Branch step".to_string(),
+                timing: None,
+                resources: None,
+            }],
+        }]);
+        assert!(validate_build_order(&order).is_ok());
+    }
+
+    #[test]
+    fn test_validate_build_order_branch_exceeds_max_steps() {
+        let mut order = create_valid_build_order();
+        order.branches = Some(vec![BuildOrderBranch {
+            id: "branch-1".to_string(),
+            name: "Big Branch".to_string(),
+            trigger: None,
+            start_step_index: 0,
+            steps: (0..=MAX_BUILD_ORDER_STEPS)
+                .map(|i| BuildOrderStep {
+                    id: format!("step-{}", i),
+                    description: format!("Step {}", i),
+                    timing: None,
+                    resources: None,
+                })
+                .collect(),
+        }]);
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err();
+        assert!(err_msg.contains("Branch"));
+        assert!(err_msg.contains("exceeds maximum"));
+    }
+
+    #[test]
+    fn test_validate_build_order_branch_empty_step_id() {
+        let mut order = create_valid_build_order();
+        order.branches = Some(vec![BuildOrderBranch {
+            id: "branch-1".to_string(),
+            name: "Test Branch".to_string(),
+            trigger: None,
+            start_step_index: 0,
+            steps: vec![BuildOrderStep {
+                id: "".to_string(),
+                description: "Valid description".to_string(),
+                timing: None,
+                resources: None,
+            }],
+        }]);
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err();
+        assert!(err_msg.contains("Branch"));
+        assert!(err_msg.contains("missing an id"));
+    }
+
+    #[test]
+    fn test_validate_build_order_branch_empty_step_description() {
+        let mut order = create_valid_build_order();
+        order.branches = Some(vec![BuildOrderBranch {
+            id: "branch-1".to_string(),
+            name: "Test Branch".to_string(),
+            trigger: None,
+            start_step_index: 0,
+            steps: vec![BuildOrderStep {
+                id: "valid-id".to_string(),
+                description: "".to_string(),
+                timing: None,
+                resources: None,
+            }],
+        }]);
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("missing a description"));
+    }
+
+    #[test]
+    fn test_validate_build_order_multiple_branches() {
+        let mut order = create_valid_build_order();
+        order.branches = Some(vec![
+            BuildOrderBranch {
+                id: "branch-1".to_string(),
+                name: "Branch One".to_string(),
+                trigger: Some("Feudal".to_string()),
+                start_step_index: 0,
+                steps: vec![BuildOrderStep {
+                    id: "b1-step".to_string(),
+                    description: "Branch 1 step".to_string(),
+                    timing: None,
+                    resources: None,
+                }],
+            },
+            BuildOrderBranch {
+                id: "branch-2".to_string(),
+                name: "Branch Two".to_string(),
+                trigger: Some("Castle".to_string()),
+                start_step_index: 5,
+                steps: vec![BuildOrderStep {
+                    id: "b2-step".to_string(),
+                    description: "Branch 2 step".to_string(),
+                    timing: None,
+                    resources: None,
+                }],
+            },
+        ]);
+        assert!(validate_build_order(&order).is_ok());
+    }
+
+    #[test]
+    fn test_validate_build_order_empty_branches_vec() {
+        let mut order = create_valid_build_order();
+        order.branches = Some(vec![]);
+        assert!(validate_build_order(&order).is_ok());
+    }
+
+    // Tests for default functions
+    #[test]
+    fn test_default_toggle_pause() {
+        assert_eq!(default_toggle_pause(), "F8");
+    }
+
+    #[test]
+    fn test_default_ui_scale() {
+        assert_eq!(default_ui_scale(), 1.0);
+    }
+
+    #[test]
+    fn test_default_overlay_preset() {
+        assert_eq!(default_overlay_preset(), "info_dense");
+    }
+
+    #[test]
+    fn test_default_branch_start() {
+        assert_eq!(default_branch_start(), 0);
+    }
+
+    // Tests for Default implementations
+    #[test]
+    fn test_reminder_config_default() {
+        let config = ReminderConfig::default();
+        assert!(!config.enabled);
+        assert!(config.villager_queue.enabled);
+        assert_eq!(config.villager_queue.interval_seconds, 25);
+        assert!(config.scout.enabled);
+        assert_eq!(config.scout.interval_seconds, 45);
+        assert!(config.houses.enabled);
+        assert_eq!(config.houses.interval_seconds, 40);
+        assert!(config.military.enabled);
+        assert_eq!(config.military.interval_seconds, 60);
+        assert!(config.map_control.enabled);
+        assert_eq!(config.map_control.interval_seconds, 90);
+        assert!(!config.macro_check.enabled);
+        assert_eq!(config.macro_check.interval_seconds, 20);
+        assert!(config.sacred_sites.enabled);
+    }
+
+    #[test]
+    fn test_upgrade_badges_config_default() {
+        let config = UpgradeBadgesConfig::default();
+        assert!(config.enabled);
+        assert!(config.badges.is_empty());
+    }
+
+    #[test]
+    fn test_app_config_default_telemetry() {
+        let config = AppConfig::default();
+        let telemetry = config.telemetry.unwrap();
+        assert!(!telemetry.enabled);
+        assert!(telemetry.capture_actions);
+        assert!(telemetry.capture_hotkeys);
+        assert_eq!(telemetry.max_events, 200);
+    }
+
+    #[test]
+    fn test_app_config_default_hotkeys() {
+        let config = AppConfig::default();
+        assert_eq!(config.hotkeys.toggle_overlay, "F1");
+        assert_eq!(config.hotkeys.previous_step, "F2");
+        assert_eq!(config.hotkeys.next_step, "F3");
+        assert_eq!(config.hotkeys.cycle_build_order, "F4");
+        assert_eq!(config.hotkeys.toggle_click_through, "F5");
+        assert_eq!(config.hotkeys.toggle_compact, "F6");
+        assert_eq!(config.hotkeys.reset_build_order, "F7");
+        assert_eq!(config.hotkeys.toggle_pause, "F8");
+    }
+
+    #[test]
+    fn test_app_config_default_auto_advance() {
+        let config = AppConfig::default();
+        assert!(!config.auto_advance.enabled);
+        assert_eq!(config.auto_advance.delay_seconds, 0);
+    }
+
+    #[test]
+    fn test_app_config_default_window() {
+        let config = AppConfig::default();
+        assert!(config.window_position.is_none());
+        assert!(config.window_size.is_none());
+    }
+
+    #[test]
+    fn test_app_config_default_filters() {
+        let config = AppConfig::default();
+        assert!(config.filter_civilization.is_none());
+        assert!(config.filter_difficulty.is_none());
+    }
+
+    // Test MAX_BUILD_ORDER_STEPS constant
+    #[test]
+    fn test_max_build_order_steps_constant() {
+        assert_eq!(MAX_BUILD_ORDER_STEPS, 200);
+    }
 }

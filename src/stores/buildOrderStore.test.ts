@@ -674,3 +674,437 @@ describe("buildOrderStore selectors", () => {
     });
   });
 });
+
+describe("buildOrderStore edge cases", () => {
+  beforeEach(() => {
+    const { result } = renderHook(() => useBuildOrderStore());
+    act(() => {
+      result.current.setBuildOrders([]);
+    });
+  });
+
+  describe("resolveActiveSteps edge cases", () => {
+    it("handles undefined order", () => {
+      const steps = resolveActiveSteps(undefined, null);
+      expect(steps).toEqual([]);
+    });
+
+    it("handles order with undefined steps", () => {
+      const order = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+      } as BuildOrder;
+      const steps = resolveActiveSteps(order, null);
+      expect(steps).toEqual([]);
+    });
+
+    it("handles branch with undefined steps", () => {
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [{ id: "s1", description: "Step 1" }],
+        branches: [
+          {
+            id: "branch1",
+            name: "Branch",
+            startStepIndex: 0,
+          } as any,
+        ],
+      };
+      const steps = resolveActiveSteps(order, "branch1");
+      expect(steps).toEqual([]);
+    });
+
+    it("handles branch with startStepIndex beyond steps length", () => {
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [{ id: "s1", description: "Step 1" }],
+        branches: [
+          {
+            id: "branch1",
+            name: "Branch",
+            startStepIndex: 100,
+            steps: [{ id: "b1", description: "Branch Step" }],
+          },
+        ],
+      };
+      const steps = resolveActiveSteps(order, "branch1");
+      // Should clamp startStepIndex to steps.length
+      expect(steps).toHaveLength(2);
+    });
+
+    it("handles branch with negative startStepIndex", () => {
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [
+          { id: "s1", description: "Step 1" },
+          { id: "s2", description: "Step 2" },
+        ],
+        branches: [
+          {
+            id: "branch1",
+            name: "Branch",
+            startStepIndex: -5,
+            steps: [{ id: "b1", description: "Branch Step" }],
+          },
+        ],
+      };
+      const steps = resolveActiveSteps(order, "branch1");
+      // Should clamp to 0
+      expect(steps[0].id).toBe("b1");
+    });
+
+    it("handles non-existent branch id", () => {
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [{ id: "s1", description: "Step 1" }],
+        branches: [
+          {
+            id: "branch1",
+            name: "Branch",
+            startStepIndex: 0,
+            steps: [{ id: "b1", description: "Branch Step" }],
+          },
+        ],
+      };
+      const steps = resolveActiveSteps(order, "nonexistent");
+      expect(steps).toHaveLength(1);
+      expect(steps[0].id).toBe("s1");
+    });
+
+    it("handles order with empty branches array", () => {
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [{ id: "s1", description: "Step 1" }],
+        branches: [],
+      };
+      const steps = resolveActiveSteps(order, "any");
+      expect(steps).toHaveLength(1);
+    });
+  });
+
+  describe("setBuildOrders with pinned orders", () => {
+    it("sets currentOrderIndex to pinned order", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+      const ordersWithPinned: BuildOrder[] = [
+        {
+          id: "order-1",
+          name: "First",
+          civilization: "English",
+          description: "",
+          difficulty: "Beginner",
+          enabled: true,
+          steps: [],
+          pinned: false,
+        },
+        {
+          id: "order-2",
+          name: "Pinned",
+          civilization: "French",
+          description: "",
+          difficulty: "Beginner",
+          enabled: true,
+          steps: [],
+          pinned: true,
+        },
+        {
+          id: "order-3",
+          name: "Third",
+          civilization: "Mongols",
+          description: "",
+          difficulty: "Beginner",
+          enabled: true,
+          steps: [],
+          pinned: false,
+        },
+      ];
+
+      act(() => {
+        result.current.setBuildOrders(ordersWithPinned);
+      });
+
+      expect(result.current.currentOrderIndex).toBe(1);
+    });
+
+    it("uses first pinned if multiple pinned", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+      const ordersWithMultiplePinned: BuildOrder[] = [
+        {
+          id: "order-1",
+          name: "First",
+          civilization: "English",
+          description: "",
+          difficulty: "Beginner",
+          enabled: true,
+          steps: [],
+          pinned: false,
+        },
+        {
+          id: "order-2",
+          name: "Pinned 1",
+          civilization: "French",
+          description: "",
+          difficulty: "Beginner",
+          enabled: true,
+          steps: [],
+          pinned: true,
+        },
+        {
+          id: "order-3",
+          name: "Pinned 2",
+          civilization: "Mongols",
+          description: "",
+          difficulty: "Beginner",
+          enabled: true,
+          steps: [],
+          pinned: true,
+        },
+      ];
+
+      act(() => {
+        result.current.setBuildOrders(ordersWithMultiplePinned);
+      });
+
+      expect(result.current.currentOrderIndex).toBe(1);
+    });
+  });
+
+  describe("cycleBuildOrder edge cases", () => {
+    it("handles cycling when current order is not in enabled list", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+      const orders: BuildOrder[] = [
+        {
+          id: "disabled",
+          name: "Disabled",
+          civilization: "English",
+          description: "",
+          difficulty: "Beginner",
+          enabled: false,
+          steps: [],
+        },
+        {
+          id: "enabled-1",
+          name: "Enabled 1",
+          civilization: "French",
+          description: "",
+          difficulty: "Beginner",
+          enabled: true,
+          steps: [],
+        },
+      ];
+
+      act(() => {
+        result.current.setBuildOrders(orders);
+        // Current is index 0 (disabled order)
+      });
+
+      act(() => {
+        result.current.cycleBuildOrder();
+      });
+
+      // Should cycle to next enabled
+      expect(result.current.currentOrderIndex).toBe(1);
+    });
+  });
+
+  describe("setActiveBranch edge cases", () => {
+    it("clamps step index when branch has fewer steps", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [
+          { id: "s1", description: "Step 1" },
+          { id: "s2", description: "Step 2" },
+          { id: "s3", description: "Step 3" },
+          { id: "s4", description: "Step 4" },
+        ],
+        branches: [
+          {
+            id: "short-branch",
+            name: "Short",
+            startStepIndex: 1,
+            steps: [{ id: "b1", description: "Branch Step" }],
+          },
+        ],
+      };
+
+      act(() => {
+        result.current.setBuildOrders([order]);
+        result.current.goToStep(3); // Go to step 4
+      });
+
+      expect(result.current.currentStepIndex).toBe(3);
+
+      act(() => {
+        result.current.setActiveBranch("short-branch");
+      });
+
+      // Branch has only 2 steps (1 base + 1 branch), so index should clamp to 1
+      expect(result.current.currentStepIndex).toBeLessThanOrEqual(1);
+    });
+
+    it("clears branch when setting to null", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [{ id: "s1", description: "Step 1" }],
+        branches: [
+          {
+            id: "branch1",
+            name: "Branch",
+            startStepIndex: 0,
+            steps: [{ id: "b1", description: "Branch Step" }],
+          },
+        ],
+      };
+
+      act(() => {
+        result.current.setBuildOrders([order]);
+        result.current.setActiveBranch("branch1");
+      });
+
+      expect(result.current.activeBranchId).toBe("branch1");
+
+      act(() => {
+        result.current.setActiveBranch(null);
+      });
+
+      expect(result.current.activeBranchId).toBeNull();
+    });
+  });
+
+  describe("goToStep edge cases", () => {
+    it("ignores goToStep when steps array is empty", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+      const emptyOrder: BuildOrder = {
+        id: "empty",
+        name: "Empty",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [],
+      };
+
+      act(() => {
+        result.current.setBuildOrders([emptyOrder]);
+        result.current.goToStep(5);
+      });
+
+      expect(result.current.currentStepIndex).toBe(0);
+    });
+
+    it("handles goToStep to exact last index", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [
+          { id: "s1", description: "Step 1" },
+          { id: "s2", description: "Step 2" },
+          { id: "s3", description: "Step 3" },
+        ],
+      };
+
+      act(() => {
+        result.current.setBuildOrders([order]);
+        result.current.goToStep(2); // Last valid index
+      });
+
+      expect(result.current.currentStepIndex).toBe(2);
+    });
+  });
+
+  describe("nextStep edge cases", () => {
+    it("handles nextStep with active branch", () => {
+      const { result } = renderHook(() => useBuildOrderStore());
+      const order: BuildOrder = {
+        id: "test",
+        name: "Test",
+        civilization: "English",
+        description: "",
+        difficulty: "Beginner",
+        enabled: true,
+        steps: [
+          { id: "s1", description: "Step 1" },
+          { id: "s2", description: "Step 2" },
+        ],
+        branches: [
+          {
+            id: "branch1",
+            name: "Branch",
+            startStepIndex: 1,
+            steps: [
+              { id: "b1", description: "Branch 1" },
+              { id: "b2", description: "Branch 2" },
+            ],
+          },
+        ],
+      };
+
+      act(() => {
+        result.current.setBuildOrders([order]);
+        result.current.setActiveBranch("branch1");
+      });
+
+      // Branch has 3 steps: s1 + b1 + b2
+      act(() => {
+        result.current.nextStep();
+      });
+      expect(result.current.currentStepIndex).toBe(1);
+
+      act(() => {
+        result.current.nextStep();
+      });
+      expect(result.current.currentStepIndex).toBe(2);
+
+      act(() => {
+        result.current.nextStep();
+      });
+      // Should not advance past last
+      expect(result.current.currentStepIndex).toBe(2);
+    });
+  });
+});

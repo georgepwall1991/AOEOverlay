@@ -600,3 +600,295 @@ describe("timerStore selectors", () => {
     expect(selectorResult.current).toBe(30);
   });
 });
+
+describe("timerStore edge cases", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(performance, "now").mockImplementation(() => Date.now());
+    const { result } = renderHook(() => useTimerStore());
+    act(() => {
+      result.current.resetTimer();
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe("parseTimingToSeconds edge cases", () => {
+    it("handles whitespace in timing string", () => {
+      // parseInt trims leading/trailing whitespace, so these are valid
+      expect(parseTimingToSeconds(" 1:30")).toBe(90);
+      expect(parseTimingToSeconds("1:30 ")).toBe(90);
+    });
+
+    it("handles negative numbers", () => {
+      // parseInt handles negative numbers, so -1:30 = -1*60 + 30 = -30
+      expect(parseTimingToSeconds("-1:30")).toBe(-30);
+    });
+
+    it("handles decimal numbers", () => {
+      // parseInt truncates decimals, so 1.5:30 parses as 1:30 = 90
+      expect(parseTimingToSeconds("1.5:30")).toBe(90);
+    });
+
+    it("handles very large numbers", () => {
+      expect(parseTimingToSeconds("9999:59")).toBe(9999 * 60 + 59);
+    });
+
+    it("returns null for completely invalid input", () => {
+      expect(parseTimingToSeconds("abc:def")).toBeNull();
+      expect(parseTimingToSeconds("::")).toBeNull();
+    });
+  });
+
+  describe("formatDelta edge cases", () => {
+    it("handles zero delta", () => {
+      expect(formatDelta(0)).toBe("0:00");
+    });
+
+    it("handles exactly -1 second", () => {
+      expect(formatDelta(-1)).toBe("-0:01");
+    });
+
+    it("handles exactly +1 second", () => {
+      expect(formatDelta(1)).toBe("+0:01");
+    });
+
+    it("handles large negative delta", () => {
+      expect(formatDelta(-3600)).toBe("-60:00");
+    });
+
+    it("handles large positive delta", () => {
+      expect(formatDelta(3600)).toBe("+60:00");
+    });
+  });
+
+  describe("formatDeltaCompact edge cases", () => {
+    it("handles zero", () => {
+      expect(formatDeltaCompact(0)).toBe("0s");
+    });
+
+    it("handles negative seconds", () => {
+      expect(formatDeltaCompact(-30)).toBe("-30s");
+    });
+
+    it("handles positive seconds", () => {
+      expect(formatDeltaCompact(30)).toBe("+30s");
+    });
+
+    it("handles large values", () => {
+      expect(formatDeltaCompact(3600)).toBe("+3600s");
+      expect(formatDeltaCompact(-3600)).toBe("-3600s");
+    });
+  });
+
+  describe("startTimer edge cases", () => {
+    it("does nothing when already running", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.startTimer();
+      });
+      const startedAt1 = result.current.startedAt;
+
+      act(() => {
+        vi.advanceTimersByTime(1000);
+        result.current.startTimer();
+      });
+
+      // Should not reset startedAt
+      expect(result.current.startedAt).toBe(startedAt1);
+      expect(result.current.isRunning).toBe(true);
+    });
+
+    it("resumes from accumulated time when not fresh start", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.startTimer();
+        vi.advanceTimersByTime(5000);
+        result.current.tick();
+        result.current.pauseTimer();
+      });
+
+      expect(result.current.elapsedSeconds).toBe(5);
+      expect(result.current.accumulatedTime).toBeGreaterThan(0);
+
+      act(() => {
+        result.current.startTimer();
+        vi.advanceTimersByTime(3000);
+        result.current.tick();
+      });
+
+      expect(result.current.elapsedSeconds).toBe(8);
+    });
+  });
+
+  describe("pauseTimer edge cases", () => {
+    it("does nothing when not running", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.pauseTimer();
+      });
+
+      expect(result.current.isPaused).toBe(false);
+      expect(result.current.isRunning).toBe(false);
+    });
+
+    it("does nothing when startedAt is null", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      // Force an invalid state
+      act(() => {
+        useTimerStore.setState({ isRunning: true, startedAt: null });
+        result.current.pauseTimer();
+      });
+
+      // Should handle gracefully
+      expect(result.current.isPaused).toBe(false);
+    });
+  });
+
+  describe("resumeTimer edge cases", () => {
+    it("does nothing when not paused", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.resumeTimer();
+      });
+
+      expect(result.current.isRunning).toBe(false);
+      expect(result.current.isPaused).toBe(false);
+    });
+  });
+
+  describe("togglePause edge cases", () => {
+    it("does nothing when timer has not started", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.togglePause();
+      });
+
+      expect(result.current.isRunning).toBe(false);
+      expect(result.current.isPaused).toBe(false);
+    });
+
+    it("pauses when running", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.startTimer();
+        result.current.togglePause();
+      });
+
+      expect(result.current.isRunning).toBe(false);
+      expect(result.current.isPaused).toBe(true);
+    });
+
+    it("resumes when paused", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.startTimer();
+        result.current.pauseTimer();
+        result.current.togglePause();
+      });
+
+      expect(result.current.isRunning).toBe(true);
+      expect(result.current.isPaused).toBe(false);
+    });
+  });
+
+  describe("tick edge cases", () => {
+    it("does nothing when not running", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.tick();
+      });
+
+      expect(result.current.elapsedSeconds).toBe(0);
+    });
+
+    it("does nothing when startedAt is null", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        useTimerStore.setState({ isRunning: true, startedAt: null });
+        result.current.tick();
+      });
+
+      expect(result.current.elapsedSeconds).toBe(0);
+    });
+  });
+
+  describe("recordStepTime edge cases", () => {
+    it("accumulates drift across multiple steps", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.startTimer();
+        vi.advanceTimersByTime(70000); // 1:10
+        result.current.tick();
+        result.current.recordStepTime("1:00"); // 10s behind
+      });
+
+      expect(result.current.accumulatedDrift).toBe(10);
+
+      act(() => {
+        vi.advanceTimersByTime(50000); // now at 2:00
+        result.current.tick();
+        result.current.recordStepTime("2:30"); // 30s ahead
+      });
+
+      // 10 + (-30) = -20
+      expect(result.current.accumulatedDrift).toBe(-20);
+    });
+
+    it("handles invalid timing string", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.startTimer();
+        vi.advanceTimersByTime(5000);
+        result.current.tick();
+        result.current.recordStepTime("invalid");
+      });
+
+      expect(result.current.lastStepTime).toBe(5);
+      expect(result.current.lastDelta).toBeNull();
+    });
+  });
+
+  describe("stopTimer", () => {
+    it("resets all state", () => {
+      const { result } = renderHook(() => useTimerStore());
+
+      act(() => {
+        result.current.startTimer();
+        vi.advanceTimersByTime(10000);
+        result.current.tick();
+        result.current.recordStepTime("0:30");
+      });
+
+      expect(result.current.elapsedSeconds).toBe(10);
+      expect(result.current.accumulatedDrift).not.toBe(0);
+
+      act(() => {
+        result.current.stopTimer();
+      });
+
+      expect(result.current.isRunning).toBe(false);
+      expect(result.current.isPaused).toBe(false);
+      expect(result.current.startedAt).toBeNull();
+      expect(result.current.accumulatedTime).toBe(0);
+      expect(result.current.elapsedSeconds).toBe(0);
+      expect(result.current.lastStepTime).toBeNull();
+      expect(result.current.lastDelta).toBeNull();
+      expect(result.current.accumulatedDrift).toBe(0);
+    });
+  });
+});

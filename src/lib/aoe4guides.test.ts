@@ -5,6 +5,8 @@ import {
   importAoe4GuidesBuild,
   browseAoe4GuidesBuilds,
   getCivNameFromCode,
+  CIVILIZATION_TO_CODE,
+  MAX_BUILD_ORDER_STEPS,
 } from "./aoe4guides";
 
 describe("aoe4guides utilities", () => {
@@ -476,5 +478,528 @@ describe("aoe4guides API", () => {
 
       await expect(browseAoe4GuidesBuilds()).rejects.toThrow("500");
     });
+
+    it("handles null values from API gracefully", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: "1",
+            title: null,
+            description: null,
+            author: null,
+            civ: null,
+            strategy: null,
+            season: null,
+            views: null,
+            likes: null,
+            upvotes: null,
+            downvotes: null,
+            score: null,
+            isDraft: null,
+          },
+        ],
+      });
+
+      const result = await browseAoe4GuidesBuilds();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe("");
+      expect(result[0].description).toBe("");
+      expect(result[0].author).toBe("");
+      expect(result[0].views).toBe(0);
+    });
+  });
+
+  describe("edge cases", () => {
+    it("handles HTML img tags in step descriptions", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description:
+                    '<img src="/assets/pictures/unit_worker/villager.png" class="icon-default" title="Villager" /> to food',
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.steps[0].description).toContain("[icon:villager]");
+      expect(result.steps[0].description).not.toContain("<img");
+    });
+
+    it("handles br tags in descriptions", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description: "Build house<br />Then build mill<br/>Finally get food",
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.steps[0].description).not.toContain("<br");
+      expect(result.steps[0].description).toContain("|");
+    });
+
+    it("handles HTML entities in descriptions", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description: "&amp; test &lt; &gt; &quot; &#39; &nbsp;",
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.steps[0].description).toContain("&");
+      expect(result.steps[0].description).toContain("<");
+      expect(result.steps[0].description).toContain(">");
+      expect(result.steps[0].description).toContain('"');
+      expect(result.steps[0].description).toContain("'");
+    });
+
+    it("handles timing with HTML tags", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description: "Test",
+                  time: "<br />2:30<br/>",
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.steps[0].timing).toBe("2:30");
+    });
+
+    it("skips empty steps", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                { description: "" },
+                { description: "Valid step" },
+                { description: "   " },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.steps.length).toBe(1);
+      expect(result.steps[0].description).toBe("Valid step");
+    });
+
+    it("skips steps that are only separators", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                { description: "<br /><br/>" },
+                { description: "Valid step" },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      // Should skip the separator-only step
+      expect(result.steps.some((s) => s.description === "Valid step")).toBe(true);
+    });
+
+    it("handles zero resources", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description: "Test",
+                  food: "0",
+                  wood: "0",
+                  gold: "0",
+                  stone: "0",
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      // All zeros should result in no resources object
+      expect(result.steps[0].resources).toBeUndefined();
+    });
+
+    it("handles negative and invalid resource values", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description: "Test",
+                  food: "-50",
+                  wood: "abc",
+                  gold: "50",
+                  stone: "",
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.steps[0].resources?.food).toBeUndefined();
+      expect(result.steps[0].resources?.wood).toBeUndefined();
+      expect(result.steps[0].resources?.gold).toBe(50);
+      expect(result.steps[0].resources?.stone).toBeUndefined();
+    });
+
+    it("handles unknown civilization codes with fallback", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "UNKNOWN_CIV",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [{ description: "Test" }],
+            },
+          ],
+        }),
+      });
+
+      // Should fall back to English and log a warning
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.civilization).toBe("English");
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it("handles unknown strategy with fallback to Intermediate", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          strategy: "Some Unknown Strategy",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [{ description: "Test" }],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.difficulty).toBe("Intermediate");
+    });
+
+    it("handles gameplan as first step", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "This is the gameplan for Dark Age",
+              steps: [{ description: "First actual step" }],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      // Gameplan should be capitalized and included
+      expect(result.steps[0].description).toBe("This is the gameplan for Dark Age");
+      expect(result.steps[1].description).toBe("First actual step");
+    });
+
+    it("handles all age levels correctly", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "ageUp",
+              age: 1, // Age up from 1 to 2
+              gameplan: "",
+              steps: [{ description: "Step" }],
+            },
+            {
+              type: "ageUp",
+              age: 2, // Age up from 2 to 3
+              gameplan: "",
+              steps: [{ description: "Step" }],
+            },
+            {
+              type: "ageUp",
+              age: 3, // Age up from 3 to 4
+              gameplan: "",
+              steps: [{ description: "Step" }],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.steps.some((s) => s.description.includes("Feudal Age"))).toBe(true);
+      expect(result.steps.some((s) => s.description.includes("Castle Age"))).toBe(true);
+      expect(result.steps.some((s) => s.description.includes("Imperial Age"))).toBe(true);
+    });
+
+    it("handles age beyond 4 with fallback", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "ageUp",
+              age: 4, // Age up from 4 to 5 (doesn't exist)
+              gameplan: "",
+              steps: [{ description: "Step" }],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.steps.some((s) => s.description.includes("Age 5"))).toBe(true);
+    });
+
+    it("retries on network failure", async () => {
+      // First two calls fail, third succeeds
+      mockFetch
+        .mockRejectedValueOnce(new Error("Network error"))
+        .mockRejectedValueOnce(new Error("Network error"))
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            id: "test",
+            title: "Test",
+            civ: "ENG",
+            steps: [
+              {
+                type: "age",
+                age: 1,
+                gameplan: "",
+                steps: [{ description: "Test" }],
+              },
+            ],
+          }),
+        });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.id).toBe("aoe4guides-test");
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it("handles build with empty title", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [{ description: "Test" }],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.name).toBe("Imported Build");
+    });
+
+    it("includes author and strategy in description", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          description: "My build description",
+          author: "TestAuthor",
+          civ: "ENG",
+          strategy: "Rush",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [{ description: "Test" }],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+
+      expect(result.description).toContain("My build description");
+      expect(result.description).toContain("TestAuthor");
+      expect(result.description).toContain("Rush");
+      expect(result.description).toContain("aoe4guides.com");
+    });
+  });
+});
+
+describe("CIVILIZATION_TO_CODE mapping", () => {
+  it("maps all standard civilizations", () => {
+    expect(CIVILIZATION_TO_CODE["English"]).toBe("ENG");
+    expect(CIVILIZATION_TO_CODE["French"]).toBe("FRE");
+    expect(CIVILIZATION_TO_CODE["Holy Roman Empire"]).toBe("HRE");
+    expect(CIVILIZATION_TO_CODE["Rus"]).toBe("RUS");
+    expect(CIVILIZATION_TO_CODE["Chinese"]).toBe("CHI");
+    expect(CIVILIZATION_TO_CODE["Delhi Sultanate"]).toBe("DEL");
+    expect(CIVILIZATION_TO_CODE["Abbasid Dynasty"]).toBe("ABB");
+    expect(CIVILIZATION_TO_CODE["Mongols"]).toBe("MON");
+    expect(CIVILIZATION_TO_CODE["Ottomans"]).toBe("OTT");
+    expect(CIVILIZATION_TO_CODE["Malians"]).toBe("MAL");
+    expect(CIVILIZATION_TO_CODE["Byzantines"]).toBe("BYZ");
+    expect(CIVILIZATION_TO_CODE["Japanese"]).toBe("JAP");
+  });
+
+  it("maps variant civilizations", () => {
+    expect(CIVILIZATION_TO_CODE["Jeanne d'Arc"]).toBe("JDA");
+    expect(CIVILIZATION_TO_CODE["Ayyubids"]).toBe("AYY");
+    expect(CIVILIZATION_TO_CODE["Zhu Xi's Legacy"]).toBe("ZXL");
+    expect(CIVILIZATION_TO_CODE["Order of the Dragon"]).toBe("DRA");
+  });
+
+  it("maps Dynasties of the East DLC civilizations", () => {
+    expect(CIVILIZATION_TO_CODE["Golden Horde"]).toBe("GHO");
+    expect(CIVILIZATION_TO_CODE["Macedonian Dynasty"]).toBe("MAC");
+    expect(CIVILIZATION_TO_CODE["Sengoku Daimyo"]).toBe("SEN");
+    expect(CIVILIZATION_TO_CODE["Tughlaq Dynasty"]).toBe("TUG");
+  });
+});
+
+describe("MAX_BUILD_ORDER_STEPS constant", () => {
+  it("is 200", () => {
+    expect(MAX_BUILD_ORDER_STEPS).toBe(200);
   });
 });

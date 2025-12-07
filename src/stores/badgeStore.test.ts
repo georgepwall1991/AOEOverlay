@@ -118,4 +118,99 @@ describe("badgeStore", () => {
       expect(result.current.isBadgeDismissed("wheelbarrow")).toBe(false);
     });
   });
+
+  describe("edge cases", () => {
+    it("handles empty string badge id", () => {
+      const { result } = renderHook(() => useBadgeStore());
+
+      act(() => {
+        result.current.dismissBadge("");
+      });
+
+      expect(result.current.dismissedBadges.has("")).toBe(true);
+      expect(result.current.isBadgeDismissed("")).toBe(true);
+    });
+
+    it("handles badge id with special characters", () => {
+      const { result } = renderHook(() => useBadgeStore());
+
+      act(() => {
+        result.current.dismissBadge("badge-with-dashes");
+        result.current.dismissBadge("badge_with_underscores");
+        result.current.dismissBadge("badge.with.dots");
+      });
+
+      expect(result.current.isBadgeDismissed("badge-with-dashes")).toBe(true);
+      expect(result.current.isBadgeDismissed("badge_with_underscores")).toBe(true);
+      expect(result.current.isBadgeDismissed("badge.with.dots")).toBe(true);
+    });
+
+    it("handles very long badge ids", () => {
+      const { result } = renderHook(() => useBadgeStore());
+      const longId = "a".repeat(1000);
+
+      act(() => {
+        result.current.dismissBadge(longId);
+      });
+
+      expect(result.current.isBadgeDismissed(longId)).toBe(true);
+    });
+
+    it("handles unicode badge ids", () => {
+      const { result } = renderHook(() => useBadgeStore());
+
+      act(() => {
+        result.current.dismissBadge("badge_émoji_🎮");
+        result.current.dismissBadge("日本語バッジ");
+      });
+
+      expect(result.current.isBadgeDismissed("badge_émoji_🎮")).toBe(true);
+      expect(result.current.isBadgeDismissed("日本語バッジ")).toBe(true);
+    });
+
+    it("is case sensitive", () => {
+      const { result } = renderHook(() => useBadgeStore());
+
+      act(() => {
+        result.current.dismissBadge("Wheelbarrow");
+      });
+
+      expect(result.current.isBadgeDismissed("Wheelbarrow")).toBe(true);
+      expect(result.current.isBadgeDismissed("wheelbarrow")).toBe(false);
+      expect(result.current.isBadgeDismissed("WHEELBARROW")).toBe(false);
+    });
+
+    it("handles dismissing many badges", () => {
+      const { result } = renderHook(() => useBadgeStore());
+
+      act(() => {
+        for (let i = 0; i < 100; i++) {
+          result.current.dismissBadge(`badge_${i}`);
+        }
+      });
+
+      expect(result.current.dismissedBadges.size).toBe(100);
+      expect(result.current.isBadgeDismissed("badge_0")).toBe(true);
+      expect(result.current.isBadgeDismissed("badge_99")).toBe(true);
+    });
+
+    it("reset works with many dismissed badges", () => {
+      const { result } = renderHook(() => useBadgeStore());
+
+      act(() => {
+        for (let i = 0; i < 50; i++) {
+          result.current.dismissBadge(`badge_${i}`);
+        }
+      });
+
+      expect(result.current.dismissedBadges.size).toBe(50);
+
+      act(() => {
+        result.current.resetBadges();
+      });
+
+      expect(result.current.dismissedBadges.size).toBe(0);
+      expect(result.current.isBadgeDismissed("badge_0")).toBe(false);
+    });
+  });
 });
