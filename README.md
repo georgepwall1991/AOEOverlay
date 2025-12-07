@@ -1,192 +1,184 @@
+<div align="center">
+
 # AoE4 Overlay
 
-A modern, cross-platform overlay application for Age of Empires 4 that displays build orders with voice coaching, timers, and player statistics.
+### Your Build Order Coach for Age of Empires IV
 
-Built with **Tauri v2 + React 19 + TypeScript + Tailwind CSS + shadcn/ui**.
+[![Release](https://img.shields.io/github/v/release/georgepwall1991/AOEOverlay?style=for-the-badge&logo=github&color=blue)](https://github.com/georgepwall1991/AOEOverlay/releases)
+[![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=for-the-badge)]()
+[![Tauri](https://img.shields.io/badge/built%20with-Tauri%20v2-FFC131?style=for-the-badge&logo=tauri)](https://tauri.app)
+
+**A lightweight, cross-platform overlay that displays build orders while you play.**
+
+Import from [aoe4world.com](https://aoe4world.com) or [aoe4guides.com](https://aoe4guides.com), navigate with hotkeys, and get voice coaching to improve your game.
+
+[**Download**](#-installation) · [**Features**](#-features) · [**Usage**](#-usage) · [**Contributing**](#-contributing)
+
+---
+
+<!-- Add a screenshot here -->
+<!-- ![AoE4 Overlay Screenshot](docs/images/screenshot.png) -->
+
+</div>
+
+## Why AoE4 Overlay?
+
+- **Zero alt-tabbing** — Build orders stay visible on top of your game
+- **Voice coaching** — Steps are read aloud so you never miss a beat
+- **Import in seconds** — Paste any URL from aoe4world.com or aoe4guides.com
+- **Tiny footprint** — ~4MB app, minimal CPU/memory usage
+- **Works offline** — No account or internet required to use
+
+---
+
+## Installation
+
+### Download
+
+| Platform | Download |
+|:--------:|:--------:|
+| **Windows** | [`.msi` installer](https://github.com/georgepwall1991/AOEOverlay/releases/latest) |
+| **macOS (Apple Silicon)** | [`.dmg` installer](https://github.com/georgepwall1991/AOEOverlay/releases/latest) |
+| **macOS (Intel)** | [`.dmg` installer](https://github.com/georgepwall1991/AOEOverlay/releases/latest) |
+| **Linux** | [`.AppImage`](https://github.com/georgepwall1991/AOEOverlay/releases/latest) / [`.deb`](https://github.com/georgepwall1991/AOEOverlay/releases/latest) |
+
+> **Note:** Apps are unsigned. On macOS, right-click and select "Open" the first time. On Windows, click "More info" → "Run anyway".
+
+---
 
 ## Features
 
 ### Build Order Display
-- Transparent, always-on-top overlay window
-- Shows current, previous, and upcoming build order steps
-- Resource tracking per step (food, wood, gold, stone)
-- Civilization badges and official AoE4 game icons
-- Two display modes: **Expanded** and **Compact**
-- Click-through mode for non-interactive overlay
-- Draggable window with position memory
 
-### Voice Coaching (TTS)
-- Text-to-speech reads build order steps aloud
-- Configurable speech rate (0.5x - 2.0x)
-- Platform-native TTS (macOS `say`, Windows System.Speech)
-- Icon markers converted to readable text (`[icon:scout]` → "scout")
+| Feature | Description |
+|---------|-------------|
+| **Always-on-top** | Transparent overlay stays visible during gameplay |
+| **Step navigation** | See current, previous, and upcoming steps at a glance |
+| **Resource tracking** | Food, wood, gold, stone counts per step |
+| **Civilization badges** | Visual civ indicators with official game icons |
+| **Two view modes** | Expanded (detailed) or Compact (minimal) |
+| **Click-through** | Overlay doesn't block mouse clicks on your game |
+
+### Voice Coaching
+
+- **Text-to-speech** reads each step aloud as you advance
+- **Adjustable speed** from 0.5x to 2.0x
+- **Smart icon parsing** — `[icon:scout]` is spoken as "scout"
+- **Platform native** — Uses macOS `say` and Windows SAPI
 
 ### Timer & Pace Tracking
-- Tracks elapsed game time from first step
-- Shows delta (ahead/behind) vs expected build order timing
-- Visual timer bar with pace indicator
 
-### Periodic Reminders
-- Configurable voice reminders for common tasks:
-  - Keep queuing villagers (default: 25s)
-  - Check your scout (default: 45s)
-  - Don't get supply blocked (default: 40s)
-  - Build more military (default: 60s)
-  - Control the map (default: 90s)
+- Tracks elapsed game time from your first step
+- Shows **delta** (ahead/behind) vs expected timing
+- Visual progress bar with pace indicator
+
+### Import From Popular Sites
+
+```
+https://aoe4world.com/builds/12345
+https://aoe4guides.com/build/abc123
+```
+
+Just paste the URL and the build is imported automatically.
 
 ### Global Hotkeys
-| Default | Action |
-|---------|--------|
+
+| Key | Action |
+|:---:|--------|
 | `F1` | Toggle overlay visibility |
 | `F2` | Previous step |
 | `F3` | Next step |
-| `F4` | Cycle build order |
-| `F5` | Toggle click-through |
+| `F4` | Cycle between build orders |
+| `F5` | Toggle click-through mode |
 | `F6` | Toggle compact mode |
-| `F7` | Reset build order |
+| `F7` | Reset to step 1 |
+| `F8` | Start/pause timer |
+| `?` | Show keyboard shortcuts |
 
-All hotkeys work while the game has focus.
+All hotkeys work while AoE4 has focus. Fully customizable in Settings.
 
-### Build Order Management
-- Import/export build orders (JSON format)
-- Enable/disable individual build orders
-- Filter by civilization and difficulty
-- Built-in editor for customization
+### Periodic Reminders
 
-### Player Statistics
-- Integration with [AoE4 World API](https://aoe4world.com)
-- Search players by name
-- View rank, rating, win rate
-- Per-civilization statistics
+Voice reminders to keep you on track:
 
-## Installation
+| Reminder | Default Interval |
+|----------|:----------------:|
+| Queue villagers | 25s |
+| Check your scout | 45s |
+| Don't get supply blocked | 40s |
+| Build more military | 60s |
+| Control the map | 90s |
+
+---
+
+## Usage
+
+1. **Launch the app** — Overlay appears in the corner of your screen
+2. **Import a build** — Settings → paste URL from aoe4world or aoe4guides
+3. **Start your game** — Overlay stays on top of AoE4
+4. **Navigate with hotkeys** — Press `F3` to advance steps as you play
+5. **Listen to coaching** — Steps are read aloud automatically
+
+### Quick Tips
+
+- Press `?` anytime to see all keyboard shortcuts
+- Click the build name to switch between multiple builds
+- Drag the grip icon to reposition the overlay
+- Toggle icons in the header for voice, click-through, and compact mode
+
+---
+
+## Supported Civilizations
+
+<details>
+<summary><strong>All 20 civilizations supported</strong></summary>
+
+**Base Game:**
+English, French, Holy Roman Empire, Rus, Chinese, Delhi Sultanate, Abbasid Dynasty, Mongols
+
+**The Sultans Ascend:**
+Ottomans, Malians, Byzantines, Japanese
+
+**Variant Civilizations:**
+Jeanne d'Arc, Ayyubids, Zhu Xi's Legacy, Order of the Dragon
+
+**Dynasties of the East:**
+Golden Horde, Macedonian Dynasty, Sengoku Daimyo, Tughlaq Dynasty
+
+</details>
+
+---
+
+## Development
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) v18+
+
+- [Node.js](https://nodejs.org/) v20+
 - [Rust](https://rustup.rs/) (latest stable)
-- Platform-specific dependencies:
+- Platform dependencies:
   - **macOS**: Xcode Command Line Tools
-  - **Windows**: Microsoft Visual Studio C++ Build Tools
+  - **Windows**: Visual Studio C++ Build Tools
   - **Linux**: `webkit2gtk`, `libappindicator3`
 
-### Development Setup
+### Quick Start
 
 ```bash
-# Clone the repository
+# Clone
 git clone https://github.com/georgepwall1991/AOEOverlay.git
 cd AOEOverlay
 
 # Install dependencies
 npm install
 
-# Run in development mode
+# Run in dev mode
 npm run tauri dev
-```
 
-### Building for Production
-
-```bash
-# Build the application
+# Build for production
 npm run tauri build
 ```
 
-Built applications will be in `src-tauri/target/release/bundle/`.
-
-## Usage
-
-1. **Launch the app** - The overlay window and system tray icon will appear
-2. **Load a build order** - Use Settings (right-click tray icon) to manage build orders
-3. **Start your game** - The overlay stays on top of AoE4
-4. **Use hotkeys** - Press F3 to advance steps as you play
-5. **Enable voice coaching** - Toggle in Settings > Voice tab
-
-### Settings Window
-Right-click the system tray icon and select "Settings" to access:
-- **General**: Opacity, font size, theme, overlay position
-- **Hotkeys**: Customize all keyboard shortcuts
-- **Voice**: TTS settings, speech rate, enable/disable features
-- **Reminders**: Configure periodic reminder intervals
-- **Build Orders**: Import, export, enable/disable, edit
-
-## Build Order Format
-
-Build orders are JSON files with this structure:
-
-```json
-{
-  "id": "unique-id",
-  "name": "Build Order Name",
-  "civilization": "French",
-  "description": "Short description of the strategy",
-  "difficulty": "Intermediate",
-  "enabled": true,
-  "steps": [
-    {
-      "id": "step-1",
-      "description": "[icon:villager] Queue 2 villagers to [icon:sheep] sheep",
-      "timing": "0:00",
-      "resources": {
-        "food": 6,
-        "wood": 0,
-        "gold": 0,
-        "stone": 0
-      }
-    }
-  ]
-}
-```
-
-### Icon Markers
-Use `[icon:name]` in descriptions to display game icons:
-- Units: `villager`, `scout`, `knight`, `spearman`, `longbowman`, `crossbowman`, `man_at_arms`
-- Buildings: `house`, `town_center`, `barracks`, `archery_range`, `stable`, `mining_camp`, `lumber_camp`, `farm`
-- Resources: `food`, `wood`, `gold`, `stone`, `sheep`
-- Ages: `dark_age`, `feudal_age`, `castle_age`, `imperial_age`
-
-### Supported Civilizations
-English, French, Holy Roman Empire, Rus, Chinese, Delhi Sultanate, Abbasid Dynasty, Mongols, Ottomans, Malians, Byzantines, Japanese, Jeanne d'Arc, Ayyubids, Zhu Xi's Legacy, Order of the Dragon
-
-### Difficulty Levels
-Beginner, Intermediate, Advanced, Expert
-
-## Project Structure
-
-```
-AOEOverlay/
-├── src/                    # React frontend
-│   ├── components/         # UI components
-│   │   ├── overlay/        # Overlay window components
-│   │   ├── settings/       # Settings window components
-│   │   └── ui/             # shadcn/ui primitives
-│   ├── hooks/              # React hooks
-│   ├── stores/             # Zustand state stores
-│   ├── types/              # TypeScript types
-│   └── lib/                # Utilities
-├── src-tauri/              # Rust backend
-│   └── src/
-│       ├── lib.rs          # Main Tauri entry point
-│       ├── commands.rs     # Tauri commands
-│       ├── config.rs       # Configuration & file I/O
-│       ├── hotkeys.rs      # Global hotkey management
-│       ├── state.rs        # Application state
-│       ├── tray.rs         # System tray menu
-│       └── tts.rs          # Text-to-speech module
-├── public/
-│   ├── build-orders/       # Sample build order JSONs
-│   └── icons/              # AoE4 game icons
-└── docs/                   # Documentation
-```
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
-
-## Documentation
-
-- [Architecture](docs/ARCHITECTURE.md) - Codebase structure and design
-- [Features](docs/FEATURES.md) - Detailed feature documentation
-- [Build Orders](docs/BUILD-ORDERS.md) - Build order format and examples
-- [Original Spec](docs/ORIGINAL-SPEC.md) - Original design specification
-
-## Tech Stack
+### Tech Stack
 
 | Layer | Technology |
 |-------|------------|
@@ -197,7 +189,32 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture docum
 | Build | Vite |
 | Backend | Rust |
 
+### Project Structure
+
+```
+src/                    # React frontend
+├── components/
+│   ├── overlay/        # Overlay window
+│   ├── settings/       # Settings window
+│   └── ui/             # shadcn/ui components
+├── hooks/              # Custom React hooks
+├── stores/             # Zustand state
+├── lib/                # Utilities & API clients
+└── types/              # TypeScript types
+
+src-tauri/              # Rust backend
+└── src/
+    ├── commands.rs     # Tauri commands
+    ├── config.rs       # File I/O
+    ├── hotkeys.rs      # Global shortcuts
+    └── tts.rs          # Text-to-speech
+```
+
+---
+
 ## Contributing
+
+Contributions are welcome! Please:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -205,12 +222,20 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture docum
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
+---
 
 ## Acknowledgments
 
 - Inspired by [FluffyMaguro's AoE4_Overlay](https://github.com/FluffyMaguro/AoE4_Overlay)
-- Game icons from Age of Empires 4
-- Player stats from [AoE4 World](https://aoe4world.com)
+- Build data from [AoE4 World](https://aoe4world.com) and [AoE4 Guides](https://aoe4guides.com)
+- Game icons from Age of Empires IV
+
+---
+
+<div align="center">
+
+**[Download Latest Release](https://github.com/georgepwall1991/AOEOverlay/releases/latest)**
+
+Made with love for the AoE4 community
+
+</div>
