@@ -3,8 +3,78 @@
  * Handles importing and browsing build orders from aoe4guides.com
  */
 
+import { z } from "zod";
 import type { BuildOrder, BuildOrderStep, Civilization, Difficulty } from "@/types";
 import { BuildOrderSchema } from "@/types";
+
+// ============================================================================
+// Zod Schemas for API Response Validation
+// ============================================================================
+
+const Aoe4GuidesStepSchema = z.object({
+  description: z.string(),
+  time: z.string().optional(),
+  villagers: z.string().optional(),
+  builders: z.string().optional(),
+  food: z.string().optional(),
+  wood: z.string().optional(),
+  gold: z.string().optional(),
+  stone: z.string().optional(),
+});
+
+const Aoe4GuidesAgePhaseSchema = z.object({
+  type: z.enum(["age", "ageUp"]),
+  age: z.number(),
+  gameplan: z.string(),
+  steps: z.array(Aoe4GuidesStepSchema),
+});
+
+const Aoe4GuidesTimestampSchema = z.object({
+  _seconds: z.number(),
+  _nanoseconds: z.number(),
+});
+
+const Aoe4GuidesBuildSchema = z.object({
+  id: z.string(),
+  title: z.string().default(""),
+  description: z.string().default(""),
+  author: z.string().default(""),
+  authorUid: z.string().default(""),
+  civ: z.string(),
+  strategy: z.string().default(""),
+  season: z.string().default(""),
+  map: z.string().default(""),
+  video: z.string().default(""),
+  views: z.number().default(0),
+  likes: z.number().default(0),
+  upvotes: z.number().default(0),
+  downvotes: z.number().default(0),
+  score: z.number().default(0),
+  scoreAllTime: z.number().default(0),
+  timeCreated: Aoe4GuidesTimestampSchema.optional(),
+  timeUpdated: Aoe4GuidesTimestampSchema.optional(),
+  steps: z.array(Aoe4GuidesAgePhaseSchema),
+  isDraft: z.boolean().default(false),
+});
+
+// Lenient schema for browse endpoint - only requires minimal fields
+const Aoe4GuidesBuildSummarySchema = z.object({
+  id: z.string(),
+  title: z.string().default(""),
+  description: z.string().default(""),
+  author: z.string().default(""),
+  civ: z.string().default(""),
+  strategy: z.string().default(""),
+  season: z.string().default(""),
+  views: z.number().default(0),
+  likes: z.number().default(0),
+  upvotes: z.number().default(0),
+  downvotes: z.number().default(0),
+  score: z.number().default(0),
+  isDraft: z.boolean().default(false),
+});
+
+type Aoe4GuidesBuild = z.infer<typeof Aoe4GuidesBuildSchema>;
 
 const API_BASE = "https://aoe4guides.com/api";
 
@@ -29,49 +99,8 @@ async function fetchWithTimeout(input: RequestInfo | URL, timeoutMs = 5000) {
 }
 
 // ============================================================================
-// Type Definitions for AOE4 Guides API
+// Type Definitions
 // ============================================================================
-
-interface Aoe4GuidesStep {
-  description: string;
-  time?: string;
-  villagers?: string;
-  builders?: string;
-  food?: string;
-  wood?: string;
-  gold?: string;
-  stone?: string;
-}
-
-interface Aoe4GuidesAgePhase {
-  type: "age" | "ageUp";
-  age: number;
-  gameplan: string;
-  steps: Aoe4GuidesStep[];
-}
-
-interface Aoe4GuidesBuild {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  authorUid: string;
-  civ: string;
-  strategy: string;
-  season: string;
-  map: string;
-  video: string;
-  views: number;
-  likes: number;
-  upvotes: number;
-  downvotes: number;
-  score: number;
-  scoreAllTime: number;
-  timeCreated: { _seconds: number; _nanoseconds: number };
-  timeUpdated: { _seconds: number; _nanoseconds: number };
-  steps: Aoe4GuidesAgePhase[];
-  isDraft: boolean;
-}
 
 // Summary type for list view (without full steps)
 export interface Aoe4GuidesBuildSummary {
@@ -821,14 +850,15 @@ function convertBuild(build: Aoe4GuidesBuild): BuildOrder {
   const converted = BuildOrderSchema.parse({
     id: `aoe4guides-${build.id}`,
     name: build.title || "Imported Build",
-    civilization: normalizeCivilization(build.civ) as Civilization,
+    civilization: normalizeCivilization(build.civ),
     description: descParts.join(". "),
     difficulty: strategyToDifficulty(build.strategy),
     enabled: true,
     steps,
   });
 
-  return converted as unknown as BuildOrder;
+  // Safe cast: civilization and difficulty are normalized to valid enum values
+  return converted as BuildOrder;
 }
 
 // ============================================================================
@@ -852,9 +882,10 @@ export async function fetchAoe4GuidesBuild(buildId: string): Promise<BuildOrder>
         throw new Error(`Failed to fetch build: ${response.status} ${response.statusText}`);
       }
 
-      const data = (await response.json()) as Aoe4GuidesBuild;
+      const json = await response.json();
+      const data = Aoe4GuidesBuildSchema.parse(json);
 
-      if (!data || !data.steps || data.steps.length === 0) {
+      if (!data.steps || data.steps.length === 0) {
         throw new Error("Build has no steps");
       }
 
@@ -924,7 +955,8 @@ export async function browseAoe4GuidesBuilds(options?: {
     throw new Error(`Failed to browse builds: ${response.status} ${response.statusText}`);
   }
 
-  const data = (await response.json()) as Aoe4GuidesBuild[];
+  const json = await response.json();
+  const data = z.array(Aoe4GuidesBuildSummarySchema).parse(json);
 
   // Filter out drafts and map to summary
   return data
