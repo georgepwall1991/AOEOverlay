@@ -32,16 +32,39 @@ jobs:
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create release
+      - name: Create or get release
         id: create-release
         uses: actions/github-script@v7
         with:
           script: |
             const version = '${{ steps.get-version.outputs.version }}';
+            const tagName = `v${version}`;
+
+            // Check if release already exists
+            try {
+              const { data: existing } = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tagName
+              });
+              console.log(`Found existing release ${existing.id} for ${tagName}`);
+              // Update it to draft so we can add assets
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: existing.id,
+                draft: true
+              });
+              return existing.id;
+            } catch (e) {
+              if (e.status !== 404) throw e;
+            }
+
+            // Create new release
             const { data } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: `v${version}`,
+              tag_name: tagName,
               name: `AoE4 Overlay v${version}`,
               body: `## AoE4 Build Order Overlay v${version}\n\n### Downloads\n\n**Windows:** Download the \`.msi\` installer\n**macOS:** Download the \`.dmg\` file\n**Linux:** Download the \`.AppImage\` or \`.deb\` file\n\n### What's New\n\nSee the [changelog](https://github.com/${{ github.repository }}/commits/v${version}) for details.`,
               draft: true,
