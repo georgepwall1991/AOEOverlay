@@ -2,7 +2,7 @@ import type { Civilization } from "@/types";
 
 export interface MatchupEntry {
   civ: Civilization;
-  opponent: Civilization;
+  opponent: Civilization | "Any";
   threats: string[];
   responses: string[];
   scoutFor: string[];
@@ -105,6 +105,53 @@ export const MATCHUPS: MatchupEntry[] = [
     dangerTimers: [
       "Ger + House before 0:50",
       "Punish Song landmark before ~4:00 if possible",
+    ],
+  },
+  {
+    civ: "Abbasid Dynasty",
+    opponent: "English",
+    threats: ["Longbow containment", "White Tower drops"],
+    responses: [
+      "Horsemen + Phalanx upgrade",
+      "Multiple TCs to out-scale",
+      "Research Siege Engineering",
+    ],
+    scoutFor: [
+      "Forward Council Hall",
+      "Stone mining for 2nd TC",
+      "Kings Palace timing",
+    ],
+    counterTips: [
+      "Flank longbows with horsemen",
+      "Don't fight under their TC fire",
+      "Research Siege Engineering early",
+    ],
+    dangerTimers: [
+      "Longbows arrive ~5:00",
+      "Ram push potential ~7:00",
+    ],
+  },
+  {
+    civ: "Ottomans",
+    opponent: "Any",
+    threats: ["Free units from Military Schools", "Great Bombard late game"],
+    responses: [
+      "Kill Military Schools if exposed",
+      "Wall early to stop raids",
+    ],
+    scoutFor: [
+      "Blacksmith placement (landmarks)",
+      "Military school count",
+      "Vizier Point progression",
+    ],
+    counterTips: [
+      "Snipe Mehter drums first",
+      "Spread units vs Mangonels",
+      "Don't let them mass Janissaries",
+    ],
+    dangerTimers: [
+      "Dark Age spear raid ~2:30",
+      "Feudal push ~5:30",
     ],
   },
 ];

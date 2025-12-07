@@ -66,7 +66,7 @@ pub fn delete_build_order(id: String, state: State<AppState>) -> Result<(), Stri
     // If file doesn't exist, that's fine, we still want to remove from cache
     if let Err(e) = fs::remove_file(&path) {
         if e.kind() != std::io::ErrorKind::NotFound {
-            eprintln!("Warning: Failed to delete build order file: {}", e);
+            return Err(format!("Failed to delete build order file: {}", e));
         }
     }
 

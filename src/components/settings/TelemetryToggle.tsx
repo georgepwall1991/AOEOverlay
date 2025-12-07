@@ -5,15 +5,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useConfigStore, useTelemetryEvents, useTelemetryStore } from "@/stores";
+import { useConfigStore, useEventLogEvents, useEventLogStore } from "@/stores";
 import { DEFAULT_TELEMETRY_CONFIG, type TelemetryConfig } from "@/types";
 import { formatTimestamp, logTelemetryEvent } from "@/lib/utils";
 import { saveConfig } from "@/lib/tauri";
 
 export function TelemetryToggle() {
   const { config, updateConfig } = useConfigStore();
-  const events = useTelemetryEvents();
-  const clear = useTelemetryStore((s) => s.clear);
+  const events = useEventLogEvents();
+  const clear = useEventLogStore((s) => s.clear);
 
   const telemetryConfig: TelemetryConfig = useMemo(
     () => ({ ...DEFAULT_TELEMETRY_CONFIG, ...(config.telemetry ?? {}) }),

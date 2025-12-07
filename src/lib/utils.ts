@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { useConfigStore, useTelemetryStore } from "@/stores";
+import { useConfigStore, useEventLogStore } from "@/stores";
 import { DEFAULT_TELEMETRY_CONFIG, type TelemetryEvent } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -34,7 +34,7 @@ export function logTelemetryEvent(type: string, options: LogOptions = {}) {
     meta: options.meta,
   };
 
-  useTelemetryStore
+  useEventLogStore
     .getState()
     .addEvent({ ...payload, maxEvents: telemetry.maxEvents });
 }

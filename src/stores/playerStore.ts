@@ -60,8 +60,8 @@ export const usePlayerStore = create<PlayerState>()(
           const response = await aoe4worldApi.searchPlayers(query, 5);
           set({ searchResults: response.players || [], isSearching: false });
         } catch (error) {
-          console.error("Failed to search players:", error);
-          set({ searchResults: [], isSearching: false });
+          const message = error instanceof Error ? error.message : "Failed to search players";
+          set({ searchResults: [], isSearching: false, error: message });
         }
       },
 

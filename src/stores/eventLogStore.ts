@@ -6,7 +6,7 @@ const FALLBACK_MAX_EVENTS = 200;
 const makeId = () =>
   `te-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-interface TelemetryState {
+interface EventLogState {
   events: TelemetryEvent[];
   total: number;
   addEvent: (
@@ -19,7 +19,7 @@ interface TelemetryState {
   clear: () => void;
 }
 
-export const useTelemetryStore = create<TelemetryState>((set, get) => ({
+export const useEventLogStore = create<EventLogState>((set) => ({
   events: [],
   total: 0,
 
@@ -49,6 +49,6 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
 }));
 
 // Selectors
-export const useTelemetryEvents = () => useTelemetryStore((state) => state.events);
+export const useEventLogEvents = () => useEventLogStore((state) => state.events);
 
 

@@ -108,12 +108,8 @@ class Aoe4WorldApi {
    * Get player rank in a specific leaderboard
    */
   async getPlayerRank(profileId: number, leaderboard: string = "rm_solo"): Promise<number | null> {
-    try {
-      const response = await this.getLeaderboard(leaderboard, { profile_id: profileId, limit: 1 });
-      return response.data[0]?.rank ?? null;
-    } catch {
-      return null;
-    }
+    const response = await this.getLeaderboard(leaderboard, { profile_id: profileId, limit: 1 });
+    return response.data[0]?.rank ?? null;
   }
 }
 

@@ -14,6 +14,8 @@ Improvement ideas for AoE4 Overlay, prioritized by impact on player improvement.
 - [x] Opacity control
 - [x] Next steps preview
 - [x] Player statistics (AoE4 World API)
+- [x] Matchup Cheat Sheets
+- [x] AoE4World Build Import
 
 ---
 
@@ -59,32 +61,7 @@ Improvement ideas for AoE4 Overlay, prioritized by impact on player improvement.
 
 ---
 
-### 3. Matchup Cheat Sheets
-**Problem:** Players don't know what to expect or scout for.
-
-**Solution:** Pre-game briefing based on opponent civ selection.
-
-**Example vs French:**
-```
-⚔️ THREATS
-• Royal Knights at 4:30 (School of Cavalry)
-• Trade boom if game goes long
-
-🛡️ RESPONSES
-• Build Spearmen immediately in Feudal
-• Wall choke points early
-• Don't over-invest in archers (knight armor)
-
-👁️ SCOUT FOR
-• Early Stable = Knight rush incoming
-• Market + Trade = Boom strategy
-```
-
-**Implementation:** `matchups.json` with civ-vs-civ data.
-
----
-
-### 4. Smart Timer Drift
+### 3. Smart Timer Drift
 **Problem:** Falling behind makes the overlay annoying (reading Castle Age while you're 200 food short).
 
 **Solution:**
@@ -94,21 +71,6 @@ Improvement ideas for AoE4 Overlay, prioritized by impact on player improvement.
 **Example:**
 - Expected Feudal at 4:30, actual at 5:00
 - All subsequent timings shift +30s automatically
-
----
-
-### 5. AoE4World Build Import
-**Problem:** Manual JSON creation is friction. Builds exist on AoE4World.
-
-**Solution:** Paste URL → Auto-import build order.
-
-**Flow:**
-1. User pastes `https://aoe4world.com/builds/123`
-2. App fetches and parses
-3. Converts to local JSON format
-4. Saves to build-orders folder
-
-**Technical:** May need web scraping or API integration.
 
 ---
 

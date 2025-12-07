@@ -256,7 +256,7 @@ export function convertAge4Builder(input: Age4BuilderFormat): BuildOrder {
     steps,
   };
 
-  return BuildOrderSchema.parse(converted);
+  return BuildOrderSchema.parse(converted) as BuildOrder;
 }
 
 /**
