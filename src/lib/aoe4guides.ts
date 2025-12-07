@@ -863,6 +863,13 @@ export async function fetchAoe4GuidesBuild(buildId: string): Promise<BuildOrder>
       return converted;
     } catch (error) {
       lastError = error;
+      // Don't retry on 404s or validation errors
+      if (error instanceof Error && (
+        error.message.includes("not found") || 
+        error.message.includes("no steps")
+      )) {
+        break;
+      }
       if (attempt < 2) continue;
     }
   }

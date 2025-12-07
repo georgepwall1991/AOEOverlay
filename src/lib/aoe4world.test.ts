@@ -132,13 +132,13 @@ describe("aoe4world API", () => {
     });
 
     it("throws error on other HTTP errors", async () => {
-      mockFetch.mockResolvedValueOnce({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 500,
         statusText: "Internal Server Error",
       });
 
-      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow(
+      await expect(fetchAoe4WorldBuild(124)).rejects.toThrow(
         "Failed to fetch build: 500 Internal Server Error"
       );
     });
@@ -147,34 +147,34 @@ describe("aoe4world API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          id: 123,
+          id: 125,
           title: "Empty Build",
           civilization: "english",
           steps: [],
         }),
       });
 
-      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow();
+      await expect(fetchAoe4WorldBuild(125)).rejects.toThrow();
     });
 
     it("throws error when steps array is missing", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          id: 123,
+          id: 126,
           title: "Missing Steps",
           civilization: "english",
         }),
       });
 
-      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow();
+      await expect(fetchAoe4WorldBuild(126)).rejects.toThrow();
     });
 
     it("rejects malformed API payloads", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          id: 123,
+          id: 127,
           title: "Malformed",
           civilization: "english",
           steps: [
@@ -185,7 +185,7 @@ describe("aoe4world API", () => {
         }),
       });
 
-      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow();
+      await expect(fetchAoe4WorldBuild(127)).rejects.toThrow();
     });
 
     it("handles timing as number (seconds)", async () => {
@@ -387,14 +387,14 @@ describe("aoe4world API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          id: 123,
+          id: 128,
           title: "Test",
           civilization: "english",
           steps,
         }),
       });
 
-      await expect(fetchAoe4WorldBuild(123)).rejects.toThrow(
+      await expect(fetchAoe4WorldBuild(128)).rejects.toThrow(
         `Build order exceeds maximum of ${MAX_BUILD_ORDER_STEPS} steps`
       );
     });
@@ -455,13 +455,13 @@ describe("aoe4world API", () => {
 
     it("throws error on invalid URL", async () => {
       await expect(importAoe4WorldBuild("invalid")).rejects.toThrow(
-        "Invalid URL or ID"
+        "Invalid AoE4World link"
       );
     });
 
     it("throws error on empty string", async () => {
       await expect(importAoe4WorldBuild("")).rejects.toThrow(
-        "Invalid URL or ID"
+        "Invalid AoE4World link"
       );
     });
   });
@@ -579,11 +579,12 @@ describe("aoe4world API", () => {
       expect(rank).toBeNull();
     });
 
-    it("getPlayerRank returns null on API error", async () => {
+    it("getPlayerRank throws on API error", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      const rank = await aoe4worldApi.getPlayerRank(123, "rm_solo");
-      expect(rank).toBeNull();
+      await expect(aoe4worldApi.getPlayerRank(123, "rm_solo")).rejects.toThrow(
+        "Network error"
+      );
     });
 
     it("throws error on API failure", async () => {

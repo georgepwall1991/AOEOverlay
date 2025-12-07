@@ -486,6 +486,7 @@ describe("timerStore state management", () => {
 describe("timerStore selectors", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.spyOn(performance, "now").mockImplementation(() => Date.now());
     const { result } = renderHook(() => useTimerStore());
     act(() => {
       result.current.resetTimer();
@@ -497,105 +498,98 @@ describe("timerStore selectors", () => {
   });
 
   it("useIsTimerRunning returns running state", () => {
-    const { result: storeResult } = renderHook(() => useTimerStore());
     const { result: selectorResult } = renderHook(() => useIsTimerRunning());
 
     expect(selectorResult.current).toBe(false);
 
     act(() => {
-      storeResult.current.startTimer();
+      useTimerStore.getState().startTimer();
     });
 
     expect(selectorResult.current).toBe(true);
   });
 
   it("useIsTimerPaused returns paused state", () => {
-    const { result: storeResult } = renderHook(() => useTimerStore());
     const { result: selectorResult } = renderHook(() => useIsTimerPaused());
 
     expect(selectorResult.current).toBe(false);
 
     act(() => {
-      storeResult.current.startTimer();
-      storeResult.current.pauseTimer();
+      useTimerStore.getState().startTimer();
+      useTimerStore.getState().pauseTimer();
     });
 
     expect(selectorResult.current).toBe(true);
   });
 
   it("useElapsedSeconds returns elapsed time", () => {
-    const { result: storeResult } = renderHook(() => useTimerStore());
     const { result: selectorResult } = renderHook(() => useElapsedSeconds());
 
     expect(selectorResult.current).toBe(0);
 
     act(() => {
-      storeResult.current.startTimer();
+      useTimerStore.getState().startTimer();
       vi.advanceTimersByTime(5000);
-      storeResult.current.tick();
+      useTimerStore.getState().tick();
     });
 
     expect(selectorResult.current).toBe(5);
   });
 
   it("useLastDelta returns delta value", () => {
-    const { result: storeResult } = renderHook(() => useTimerStore());
     const { result: selectorResult } = renderHook(() => useLastDelta());
 
     expect(selectorResult.current).toBeNull();
 
     act(() => {
-      storeResult.current.startTimer();
+      useTimerStore.getState().startTimer();
       vi.advanceTimersByTime(90000);
-      storeResult.current.tick();
-      storeResult.current.recordStepTime("2:00");
+      useTimerStore.getState().tick();
+      useTimerStore.getState().recordStepTime("2:00");
     });
 
     expect(selectorResult.current).toBe(-30);
   });
 
   it("useTimerDisplay returns formatted time", () => {
-    const { result: storeResult } = renderHook(() => useTimerStore());
     const { result: selectorResult } = renderHook(() => useTimerDisplay());
 
     expect(selectorResult.current).toBe("0:00");
 
     act(() => {
-      storeResult.current.startTimer();
+      useTimerStore.getState().startTimer();
       vi.advanceTimersByTime(95000);
-      storeResult.current.tick();
+      useTimerStore.getState().tick();
     });
 
     expect(selectorResult.current).toBe("1:35");
   });
 
   it("useDeltaDisplay returns formatted delta or null", () => {
-    const { result: storeResult } = renderHook(() => useTimerStore());
     const { result: selectorResult } = renderHook(() => useDeltaDisplay());
 
     expect(selectorResult.current).toBeNull();
 
     act(() => {
-      storeResult.current.startTimer();
+      useTimerStore.getState().startTimer();
       vi.advanceTimersByTime(150000);
-      storeResult.current.tick();
-      storeResult.current.recordStepTime("2:00");
+      useTimerStore.getState().tick();
+      useTimerStore.getState().recordStepTime("2:00");
     });
 
     expect(selectorResult.current).toBe("+0:30");
   });
 
   it("useAccumulatedDrift returns drift value", () => {
-    const { result: storeResult } = renderHook(() => useTimerStore());
     const { result: selectorResult } = renderHook(() => useAccumulatedDrift());
 
     expect(selectorResult.current).toBe(0);
 
     act(() => {
-      storeResult.current.startTimer();
+      useTimerStore.getState().startTimer();
       vi.advanceTimersByTime(150000);
-      storeResult.current.tick();
-      storeResult.current.recordStepTime("2:00");
+      useTimerStore.getState().tick();
+      useTimerStore.getState().recordStepTime("2:00");
     });
 
     expect(selectorResult.current).toBe(30);

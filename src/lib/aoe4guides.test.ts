@@ -299,31 +299,31 @@ describe("aoe4guides API", () => {
         statusText: "Not Found",
       });
 
-      await expect(fetchAoe4GuidesBuild("notfound")).rejects.toThrow("not found");
+      await expect(fetchAoe4GuidesBuild("notfound-404")).rejects.toThrow("not found");
     });
 
     it("throws error when build has no steps", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
-          id: "test",
+          id: "nosteps-123",
           title: "Test",
           civ: "ENG",
           steps: [],
         }),
       });
 
-      await expect(fetchAoe4GuidesBuild("test")).rejects.toThrow("no steps");
+      await expect(fetchAoe4GuidesBuild("nosteps-123")).rejects.toThrow("no steps");
     });
 
     it("throws error on API failure", async () => {
-      mockFetch.mockResolvedValueOnce({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 500,
         statusText: "Internal Server Error",
       });
 
-      await expect(fetchAoe4GuidesBuild("test")).rejects.toThrow("500");
+      await expect(fetchAoe4GuidesBuild("fail-500")).rejects.toThrow("500");
     });
   });
 
@@ -356,7 +356,9 @@ describe("aoe4guides API", () => {
     });
 
     it("throws error for invalid URL", async () => {
-      await expect(importAoe4GuidesBuild("invalid")).rejects.toThrow("Invalid URL or ID");
+      await expect(importAoe4GuidesBuild("invalid")).rejects.toThrow(
+        "Invalid AOE4Guides link"
+      );
     });
   });
 

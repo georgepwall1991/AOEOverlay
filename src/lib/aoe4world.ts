@@ -375,7 +375,15 @@ export async function fetchAoe4WorldBuild(buildId: number): Promise<BuildOrder> 
       return converted;
     } catch (error) {
       lastError = error;
-      // Retry on network/timeouts, but break on abort/404 handled above
+      // Don't retry on 404s or validation errors
+      if (error instanceof Error && (
+        error.message.includes("not found") ||
+        error.message.includes("Build order exceeds") ||
+        error instanceof z.ZodError // Validation errors
+      )) {
+        break;
+      }
+      // Retry on network/timeouts
       if (attempt < 2) continue;
     }
   }
