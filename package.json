@@ -1,7 +1,7 @@
 {
   "name": "aoe4-overlay",
   "private": true,
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "A build order overlay for Age of Empires IV",
   "author": "George Wall",
   "license": "MIT",
