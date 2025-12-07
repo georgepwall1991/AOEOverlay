@@ -288,4 +288,95 @@ mod tests {
         let path = PathBuf::from(path_str);
         assert_eq!(path.to_str().unwrap(), path_str);
     }
+
+    #[test]
+    fn test_config_changed_event_name() {
+        assert_eq!(CONFIG_CHANGED_EVENT, "config-changed");
+    }
+
+    #[test]
+    fn test_build_orders_changed_event_name() {
+        assert_eq!(BUILD_ORDERS_CHANGED_EVENT, "build-orders-changed");
+    }
+
+    #[test]
+    fn test_max_import_size_is_reasonable() {
+        // Import size should be at least 1KB and at most 10MB
+        assert!(MAX_IMPORT_SIZE >= 1024);
+        assert!(MAX_IMPORT_SIZE <= 10 * 1024 * 1024);
+    }
+
+    // OS-specific path tests
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_windows_path_handling() {
+        let path_str = "C:\\Users\\test\\build.json";
+        let path = PathBuf::from(path_str);
+        assert!(path.is_absolute());
+        assert_eq!(path.extension().unwrap(), "json");
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    #[test]
+    fn test_unix_path_handling() {
+        let path_str = "/home/user/build.json";
+        let path = PathBuf::from(path_str);
+        assert!(path.is_absolute());
+        assert_eq!(path.extension().unwrap(), "json");
+    }
+
+    #[test]
+    fn test_relative_path_handling() {
+        let path_str = "build_orders/my_build.json";
+        let path = PathBuf::from(path_str);
+        assert!(!path.is_absolute());
+        assert_eq!(path.file_name().unwrap(), "my_build.json");
+    }
+
+    #[test]
+    fn test_pathbuf_file_extension() {
+        let path = PathBuf::from("/path/to/file.json");
+        assert_eq!(path.extension().and_then(|s| s.to_str()), Some("json"));
+
+        let no_ext = PathBuf::from("/path/to/file");
+        assert_eq!(no_ext.extension(), None);
+    }
+
+    #[test]
+    fn test_pathbuf_file_name() {
+        let path = PathBuf::from("/path/to/my_build.json");
+        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some("my_build.json"));
+    }
+
+    #[test]
+    fn test_pathbuf_parent() {
+        let path = PathBuf::from("/path/to/my_build.json");
+        assert_eq!(path.parent().and_then(|p| p.to_str()), Some("/path/to"));
+    }
+
+    #[test]
+    fn test_pathbuf_join() {
+        let base = PathBuf::from("/path/to");
+        let full = base.join("my_build.json");
+        assert!(full.to_str().unwrap().contains("my_build.json"));
+    }
+
+    #[test]
+    fn test_format_build_order_filename() {
+        let id = "english-rush-v1";
+        let filename = format!("{}.json", id);
+        assert_eq!(filename, "english-rush-v1.json");
+    }
+
+    #[test]
+    fn test_format_file_size_error_message() {
+        let file_size = 2_000_000u64;
+        let error_msg = format!(
+            "File too large: {} bytes (max {} bytes)",
+            file_size,
+            MAX_IMPORT_SIZE
+        );
+        assert!(error_msg.contains("2000000"));
+        assert!(error_msg.contains("1048576"));
+    }
 }

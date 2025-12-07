@@ -139,4 +139,118 @@ mod tests {
         assert_eq!(string_to_code("UnknownKey"), None);
         assert_eq!(string_to_code(""), None);
     }
+
+    #[test]
+    fn test_all_function_keys() {
+        assert_eq!(string_to_code("F1"), Some(Code::F1));
+        assert_eq!(string_to_code("F2"), Some(Code::F2));
+        assert_eq!(string_to_code("F3"), Some(Code::F3));
+        assert_eq!(string_to_code("F4"), Some(Code::F4));
+        assert_eq!(string_to_code("F5"), Some(Code::F5));
+        assert_eq!(string_to_code("F6"), Some(Code::F6));
+        assert_eq!(string_to_code("F7"), Some(Code::F7));
+        assert_eq!(string_to_code("F8"), Some(Code::F8));
+        assert_eq!(string_to_code("F9"), Some(Code::F9));
+        assert_eq!(string_to_code("F10"), Some(Code::F10));
+        assert_eq!(string_to_code("F11"), Some(Code::F11));
+        assert_eq!(string_to_code("F12"), Some(Code::F12));
+    }
+
+    #[test]
+    fn test_all_digits() {
+        assert_eq!(string_to_code("0"), Some(Code::Digit0));
+        assert_eq!(string_to_code("1"), Some(Code::Digit1));
+        assert_eq!(string_to_code("2"), Some(Code::Digit2));
+        assert_eq!(string_to_code("3"), Some(Code::Digit3));
+        assert_eq!(string_to_code("4"), Some(Code::Digit4));
+        assert_eq!(string_to_code("5"), Some(Code::Digit5));
+        assert_eq!(string_to_code("6"), Some(Code::Digit6));
+        assert_eq!(string_to_code("7"), Some(Code::Digit7));
+        assert_eq!(string_to_code("8"), Some(Code::Digit8));
+        assert_eq!(string_to_code("9"), Some(Code::Digit9));
+    }
+
+    #[test]
+    fn test_all_letters() {
+        let letters = [
+            ("A", Code::KeyA), ("B", Code::KeyB), ("C", Code::KeyC),
+            ("D", Code::KeyD), ("E", Code::KeyE), ("F", Code::KeyF),
+            ("G", Code::KeyG), ("H", Code::KeyH), ("I", Code::KeyI),
+            ("J", Code::KeyJ), ("K", Code::KeyK), ("L", Code::KeyL),
+            ("M", Code::KeyM), ("N", Code::KeyN), ("O", Code::KeyO),
+            ("P", Code::KeyP), ("Q", Code::KeyQ), ("R", Code::KeyR),
+            ("S", Code::KeyS), ("T", Code::KeyT), ("U", Code::KeyU),
+            ("V", Code::KeyV), ("W", Code::KeyW), ("X", Code::KeyX),
+            ("Y", Code::KeyY), ("Z", Code::KeyZ),
+        ];
+        for (letter, code) in letters {
+            assert_eq!(string_to_code(letter), Some(code), "Failed for {}", letter);
+        }
+    }
+
+    #[test]
+    fn test_special_keys() {
+        assert_eq!(string_to_code("SPACE"), Some(Code::Space));
+        assert_eq!(string_to_code("ESCAPE"), Some(Code::Escape));
+        assert_eq!(string_to_code("ESC"), Some(Code::Escape));
+        assert_eq!(string_to_code("ENTER"), Some(Code::Enter));
+        assert_eq!(string_to_code("RETURN"), Some(Code::Enter));
+        assert_eq!(string_to_code("TAB"), Some(Code::Tab));
+        assert_eq!(string_to_code("BACKSPACE"), Some(Code::Backspace));
+        assert_eq!(string_to_code("INSERT"), Some(Code::Insert));
+        assert_eq!(string_to_code("DELETE"), Some(Code::Delete));
+        assert_eq!(string_to_code("DEL"), Some(Code::Delete));
+    }
+
+    #[test]
+    fn test_navigation_keys() {
+        assert_eq!(string_to_code("HOME"), Some(Code::Home));
+        assert_eq!(string_to_code("END"), Some(Code::End));
+        assert_eq!(string_to_code("PAGEUP"), Some(Code::PageUp));
+        assert_eq!(string_to_code("PGUP"), Some(Code::PageUp));
+        assert_eq!(string_to_code("PAGEDOWN"), Some(Code::PageDown));
+        assert_eq!(string_to_code("PGDN"), Some(Code::PageDown));
+    }
+
+    #[test]
+    fn test_arrow_keys() {
+        assert_eq!(string_to_code("UP"), Some(Code::ArrowUp));
+        assert_eq!(string_to_code("DOWN"), Some(Code::ArrowDown));
+        assert_eq!(string_to_code("LEFT"), Some(Code::ArrowLeft));
+        assert_eq!(string_to_code("RIGHT"), Some(Code::ArrowRight));
+    }
+
+    #[test]
+    fn test_case_insensitivity() {
+        assert_eq!(string_to_code("space"), Some(Code::Space));
+        assert_eq!(string_to_code("SPACE"), Some(Code::Space));
+        assert_eq!(string_to_code("Space"), Some(Code::Space));
+        assert_eq!(string_to_code("sPaCe"), Some(Code::Space));
+        assert_eq!(string_to_code("escape"), Some(Code::Escape));
+        assert_eq!(string_to_code("Escape"), Some(Code::Escape));
+    }
+
+    #[test]
+    fn test_invalid_keys() {
+        assert_eq!(string_to_code(""), None);
+        assert_eq!(string_to_code("F13"), None);
+        assert_eq!(string_to_code("F0"), None);
+        assert_eq!(string_to_code("CTRL"), None);
+        assert_eq!(string_to_code("ALT"), None);
+        assert_eq!(string_to_code("SHIFT"), None);
+        assert_eq!(string_to_code("META"), None);
+        assert_eq!(string_to_code("COMMAND"), None);
+        assert_eq!(string_to_code("WINDOWS"), None);
+        assert_eq!(string_to_code("invalid"), None);
+        assert_eq!(string_to_code("123"), None);
+        assert_eq!(string_to_code("AB"), None);
+    }
+
+    #[test]
+    fn test_whitespace_handling() {
+        // Note: current implementation doesn't trim whitespace
+        assert_eq!(string_to_code(" F1"), None);
+        assert_eq!(string_to_code("F1 "), None);
+        assert_eq!(string_to_code(" F1 "), None);
+    }
 }

@@ -110,6 +110,35 @@ mod tests {
         assert_eq!(escape_powershell("null\0byte"), "nullbyte");
     }
 
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_escape_powershell_empty_string() {
+        assert_eq!(escape_powershell(""), "");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_escape_powershell_unicode() {
+        assert_eq!(escape_powershell("hello world"), "hello world");
+        assert_eq!(escape_powershell("émojis"), "émojis");
+        assert_eq!(escape_powershell("日本語"), "日本語");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_escape_powershell_multiple_special_chars() {
+        assert_eq!(escape_powershell("$a$b$c"), "`$a`$b`$c");
+        assert_eq!(escape_powershell("'''"), "''''''");
+        assert_eq!(escape_powershell("\n\r\t"), "`n`r`t");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_escape_powershell_carriage_return() {
+        assert_eq!(escape_powershell("\r"), "`r");
+        assert_eq!(escape_powershell("line\r\nend"), "line`r`nend");
+    }
+
     #[test]
     fn test_rate_clamping() {
         // Rate should be clamped to reasonable SAPI values (-10 to 10)
@@ -128,6 +157,22 @@ mod tests {
     }
 
     #[test]
+    fn test_rate_clamping_negative_extreme() {
+        let extreme_low = ((-5.0_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(extreme_low, -10);
+    }
+
+    #[test]
+    fn test_rate_clamping_boundary() {
+        // Test boundary values
+        let at_lower_bound = ((-1.0_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(at_lower_bound, -10);
+
+        let at_upper_bound = ((3.0_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(at_upper_bound, 10);
+    }
+
+    #[test]
     fn test_macos_wpm_calculation() {
         // macOS uses WPM = rate * 200
         let slow_wpm = (0.5_f32 * 200.0) as i32;
@@ -138,5 +183,69 @@ mod tests {
 
         let fast_wpm = (2.0_f32 * 200.0) as i32;
         assert_eq!(fast_wpm, 400);
+    }
+
+    #[test]
+    fn test_macos_wpm_edge_cases() {
+        // Very slow
+        let very_slow = (0.1_f32 * 200.0) as i32;
+        assert_eq!(very_slow, 20);
+
+        // Very fast
+        let very_fast = (5.0_f32 * 200.0) as i32;
+        assert_eq!(very_fast, 1000);
+
+        // Zero rate
+        let zero = (0.0_f32 * 200.0) as i32;
+        assert_eq!(zero, 0);
+    }
+
+    #[test]
+    fn test_rate_to_sapi_conversion() {
+        // SAPI rate formula: (rate - 1.0) * 5.0
+        // rate 1.0 = SAPI 0 (normal)
+        // rate 2.0 = SAPI 5
+        // rate 0.5 = SAPI -2.5 -> -2
+        let normal = ((1.0_f32 - 1.0) * 5.0) as i32;
+        assert_eq!(normal, 0);
+
+        let double_speed = ((2.0_f32 - 1.0) * 5.0) as i32;
+        assert_eq!(double_speed, 5);
+
+        let half_speed = ((0.5_f32 - 1.0) * 5.0) as i32;
+        assert_eq!(half_speed, -2);
+    }
+
+    // OS-specific TTS availability tests
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn test_macos_say_command_available() {
+        // Test that the 'say' command exists on macOS
+        let output = std::process::Command::new("which")
+            .arg("say")
+            .output();
+        assert!(output.is_ok(), "Should be able to run 'which say'");
+        let output = output.unwrap();
+        assert!(output.status.success(), "say command should exist on macOS");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_windows_powershell_available() {
+        // Test that PowerShell exists on Windows
+        let output = std::process::Command::new("powershell")
+            .args(["-NoProfile", "-Command", "echo test"])
+            .output();
+        assert!(output.is_ok(), "Should be able to run PowerShell");
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    #[test]
+    fn test_linux_tts_unsupported() {
+        // On Linux/other platforms, TTS should return an error
+        let result = super::spawn_tts_process("test", 1.0);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert_eq!(err.kind(), std::io::ErrorKind::Unsupported);
     }
 }
