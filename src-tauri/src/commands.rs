@@ -6,7 +6,54 @@ use crate::state::AppState;
 use crate::hotkeys::register_hotkeys;
 
 const MAX_IMPORT_SIZE: u64 = 1024 * 1024; // 1MB limit
+const MAX_BUILD_ORDER_STEPS: usize = 200;
 const CONFIG_CHANGED_EVENT: &str = "config-changed";
+const BUILD_ORDERS_CHANGED_EVENT: &str = "build-orders-changed";
+
+fn validate_build_order(order: &BuildOrder) -> Result<(), String> {
+    let step_count = order.steps.len();
+    if step_count == 0 {
+        return Err("Build order must contain at least one step".to_string());
+    }
+    if step_count > MAX_BUILD_ORDER_STEPS {
+        return Err(format!(
+            "Build order exceeds maximum of {} steps (has {})",
+            MAX_BUILD_ORDER_STEPS, step_count
+        ));
+    }
+
+    for (idx, step) in order.steps.iter().enumerate() {
+        if step.id.trim().is_empty() {
+            return Err(format!("Step {} is missing an id", idx + 1));
+        }
+        if step.description.trim().is_empty() {
+            return Err(format!("Step {} is missing a description", idx + 1));
+        }
+    }
+
+    if let Some(branches) = &order.branches {
+        for branch in branches {
+            if branch.steps.len() > MAX_BUILD_ORDER_STEPS {
+                return Err(format!(
+                    "Branch \"{}\" exceeds maximum of {} steps (has {})",
+                    branch.name,
+                    MAX_BUILD_ORDER_STEPS,
+                    branch.steps.len()
+                ));
+            }
+            for (idx, step) in branch.steps.iter().enumerate() {
+                if step.id.trim().is_empty() {
+                    return Err(format!("Branch {} step {} is missing an id", branch.name, idx + 1));
+                }
+                if step.description.trim().is_empty() {
+                    return Err(format!("Branch {} step {} is missing a description", branch.name, idx + 1));
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
 
 #[tauri::command]
 pub fn get_config(state: State<AppState>) -> Result<AppConfig, String> {
@@ -40,7 +87,9 @@ pub fn get_build_orders(state: State<AppState>) -> Result<Vec<BuildOrder>, Strin
 }
 
 #[tauri::command]
-pub fn save_build_order(order: BuildOrder, state: State<AppState>) -> Result<(), String> {
+pub fn save_build_order(order: BuildOrder, state: State<AppState>, app: AppHandle) -> Result<(), String> {
+    validate_build_order(&order)?;
+
     // Save to file
     let dir = get_build_orders_dir();
     let path = dir.join(format!("{}.json", order.id));
@@ -54,12 +103,15 @@ pub fn save_build_order(order: BuildOrder, state: State<AppState>) -> Result<(),
     } else {
         orders.push(order);
     }
-    
+
+    // Broadcast build order change to all windows
+    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders).map_err(|e| e.to_string())?;
+
     Ok(())
 }
 
 #[tauri::command]
-pub fn delete_build_order(id: String, state: State<AppState>) -> Result<(), String> {
+pub fn delete_build_order(id: String, state: State<AppState>, app: AppHandle) -> Result<(), String> {
     // Delete from file
     let dir = get_build_orders_dir();
     let path = dir.join(format!("{}.json", id));
@@ -73,6 +125,9 @@ pub fn delete_build_order(id: String, state: State<AppState>) -> Result<(), Stri
     // Update cache
     let mut orders = state.build_orders.lock().map_err(|e| e.to_string())?;
     orders.retain(|o| o.id != id);
+
+    // Broadcast build order change to all windows
+    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders).map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -91,18 +146,6 @@ pub fn set_window_position(window: Window, x: i32, y: i32) -> Result<(), String>
     window
         .set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }))
         .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-pub fn toggle_overlay(app: AppHandle) -> Result<(), String> {
-    if let Some(window) = app.get_webview_window("overlay") {
-        if window.is_visible().unwrap_or(false) {
-            window.hide().map_err(|e| e.to_string())?;
-        } else {
-            window.show().map_err(|e| e.to_string())?;
-        }
-    }
-    Ok(())
 }
 
 #[tauri::command]
@@ -200,7 +243,7 @@ pub fn set_window_size(window: Window, width: u32, height: u32) -> Result<(), St
 }
 
 #[tauri::command]
-pub fn import_build_order(path: String, state: State<AppState>) -> Result<BuildOrder, String> {
+pub fn import_build_order(path: String, state: State<AppState>, app: AppHandle) -> Result<BuildOrder, String> {
     let path = PathBuf::from(&path);
 
     // Validate file exists and get metadata
@@ -227,19 +270,27 @@ pub fn import_build_order(path: String, state: State<AppState>) -> Result<BuildO
     let order: BuildOrder = serde_json::from_str(&content)
         .map_err(|e| format!("Invalid build order format: {}", e))?;
 
+    validate_build_order(&order)?;
+
+    // Validate duplicate against in-memory cache before writing to disk
+    let mut orders = state.build_orders.lock().map_err(|e| e.to_string())?;
+    if orders.iter().any(|o| o.id == order.id) {
+        return Err(format!(
+            "A build order with id \"{}\" already exists. Delete or rename it before importing.",
+            order.id
+        ));
+    }
+
     // Save to build orders directory
     let dir = get_build_orders_dir();
     let save_path = dir.join(format!("{}.json", order.id));
     let json = serde_json::to_string_pretty(&order).map_err(|e| e.to_string())?;
     atomic_write(save_path, json).map_err(|e| e.to_string())?;
 
-    // Update cache
-    let mut orders = state.build_orders.lock().map_err(|e| e.to_string())?;
-    if let Some(index) = orders.iter().position(|o| o.id == order.id) {
-        orders[index] = order.clone();
-    } else {
-        orders.push(order.clone());
-    }
+    orders.push(order.clone());
+
+    // Broadcast build order change to all windows
+    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders).map_err(|e| e.to_string())?;
 
     Ok(order)
 }

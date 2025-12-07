@@ -8,14 +8,14 @@ import {
   useBadgeStore,
   resolveActiveSteps,
 } from "@/stores";
-import { toggleClickThrough, toggleCompactMode, speak, toggleOverlay } from "@/lib/tauri";
+import { toggleClickThrough, toggleCompactMode, speak } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
 import { logTelemetryEvent } from "@/lib/utils";
 
 export function useGlobalHotkeys() {
   const { nextStep, previousStep, cycleBuildOrder, resetSteps } =
     useBuildOrderStore();
-  const { toggleVisibility } = useOverlayStore();
+  const { toggleVisibility, setVisible } = useOverlayStore();
   const { updateConfig } = useConfigStore();
   const { startTimer, resetTimer, recordStepTime, togglePause } = useTimerStore();
   const { resetBadges } = useBadgeStore();
@@ -96,7 +96,6 @@ export function useGlobalHotkeys() {
     const unlistenPromises = [
       listen("hotkey-toggle-overlay", () => {
         toggleVisibility();
-        toggleOverlay();
         logTelemetryEvent("hotkey:overlay:toggle", { source: "hotkey" });
       }),
       listen("hotkey-previous-step", () => {
@@ -136,6 +135,19 @@ export function useGlobalHotkeys() {
         togglePause();
         logTelemetryEvent("hotkey:timer:toggle-pause", { source: "hotkey" });
       }),
+      // Tray icon events (frontend controls visibility, not native window)
+      listen("tray-toggle-overlay", () => {
+        toggleVisibility();
+        logTelemetryEvent("tray:overlay:toggle", { source: "tray" });
+      }),
+      listen("tray-show-overlay", () => {
+        setVisible(true);
+        logTelemetryEvent("tray:overlay:show", { source: "tray" });
+      }),
+      listen("tray-hide-overlay", () => {
+        setVisible(false);
+        logTelemetryEvent("tray:overlay:hide", { source: "tray" });
+      }),
     ];
 
     return () => {
@@ -153,6 +165,7 @@ export function useGlobalHotkeys() {
     cycleBuildOrder,
     handleReset,
     toggleVisibility,
+    setVisible,
     updateConfig,
     resetTimer,
     resetBadges,

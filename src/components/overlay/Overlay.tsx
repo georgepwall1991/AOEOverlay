@@ -72,7 +72,12 @@ export function Overlay() {
 
   const toggleClickThroughWithUndo = () => {
     lastClickThrough.current = config.click_through;
-    updateConfig({ click_through: !config.click_through });
+    const next = !config.click_through;
+    updateConfig({ click_through: next });
+    // Persist so restart/settings stay in sync
+    saveConfig({ ...config, click_through: next }).catch((error) =>
+      console.error("Failed to persist click-through toggle:", error)
+    );
     setClickUndoActive(true);
     if (clickUndoTimer.current) {
       clearTimeout(clickUndoTimer.current);
@@ -86,7 +91,11 @@ export function Overlay() {
       clearTimeout(clickUndoTimer.current);
       clickUndoTimer.current = null;
     }
-    updateConfig({ click_through: lastClickThrough.current });
+    const revertTo = lastClickThrough.current;
+    updateConfig({ click_through: revertTo });
+    saveConfig({ ...config, click_through: revertTo }).catch((error) =>
+      console.error("Failed to persist click-through undo:", error)
+    );
     setClickUndoActive(false);
   };
 

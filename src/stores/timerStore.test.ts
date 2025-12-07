@@ -315,7 +315,7 @@ describe("timerStore state management", () => {
   });
 
   describe("stopTimer", () => {
-    it("stops running timer", () => {
+    it("stops running timer and clears accumulated time", () => {
       const { result } = renderHook(() => useTimerStore());
 
       act(() => {
@@ -329,6 +329,11 @@ describe("timerStore state management", () => {
       });
 
       expect(result.current.isRunning).toBe(false);
+      expect(result.current.isPaused).toBe(false);
+      expect(result.current.elapsedSeconds).toBe(0);
+      expect(result.current.accumulatedTime).toBe(0);
+      expect(result.current.lastStepTime).toBeNull();
+      expect(result.current.lastDelta).toBeNull();
     });
   });
 

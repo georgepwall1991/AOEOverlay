@@ -109,11 +109,6 @@ export async function setWindowSize(width: number, height: number): Promise<void
   return invoke("set_window_size", { width, height });
 }
 
-export async function toggleOverlay(): Promise<void> {
-  if (IS_MOCK) return Promise.resolve();
-  return invoke("toggle_overlay");
-}
-
 export async function showSettings(): Promise<void> {
   if (IS_MOCK) return Promise.resolve();
   return invoke("show_settings");

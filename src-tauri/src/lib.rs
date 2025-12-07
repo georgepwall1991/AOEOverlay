@@ -52,7 +52,6 @@ pub fn run() {
             set_window_position,
             get_window_size,
             set_window_size,
-            toggle_overlay,
             show_settings,
             set_click_through,
             toggle_click_through,

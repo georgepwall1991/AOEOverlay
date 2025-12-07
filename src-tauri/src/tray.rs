@@ -1,7 +1,7 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    App, Manager, Runtime,
+    App, Emitter, Manager, Runtime,
 };
 
 pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
@@ -19,17 +19,15 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
         .on_menu_event(|app, event| {
             match event.id.as_ref() {
                 "show" => {
-                    if let Some(window) = app.get_webview_window("overlay") {
-                        if let Err(e) = window.show() {
-                            eprintln!("Failed to show overlay: {}", e);
-                        }
+                    // Emit event to frontend to show overlay (frontend controls visibility)
+                    if let Err(e) = app.emit("tray-show-overlay", ()) {
+                        eprintln!("Failed to emit show overlay event: {}", e);
                     }
                 }
                 "hide" => {
-                    if let Some(window) = app.get_webview_window("overlay") {
-                        if let Err(e) = window.hide() {
-                            eprintln!("Failed to hide overlay: {}", e);
-                        }
+                    // Emit event to frontend to hide overlay (frontend controls visibility)
+                    if let Err(e) = app.emit("tray-hide-overlay", ()) {
+                        eprintln!("Failed to emit hide overlay event: {}", e);
                     }
                 }
                 "settings" => {
@@ -56,17 +54,9 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
             } = event
             {
                 let app = tray.app_handle();
-                if let Some(window) = app.get_webview_window("overlay") {
-                    let visible = window.is_visible().unwrap_or(false);
-                    let result = if visible { window.hide() } else { window.show() };
-                    if let Err(e) = result {
-                        eprintln!("Failed to toggle overlay: {}", e);
-                    }
-                    if !visible {
-                        if let Err(e) = window.set_focus() {
-                            eprintln!("Failed to focus overlay: {}", e);
-                        }
-                    }
+                // Emit toggle event to frontend (frontend controls visibility)
+                if let Err(e) = app.emit("tray-toggle-overlay", ()) {
+                    eprintln!("Failed to emit toggle overlay event: {}", e);
                 }
             }
         })

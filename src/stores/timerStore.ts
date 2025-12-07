@@ -111,6 +111,11 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       isRunning: false,
       isPaused: false,
       startedAt: null,
+      accumulatedTime: 0,
+      elapsedSeconds: 0,
+      lastStepTime: null,
+      lastDelta: null,
+      accumulatedDrift: 0,
     }),
 
   pauseTimer: () => {

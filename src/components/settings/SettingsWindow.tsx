@@ -11,7 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useConfigStore, useBuildOrderStore } from "@/stores";
-import { saveConfig, importBuildOrder, exportBuildOrder, saveBuildOrder } from "@/lib/tauri";
+import { saveConfig, importBuildOrder, exportBuildOrder, saveBuildOrder, getBuildOrders } from "@/lib/tauri";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   Gamepad2,
@@ -104,8 +104,9 @@ export function SettingsWindow() {
         multiple: false,
       });
       if (selected) {
-        const imported = await importBuildOrder(selected as string);
-        setBuildOrders([...buildOrders, imported]);
+        await importBuildOrder(selected as string);
+        const refreshed = await getBuildOrders();
+        setBuildOrders(refreshed);
       }
     } catch (error) {
       console.error("Failed to import build order:", error);

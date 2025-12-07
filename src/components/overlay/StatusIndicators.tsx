@@ -3,6 +3,7 @@ import { Volume2, VolumeX, MousePointer2Off, MousePointer2, Minimize2, Maximize2
 import { useTTS } from "@/hooks";
 import { useConfigStore, useMatchupStore } from "@/stores";
 import { cn, logTelemetryEvent } from "@/lib/utils";
+import { saveConfig } from "@/lib/tauri";
 
 interface StatusIndicatorsProps {
   onToggleClickThrough?: () => void;
@@ -77,16 +78,29 @@ export function StatusIndicators({
     });
   };
 
-  const toggleClickThrough = () => {
+  const toggleClickThrough = async () => {
     if (onToggleClickThrough) {
       onToggleClickThrough();
     } else {
-      updateConfig({ click_through: !clickThrough });
+      const next = !clickThrough;
+      updateConfig({ click_through: next });
+      // Persist so restart/settings stay in sync
+      try {
+        await saveConfig({ ...config, click_through: next });
+      } catch (error) {
+        console.error("Failed to persist click-through toggle:", error);
+      }
     }
   };
 
-  const toggleCompact = () => {
-    updateConfig({ compact_mode: !compactMode });
+  const toggleCompact = async () => {
+    const next = !compactMode;
+    updateConfig({ compact_mode: next });
+    try {
+      await saveConfig({ ...config, compact_mode: next });
+    } catch (error) {
+      console.error("Failed to persist compact toggle:", error);
+    }
   };
 
   const handleMatchupToggle = () => {
