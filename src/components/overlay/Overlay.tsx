@@ -1,10 +1,14 @@
-import { GripVertical, MousePointer2Off, Settings } from "lucide-react";
+import { GripVertical, Settings } from "lucide-react";
 import { useWindowDrag, useAutoResize, useTimer, useBuildOrderSync } from "@/hooks";
 import { useOpacity, useConfigStore, useCurrentStep } from "@/stores";
 import { BuildOrderDisplay } from "./BuildOrderDisplay";
 import { CompactOverlay } from "./CompactOverlay";
 import { TimerBar } from "./TimerBar";
 import { UpgradeBadges } from "./UpgradeBadges";
+import { QuickActionBar } from "./QuickActionBar";
+import { StatusIndicators } from "./StatusIndicators";
+import { KeyboardShortcutsOverlay } from "./KeyboardShortcutsOverlay";
+import { FirstLaunchOnboarding } from "./FirstLaunchOnboarding";
 import { showSettings } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
@@ -39,32 +43,33 @@ export function Overlay() {
         {/* Draggable header */}
         <div
           className={cn(
-            "flex items-center px-2 py-1 transition-colors cursor-move",
-            !floatingStyle && "border-b border-white/5",
-            config.click_through && !floatingStyle && "border-amber-500/20"
+            "flex items-center px-1.5 py-1 transition-colors",
+            !floatingStyle && "border-b border-white/5"
           )}
-          onMouseDown={startDrag}
         >
           {/* Settings button */}
           <button
             onClick={(e) => { e.stopPropagation(); showSettings(); }}
-            className="p-1 rounded hover:bg-white/10 transition-all duration-200 settings-icon-hover"
+            className="p-1 rounded hover:bg-white/10 transition-all duration-200 settings-icon-hover group relative"
             title="Open Settings"
           >
-            <Settings className="w-4 h-4 text-white/50 hover:text-white/80" />
+            <Settings className="w-3.5 h-3.5 text-white/50 group-hover:text-white/80" />
           </button>
 
-          {/* Drag indicator in center */}
-          <div className="flex-1 flex items-center justify-center">
+          {/* Keyboard shortcuts button */}
+          <KeyboardShortcutsOverlay />
+
+          {/* Drag area in center */}
+          <div
+            className="flex-1 flex items-center justify-center cursor-move hover:bg-white/5 rounded py-0.5"
+            onMouseDown={startDrag}
+            title={`Drag to move (${config.hotkeys.toggle_overlay} to hide)`}
+          >
             <GripVertical className="w-4 h-4 text-white/25" />
           </div>
 
-          {/* Click-through indicator */}
-          <div className="w-6 flex justify-end" title={config.click_through ? "Click-Through Mode" : undefined}>
-            {config.click_through && (
-              <MousePointer2Off className="w-4 h-4 text-amber-500 animate-pulse" />
-            )}
-          </div>
+          {/* Status indicators */}
+          <StatusIndicators />
         </div>
 
         {/* Timer bar - shows when timer is running or has delta */}
@@ -77,7 +82,13 @@ export function Overlay() {
 
         {/* Content */}
         <BuildOrderDisplay />
+
+        {/* Quick action bar */}
+        <QuickActionBar />
       </div>
+
+      {/* First launch onboarding */}
+      <FirstLaunchOnboarding />
     </div>
   );
 }

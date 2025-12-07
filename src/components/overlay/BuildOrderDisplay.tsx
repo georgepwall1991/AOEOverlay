@@ -1,14 +1,11 @@
-import { useBuildOrderStore, useCurrentBuildOrder, useConfigStore } from "@/stores";
+import { useBuildOrderStore, useCurrentBuildOrder } from "@/stores";
 import { BuildOrderStep } from "./BuildOrderStep";
-import { CivBadge } from "./CivBadge";
-import { cn } from "@/lib/utils";
+import { BuildSelectorDropdown } from "./BuildSelectorDropdown";
 
 export function BuildOrderDisplay() {
   const currentOrder = useCurrentBuildOrder();
   const currentStepIndex = useBuildOrderStore((s) => s.currentStepIndex);
   const goToStep = useBuildOrderStore((s) => s.goToStep);
-  const { config } = useConfigStore();
-  const floatingStyle = config.floating_style;
 
   if (!currentOrder) {
     return (
@@ -33,27 +30,20 @@ export function BuildOrderDisplay() {
 
   return (
     <div className="flex flex-col">
-      {/* Header with progress */}
-      <div className="px-3 py-2 flex items-center gap-2">
-        <CivBadge civilization={currentOrder.civilization} size="md" glow />
-
-        {/* Title */}
-        <h2 className={cn(
-          "text-sm font-bold truncate flex-1",
-          floatingStyle ? "text-gradient-gold" : "text-white"
-        )}>
-          {currentOrder.name}
-        </h2>
+      {/* Header with build selector and progress */}
+      <div className="px-2 py-2 flex items-center gap-2">
+        {/* Build selector dropdown */}
+        <BuildSelectorDropdown />
 
         {/* Progress indicator */}
-        <div className="flex items-center gap-2">
-          <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="w-12 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <span className="text-xs font-mono text-amber-400">
+          <span className="text-xs font-mono text-amber-400 tabular-nums">
             {currentStepIndex + 1}/{currentOrder.steps.length}
           </span>
         </div>
