@@ -863,4 +863,343 @@ mod tests {
     fn test_max_build_order_steps_constant() {
         assert_eq!(MAX_BUILD_ORDER_STEPS, 200);
     }
+
+    // Resources serialization tests
+    #[test]
+    fn test_resources_all_fields() {
+        let resources = Resources {
+            food: Some(100),
+            wood: Some(200),
+            gold: Some(300),
+            stone: Some(400),
+        };
+        assert_eq!(resources.food, Some(100));
+        assert_eq!(resources.wood, Some(200));
+        assert_eq!(resources.gold, Some(300));
+        assert_eq!(resources.stone, Some(400));
+    }
+
+    #[test]
+    fn test_resources_partial_fields() {
+        let resources = Resources {
+            food: Some(50),
+            wood: None,
+            gold: None,
+            stone: None,
+        };
+        assert!(resources.food.is_some());
+        assert!(resources.wood.is_none());
+    }
+
+    #[test]
+    fn test_resources_negative_values() {
+        // Resources can have negative values (representing cost/deficit)
+        let resources = Resources {
+            food: Some(-100),
+            wood: Some(-50),
+            gold: None,
+            stone: None,
+        };
+        assert_eq!(resources.food, Some(-100));
+    }
+
+    #[test]
+    fn test_resources_zero_values() {
+        let resources = Resources {
+            food: Some(0),
+            wood: Some(0),
+            gold: Some(0),
+            stone: Some(0),
+        };
+        assert_eq!(resources.food, Some(0));
+    }
+
+    // WindowPosition tests
+    #[test]
+    fn test_window_position_creation() {
+        let pos = WindowPosition { x: 100, y: 200 };
+        assert_eq!(pos.x, 100);
+        assert_eq!(pos.y, 200);
+    }
+
+    #[test]
+    fn test_window_position_negative_coords() {
+        // Negative coords are valid (multi-monitor setups)
+        let pos = WindowPosition { x: -500, y: -100 };
+        assert_eq!(pos.x, -500);
+        assert_eq!(pos.y, -100);
+    }
+
+    #[test]
+    fn test_window_position_zero() {
+        let pos = WindowPosition { x: 0, y: 0 };
+        assert_eq!(pos.x, 0);
+        assert_eq!(pos.y, 0);
+    }
+
+    // WindowSize tests
+    #[test]
+    fn test_window_size_creation() {
+        let size = WindowSize { width: 800, height: 600 };
+        assert_eq!(size.width, 800);
+        assert_eq!(size.height, 600);
+    }
+
+    #[test]
+    fn test_window_size_minimum() {
+        let size = WindowSize { width: 1, height: 1 };
+        assert_eq!(size.width, 1);
+        assert_eq!(size.height, 1);
+    }
+
+    #[test]
+    fn test_window_size_large() {
+        let size = WindowSize { width: 3840, height: 2160 };
+        assert_eq!(size.width, 3840);
+        assert_eq!(size.height, 2160);
+    }
+
+    // AutoAdvanceConfig tests
+    #[test]
+    fn test_auto_advance_config() {
+        let config = AutoAdvanceConfig {
+            enabled: true,
+            delay_seconds: 30,
+        };
+        assert!(config.enabled);
+        assert_eq!(config.delay_seconds, 30);
+    }
+
+    #[test]
+    fn test_auto_advance_config_zero_delay() {
+        let config = AutoAdvanceConfig {
+            enabled: true,
+            delay_seconds: 0,
+        };
+        assert_eq!(config.delay_seconds, 0);
+    }
+
+    // HotkeyConfig tests
+    #[test]
+    fn test_hotkey_config_all_fields() {
+        let config = HotkeyConfig {
+            toggle_overlay: "F1".to_string(),
+            previous_step: "F2".to_string(),
+            next_step: "F3".to_string(),
+            cycle_build_order: "F4".to_string(),
+            toggle_click_through: "F5".to_string(),
+            toggle_compact: "F6".to_string(),
+            reset_build_order: "F7".to_string(),
+            toggle_pause: "F8".to_string(),
+        };
+        assert_eq!(config.toggle_overlay, "F1");
+        assert_eq!(config.toggle_pause, "F8");
+    }
+
+    // BuildOrderStep tests
+    #[test]
+    fn test_build_order_step_minimal() {
+        let step = BuildOrderStep {
+            id: "s1".to_string(),
+            description: "Do something".to_string(),
+            timing: None,
+            resources: None,
+        };
+        assert!(step.timing.is_none());
+        assert!(step.resources.is_none());
+    }
+
+    #[test]
+    fn test_build_order_step_with_timing() {
+        let step = BuildOrderStep {
+            id: "s1".to_string(),
+            description: "Build house".to_string(),
+            timing: Some("1:30".to_string()),
+            resources: None,
+        };
+        assert_eq!(step.timing, Some("1:30".to_string()));
+    }
+
+    #[test]
+    fn test_build_order_step_with_resources() {
+        let step = BuildOrderStep {
+            id: "s1".to_string(),
+            description: "Build house".to_string(),
+            timing: None,
+            resources: Some(Resources {
+                food: None,
+                wood: Some(50),
+                gold: None,
+                stone: None,
+            }),
+        };
+        assert!(step.resources.is_some());
+        assert_eq!(step.resources.unwrap().wood, Some(50));
+    }
+
+    // BuildOrder optional fields tests
+    #[test]
+    fn test_build_order_pinned_field() {
+        let mut order = create_valid_build_order();
+        order.pinned = true;
+        assert!(order.pinned);
+    }
+
+    #[test]
+    fn test_build_order_favorite_field() {
+        let mut order = create_valid_build_order();
+        order.favorite = true;
+        assert!(order.favorite);
+    }
+
+    // Timer drift config tests
+    #[test]
+    fn test_timer_drift_config() {
+        let config = TimerDriftConfig { enabled: true };
+        assert!(config.enabled);
+    }
+
+    // Telemetry config tests
+    #[test]
+    fn test_telemetry_config_all_fields() {
+        let config = TelemetryConfig {
+            enabled: true,
+            capture_hotkeys: true,
+            capture_actions: false,
+            max_events: 500,
+        };
+        assert!(config.enabled);
+        assert!(config.capture_hotkeys);
+        assert!(!config.capture_actions);
+        assert_eq!(config.max_events, 500);
+    }
+
+    // UpgradeBadgeConfig tests
+    #[test]
+    fn test_upgrade_badge_config() {
+        let badge = UpgradeBadgeConfig {
+            id: "wheelbarrow".to_string(),
+            name: "Wheelbarrow".to_string(),
+            short_name: "WB".to_string(),
+            trigger_seconds: 120,
+            enabled: true,
+        };
+        assert_eq!(badge.id, "wheelbarrow");
+        assert_eq!(badge.trigger_seconds, 120);
+    }
+
+    // ReminderItemConfig tests
+    #[test]
+    fn test_reminder_item_config() {
+        let item = ReminderItemConfig {
+            enabled: true,
+            interval_seconds: 30,
+        };
+        assert!(item.enabled);
+        assert_eq!(item.interval_seconds, 30);
+    }
+
+    // SacredSitesConfig tests
+    #[test]
+    fn test_sacred_sites_config() {
+        let config = SacredSitesConfig { enabled: true };
+        assert!(config.enabled);
+    }
+
+    // Default macro check test
+    #[test]
+    fn test_default_macro_check() {
+        let config = default_macro_check();
+        assert!(!config.enabled);
+        assert_eq!(config.interval_seconds, 20);
+    }
+
+    // Default sacred sites test
+    #[test]
+    fn test_default_sacred_sites() {
+        let config = default_sacred_sites();
+        assert!(config.enabled);
+    }
+
+    // BuildOrderBranch tests
+    #[test]
+    fn test_build_order_branch_no_trigger() {
+        let branch = BuildOrderBranch {
+            id: "branch-1".to_string(),
+            name: "Test Branch".to_string(),
+            trigger: None,
+            start_step_index: 0,
+            steps: vec![],
+        };
+        assert!(branch.trigger.is_none());
+    }
+
+    #[test]
+    fn test_build_order_branch_with_start_index() {
+        let branch = BuildOrderBranch {
+            id: "branch-1".to_string(),
+            name: "Late Branch".to_string(),
+            trigger: Some("Castle Age".to_string()),
+            start_step_index: 15,
+            steps: vec![],
+        };
+        assert_eq!(branch.start_step_index, 15);
+    }
+
+    // Validate build order with step at exact max index
+    #[test]
+    fn test_validate_build_order_step_index_in_error() {
+        let mut order = create_valid_build_order();
+        order.steps = vec![
+            BuildOrderStep {
+                id: "s1".to_string(),
+                description: "First".to_string(),
+                timing: None,
+                resources: None,
+            },
+            BuildOrderStep {
+                id: "".to_string(), // Invalid - empty id
+                description: "Second".to_string(),
+                timing: None,
+                resources: None,
+            },
+        ];
+        let result = validate_build_order(&order);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err();
+        assert!(err_msg.contains("Step 2")); // Should reference step 2
+    }
+
+    // Test that civilization field can be any string
+    #[test]
+    fn test_build_order_any_civilization() {
+        let mut order = create_valid_build_order();
+        order.civilization = "CustomCiv".to_string();
+        assert!(validate_build_order(&order).is_ok());
+    }
+
+    // Test that difficulty field can be any string
+    #[test]
+    fn test_build_order_any_difficulty() {
+        let mut order = create_valid_build_order();
+        order.difficulty = "Expert".to_string();
+        assert!(validate_build_order(&order).is_ok());
+    }
+
+    // Test empty name (currently allowed)
+    #[test]
+    fn test_build_order_empty_name() {
+        let mut order = create_valid_build_order();
+        order.name = "".to_string();
+        // Name is not validated currently
+        assert!(validate_build_order(&order).is_ok());
+    }
+
+    // Test long description in step (no limit currently)
+    #[test]
+    fn test_build_order_step_long_description() {
+        let mut order = create_valid_build_order();
+        order.steps[0].description = "A".repeat(10000);
+        assert!(validate_build_order(&order).is_ok());
+    }
 }

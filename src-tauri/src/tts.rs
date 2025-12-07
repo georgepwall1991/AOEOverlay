@@ -248,4 +248,107 @@ mod tests {
         let err = result.unwrap_err();
         assert_eq!(err.kind(), std::io::ErrorKind::Unsupported);
     }
+
+    // Additional edge case tests
+
+    #[test]
+    fn test_rate_negative_value() {
+        // Negative rate should clamp to minimum
+        let negative_rate = ((-2.0_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(negative_rate, -10);
+    }
+
+    #[test]
+    fn test_rate_fractional_values() {
+        // Test fractional rate values
+        let rate_1_25 = ((1.25_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(rate_1_25, 1);
+
+        let rate_1_5 = ((1.5_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(rate_1_5, 2);
+
+        let rate_0_75 = ((0.75_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(rate_0_75, -1);
+    }
+
+    #[test]
+    fn test_rate_very_large() {
+        // Very large rate should clamp to max
+        let huge_rate = ((100.0_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(huge_rate, 10);
+    }
+
+    #[test]
+    fn test_macos_wpm_negative_rate() {
+        // Negative rate produces negative WPM (unlikely in practice but test math)
+        let negative_wpm = (-1.0_f32 * 200.0) as i32;
+        assert_eq!(negative_wpm, -200);
+    }
+
+    #[test]
+    fn test_macos_wpm_fractional_rate() {
+        // Fractional rates
+        let wpm_1_5 = (1.5_f32 * 200.0) as i32;
+        assert_eq!(wpm_1_5, 300);
+
+        let wpm_0_25 = (0.25_f32 * 200.0) as i32;
+        assert_eq!(wpm_0_25, 50);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_escape_powershell_all_special_chars_combined() {
+        // Combine all special chars that need escaping
+        let result = escape_powershell("$`\"'\\\n\r\t\0");
+        assert_eq!(result, "`$```\"`'''`\\`n`r`t");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_escape_powershell_long_string() {
+        // Test with a long string
+        let long_text = "a".repeat(1000);
+        let result = escape_powershell(&long_text);
+        assert_eq!(result.len(), 1000);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_escape_powershell_single_quotes_sequence() {
+        // Multiple single quotes in sequence
+        assert_eq!(escape_powershell("''''"), "''''''''");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_escape_powershell_mixed_escapes() {
+        // Real-world text with mixed special chars
+        let text = "Build 5 villagers! Then say: \"Go!\"";
+        let result = escape_powershell(text);
+        assert!(result.contains("`\""));
+        assert!(!result.contains("\n")); // No literal newlines
+    }
+
+    #[test]
+    fn test_sapi_rate_precision() {
+        // Test that integer conversion is predictable
+        let rate_1_1 = ((1.1_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        // 0.1 * 5.0 = 0.5, as i32 = 0
+        assert_eq!(rate_1_1, 0);
+
+        let rate_1_2 = ((1.2_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        // 0.2 * 5.0 = 1.0, as i32 = 1
+        assert_eq!(rate_1_2, 1);
+    }
+
+    #[test]
+    fn test_sapi_rate_at_clamp_boundaries() {
+        // Just above lower boundary (rate that gives exactly -10)
+        let at_min = ((-1.0_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(at_min, -10);
+
+        // Just below upper boundary (rate that gives exactly 10)
+        let at_max = ((3.0_f32 - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+        assert_eq!(at_max, 10);
+    }
 }

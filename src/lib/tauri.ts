@@ -33,10 +33,7 @@ export async function getConfig(): Promise<AppConfig> {
 }
 
 export async function saveConfig(config: AppConfig): Promise<void> {
-  if (IS_MOCK) {
-    console.log("Mock saveConfig:", config);
-    return Promise.resolve();
-  }
+  if (IS_MOCK) return Promise.resolve();
   return invoke("save_config", { config });
 }
 
@@ -52,20 +49,14 @@ export async function getBuildOrders(): Promise<BuildOrder[]> {
 }
 
 export async function saveBuildOrder(order: BuildOrder): Promise<void> {
-  if (IS_MOCK) {
-    console.log("Mock saveBuildOrder:", order);
-    return Promise.resolve();
-  }
+  if (IS_MOCK) return Promise.resolve();
   await invoke("save_build_order", { order });
   // Emit event to notify other windows
   await emit(BUILD_ORDERS_CHANGED_EVENT);
 }
 
 export async function deleteBuildOrder(id: string): Promise<void> {
-  if (IS_MOCK) {
-    console.log("Mock deleteBuildOrder:", id);
-    return Promise.resolve();
-  }
+  if (IS_MOCK) return Promise.resolve();
   await invoke("delete_build_order", { id });
   // Emit event to notify other windows
   await emit(BUILD_ORDERS_CHANGED_EVENT);
@@ -132,10 +123,7 @@ export async function toggleCompactMode(): Promise<boolean> {
 
 // TTS commands
 export async function speak(text: string, rate: number = 1.0): Promise<void> {
-  if (IS_MOCK) {
-    console.log(`Mock Speak (${rate}x): ${text}`);
-    return Promise.resolve();
-  }
+  if (IS_MOCK) return Promise.resolve();
   return invoke("speak", { text, rate });
 }
 

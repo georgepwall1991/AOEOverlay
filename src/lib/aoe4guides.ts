@@ -665,12 +665,12 @@ function convertHtmlToIconMarkers(html: string): string {
 
     // Extract filename from src path
     // e.g., /assets/pictures/unit_worker/villager.png -> villager
-    const pathMatch = src.match(/\/([^\/]+)\.(png|webp|jpg)$/i);
+    const pathMatch = src.match(/\/([^/]+)\.(png|webp|jpg)$/i);
     const filename = pathMatch ? pathMatch[1].toLowerCase() : "";
 
     // Also check parent folder for context
     // e.g., /assets/pictures/resource/resource_gold.png
-    const parentMatch = src.match(/\/([^\/]+)\/[^\/]+\.(png|webp|jpg)$/i);
+    const parentMatch = src.match(/\/([^/]+)\/[^/]+\.(png|webp|jpg)$/i);
     const parentFolder = parentMatch ? parentMatch[1].toLowerCase() : "";
 
     // Try to map to our icon format

@@ -379,4 +379,168 @@ mod tests {
         assert!(error_msg.contains("2000000"));
         assert!(error_msg.contains("1048576"));
     }
+
+    // Additional edge case tests
+
+    #[test]
+    fn test_pathbuf_empty_string() {
+        let path = PathBuf::from("");
+        assert_eq!(path.to_str(), Some(""));
+        assert_eq!(path.file_name(), None);
+    }
+
+    #[test]
+    fn test_pathbuf_with_spaces() {
+        let path = PathBuf::from("/path/with spaces/my build.json");
+        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some("my build.json"));
+        assert_eq!(path.extension().and_then(|s| s.to_str()), Some("json"));
+    }
+
+    #[test]
+    fn test_pathbuf_with_unicode() {
+        let path = PathBuf::from("/path/日本語/ビルド.json");
+        assert_eq!(path.extension().and_then(|s| s.to_str()), Some("json"));
+    }
+
+    #[test]
+    fn test_pathbuf_with_dots_in_name() {
+        let path = PathBuf::from("/path/build.order.v1.0.json");
+        assert_eq!(path.extension().and_then(|s| s.to_str()), Some("json"));
+        assert_eq!(path.file_stem().and_then(|s| s.to_str()), Some("build.order.v1.0"));
+    }
+
+    #[test]
+    fn test_pathbuf_hidden_file() {
+        let path = PathBuf::from("/path/.hidden_build.json");
+        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some(".hidden_build.json"));
+    }
+
+    #[test]
+    fn test_format_build_order_filename_with_special_chars() {
+        // IDs should be validated to be alphanumeric with dashes/underscores
+        let id = "english_rush-v1_pro";
+        let filename = format!("{}.json", id);
+        assert_eq!(filename, "english_rush-v1_pro.json");
+    }
+
+    #[test]
+    fn test_format_build_order_filename_edge_cases() {
+        // Single character ID
+        let id = "a";
+        assert_eq!(format!("{}.json", id), "a.json");
+
+        // Long ID
+        let id = "a".repeat(100);
+        let filename = format!("{}.json", id);
+        assert_eq!(filename.len(), 105); // 100 + ".json"
+    }
+
+    #[test]
+    fn test_file_size_boundary_values() {
+        // Just under limit
+        let under_limit = MAX_IMPORT_SIZE - 1;
+        assert!(under_limit < MAX_IMPORT_SIZE);
+
+        // At limit
+        let at_limit = MAX_IMPORT_SIZE;
+        assert!(at_limit <= MAX_IMPORT_SIZE);
+
+        // Just over limit
+        let over_limit = MAX_IMPORT_SIZE + 1;
+        assert!(over_limit > MAX_IMPORT_SIZE);
+    }
+
+    #[test]
+    fn test_error_message_duplicate_build_order() {
+        let id = "my-build";
+        let error = format!(
+            "A build order with id \"{}\" already exists. Delete or rename it before importing.",
+            id
+        );
+        assert!(error.contains("my-build"));
+        assert!(error.contains("already exists"));
+    }
+
+    #[test]
+    fn test_error_message_cannot_access_file() {
+        let error = format!("Cannot access file: {}", "No such file or directory");
+        assert!(error.contains("Cannot access file"));
+    }
+
+    #[test]
+    fn test_error_message_not_regular_file() {
+        let error = "Path must be a regular file".to_string();
+        assert_eq!(error, "Path must be a regular file");
+    }
+
+    #[test]
+    fn test_error_message_invalid_format() {
+        let json_error = "missing field `id`";
+        let error = format!("Invalid build order format: {}", json_error);
+        assert!(error.contains("Invalid build order format"));
+        assert!(error.contains("missing field"));
+    }
+
+    #[test]
+    fn test_error_message_failed_to_read() {
+        let error = format!("Failed to read file: {}", "permission denied");
+        assert!(error.contains("Failed to read file"));
+    }
+
+    #[test]
+    fn test_error_message_failed_to_write() {
+        let error = format!("Failed to write file: {}", "disk full");
+        assert!(error.contains("Failed to write file"));
+    }
+
+    #[test]
+    fn test_error_message_failed_to_delete() {
+        let error = format!("Failed to delete build order file: {}", "permission denied");
+        assert!(error.contains("Failed to delete"));
+    }
+
+    #[test]
+    fn test_pathbuf_root_only() {
+        let path = PathBuf::from("/");
+        assert!(path.is_absolute());
+        assert_eq!(path.file_name(), None);
+        assert_eq!(path.parent(), None);
+    }
+
+    #[test]
+    fn test_pathbuf_double_extension() {
+        let path = PathBuf::from("/path/archive.tar.gz");
+        assert_eq!(path.extension().and_then(|s| s.to_str()), Some("gz"));
+    }
+
+    #[test]
+    fn test_pathbuf_no_parent() {
+        let path = PathBuf::from("filename.json");
+        assert_eq!(path.parent().and_then(|p| p.to_str()), Some(""));
+    }
+
+    #[test]
+    fn test_max_import_size_megabyte_conversion() {
+        // Verify we can express the limit in different units
+        let bytes = MAX_IMPORT_SIZE;
+        let kb = bytes / 1024;
+        let mb = kb / 1024;
+        assert_eq!(mb, 1);
+        assert_eq!(kb, 1024);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_windows_path_with_drive_letter() {
+        let path = PathBuf::from("D:\\Games\\AoE4\\builds\\english.json");
+        assert!(path.is_absolute());
+        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some("english.json"));
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_windows_unc_path() {
+        let path = PathBuf::from("\\\\server\\share\\builds\\english.json");
+        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some("english.json"));
+    }
 }

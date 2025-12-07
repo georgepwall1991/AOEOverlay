@@ -1,5 +1,5 @@
-import { ReactElement } from "react";
-import { render, RenderOptions } from "@testing-library/react";
+import type { ReactElement } from "react";
+import { render, type RenderOptions } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // Custom render function (can add providers here if needed)

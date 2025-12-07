@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { cn, logTelemetryEvent, formatTimestamp } from "./utils";
 import { useConfigStore, useEventLogStore } from "@/stores";
 
@@ -13,7 +13,9 @@ describe("utils", () => {
     });
 
     it("handles conditional classes", () => {
-      expect(cn("foo", true && "bar", false && "baz")).toBe("foo bar");
+      const showBar = true;
+      const showBaz = false;
+      expect(cn("foo", showBar && "bar", showBaz && "baz")).toBe("foo bar");
     });
 
     it("handles undefined and null values", () => {

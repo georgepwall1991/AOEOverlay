@@ -261,7 +261,7 @@ export function BuildOrderEditor({
 
     if (numValue === undefined || isNaN(numValue)) {
       const newResources = { ...resources };
-      delete (newResources as any)[resource];
+      delete (newResources as Record<typeof resource, number | undefined>)[resource];
       if (Object.keys(newResources).length === 0) {
         steps[index] = { ...step, resources: undefined };
       } else {

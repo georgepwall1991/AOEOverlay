@@ -319,6 +319,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     if (showBrowseDialog && browseResults.length === 0) {
       handleBrowseBuilds();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only trigger on dialog open, not on results change
   }, [showBrowseDialog]);
 
   // Show editor if editing or creating
