@@ -4,7 +4,6 @@ import {
   useBuildOrderStore,
   useCurrentBuildOrder,
   useCurrentStep,
-  useEnabledBuildOrders,
 } from "./buildOrderStore";
 import type { BuildOrder } from "@/types";
 

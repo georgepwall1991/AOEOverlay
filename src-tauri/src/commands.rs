@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager, State, Window};
+use tauri::{AppHandle, Manager, State, Window, WebviewUrl, WebviewWindowBuilder};
 use crate::config::{AppConfig, BuildOrder, WindowPosition, WindowSize, get_config_path, get_build_orders_dir, atomic_write};
 use crate::state::AppState;
 use crate::hotkeys::register_hotkeys;
@@ -103,10 +103,34 @@ pub fn toggle_overlay(app: AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 pub fn show_settings(app: AppHandle) -> Result<(), String> {
+    // Check if window already exists
     if let Some(window) = app.get_webview_window("settings") {
         window.show().map_err(|e| e.to_string())?;
         window.set_focus().map_err(|e| e.to_string())?;
+        return Ok(());
     }
+
+    // Window doesn't exist, create it
+    let url = if cfg!(debug_assertions) {
+        WebviewUrl::External("http://localhost:1420/settings.html".parse().unwrap())
+    } else {
+        WebviewUrl::App("settings.html".into())
+    };
+
+    let window = WebviewWindowBuilder::new(&app, "settings", url)
+        .title("AoE4 Overlay - Settings")
+        .inner_size(800.0, 600.0)
+        .resizable(true)
+        .decorations(true)
+        .transparent(false)
+        .always_on_top(false)
+        .center()
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    window.show().map_err(|e| e.to_string())?;
+    window.set_focus().map_err(|e| e.to_string())?;
+
     Ok(())
 }
 

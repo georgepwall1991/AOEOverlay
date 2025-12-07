@@ -8,7 +8,7 @@ import {
   useHotkeys,
 } from "./configStore";
 import { DEFAULT_CONFIG } from "@/types";
-import type { AppConfig, FontSize, Theme } from "@/types";
+import type { AppConfig } from "@/types";
 
 describe("configStore", () => {
   beforeEach(() => {

@@ -104,6 +104,27 @@ const CIV_COLORS: Record<string, { bg: string; text: string; border: string }> =
     text: "text-lime-400",
     border: "border-lime-500/30",
   },
+  // Dynasties of the East DLC
+  "Golden Horde": {
+    bg: "bg-amber-600/20",
+    text: "text-amber-400",
+    border: "border-amber-600/30",
+  },
+  "Macedonian Dynasty": {
+    bg: "bg-violet-500/20",
+    text: "text-violet-400",
+    border: "border-violet-500/30",
+  },
+  "Sengoku Daimyo": {
+    bg: "bg-red-700/20",
+    text: "text-red-400",
+    border: "border-red-700/30",
+  },
+  "Tughlaq Dynasty": {
+    bg: "bg-teal-500/20",
+    text: "text-teal-400",
+    border: "border-teal-500/30",
+  },
 };
 
 const DEFAULT_COLORS = {

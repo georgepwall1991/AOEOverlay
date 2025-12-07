@@ -1,5 +1,5 @@
 import { GripVertical, MousePointer2Off, Settings } from "lucide-react";
-import { useWindowDrag, useAutoResize, useTimer } from "@/hooks";
+import { useWindowDrag, useAutoResize, useTimer, useBuildOrderSync } from "@/hooks";
 import { useOpacity, useConfigStore, useCurrentStep } from "@/stores";
 import { BuildOrderDisplay } from "./BuildOrderDisplay";
 import { CompactOverlay } from "./CompactOverlay";
@@ -15,6 +15,9 @@ export function Overlay() {
   const containerRef = useAutoResize();
   const currentStep = useCurrentStep();
   const { isRunning } = useTimer();
+
+  // Sync build orders when changed from settings window
+  useBuildOrderSync();
 
   // Show compact view if enabled
   if (config.compact_mode) {

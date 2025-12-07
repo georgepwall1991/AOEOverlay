@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { shallow } from "zustand/shallow";
+import { useShallow } from "zustand/react/shallow";
 import type { BuildOrder } from "@/types";
 
 interface BuildOrderState {
@@ -101,4 +101,4 @@ export const useCurrentStep = () =>
   });
 
 export const useEnabledBuildOrders = () =>
-  useBuildOrderStore((state) => state.buildOrders.filter((o) => o.enabled), shallow);
+  useBuildOrderStore(useShallow((state) => state.buildOrders.filter((o) => o.enabled)));

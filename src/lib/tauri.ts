@@ -1,6 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";
+
+// Event names for cross-window sync
+export const BUILD_ORDERS_CHANGED_EVENT = "build-orders-changed";
 
 const MOCK_BUILD_ORDERS: BuildOrder[] = [
   {
@@ -8,7 +12,7 @@ const MOCK_BUILD_ORDERS: BuildOrder[] = [
     name: "English Longbow Rush",
     civilization: "English",
     description: "Basic English aggression",
-    difficulty: "Easy",
+    difficulty: "Beginner",
     enabled: true,
     steps: [
       { id: "s1", description: "Build House", timing: "0:00", resources: { wood: 50 } },
@@ -51,7 +55,9 @@ export async function saveBuildOrder(order: BuildOrder): Promise<void> {
     console.log("Mock saveBuildOrder:", order);
     return Promise.resolve();
   }
-  return invoke("save_build_order", { order });
+  await invoke("save_build_order", { order });
+  // Emit event to notify other windows
+  await emit(BUILD_ORDERS_CHANGED_EVENT);
 }
 
 export async function deleteBuildOrder(id: string): Promise<void> {
@@ -59,7 +65,9 @@ export async function deleteBuildOrder(id: string): Promise<void> {
     console.log("Mock deleteBuildOrder:", id);
     return Promise.resolve();
   }
-  return invoke("delete_build_order", { id });
+  await invoke("delete_build_order", { id });
+  // Emit event to notify other windows
+  await emit(BUILD_ORDERS_CHANGED_EVENT);
 }
 
 export async function importBuildOrder(path: string): Promise<BuildOrder> {

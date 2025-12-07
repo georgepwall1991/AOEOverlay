@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload, Link, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload, Link, Loader2, Library, Globe, Eye, ThumbsUp, Search, ChevronDown, Sparkles, TrendingUp, Clock, X, ArrowUpDown, User, Flame, Target, Zap, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,11 +23,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useBuildOrderStore } from "@/stores";
 import { saveBuildOrder, deleteBuildOrder } from "@/lib/tauri";
 import { importAge4Builder } from "@/lib/age4builder";
 import { importAoe4WorldBuild } from "@/lib/aoe4world";
+import { importAoe4GuidesBuild, browseAoe4GuidesBuilds, getCivNameFromCode, type Aoe4GuidesBuildSummary } from "@/lib/aoe4guides";
 import type { BuildOrder } from "@/types";
+import { CIVILIZATIONS } from "@/types";
 import { BuildOrderEditor } from "./BuildOrderEditor";
 import { CivBadge } from "@/components/overlay/CivBadge";
 
@@ -58,6 +74,69 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
   const [importUrl, setImportUrl] = useState("");
   const [urlImportError, setUrlImportError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+
+  // AOE4 Guides state
+  const [showAoe4GuidesUrlDialog, setShowAoe4GuidesUrlDialog] = useState(false);
+  const [aoe4GuidesUrl, setAoe4GuidesUrl] = useState("");
+  const [aoe4GuidesUrlError, setAoe4GuidesUrlError] = useState<string | null>(null);
+
+  // Browse state
+  const [showBrowseDialog, setShowBrowseDialog] = useState(false);
+  const [browseResults, setBrowseResults] = useState<Aoe4GuidesBuildSummary[]>([]);
+  const [browseCivFilter, setBrowseCivFilter] = useState<string>("");
+  const [browseSearchQuery, setBrowseSearchQuery] = useState<string>("");
+  const [browseStrategyFilter, setBrowseStrategyFilter] = useState<string>("");
+  const [browseSortBy, setBrowseSortBy] = useState<"popular" | "recent" | "upvotes">("popular");
+  const [isBrowsing, setIsBrowsing] = useState(false);
+  const [browseError, setBrowseError] = useState<string | null>(null);
+
+  // Strategy options
+  const STRATEGY_OPTIONS = [
+    { value: "rush", label: "Rush", icon: Flame },
+    { value: "boom", label: "Boom", icon: TrendingUp },
+    { value: "timing", label: "Timing Attack", icon: Clock },
+    { value: "defensive", label: "Defensive", icon: Shield },
+    { value: "all-in", label: "All-In", icon: Target },
+  ];
+
+  // Filter and sort browse results
+  const filteredBrowseResults = useMemo(() => {
+    let results = [...browseResults];
+
+    // Filter by search query
+    if (browseSearchQuery.trim()) {
+      const query = browseSearchQuery.toLowerCase();
+      results = results.filter(
+        (build) =>
+          build.title.toLowerCase().includes(query) ||
+          build.author.toLowerCase().includes(query) ||
+          build.description?.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by strategy
+    if (browseStrategyFilter) {
+      results = results.filter(
+        (build) =>
+          build.strategy?.toLowerCase().includes(browseStrategyFilter.toLowerCase())
+      );
+    }
+
+    // Sort results
+    switch (browseSortBy) {
+      case "popular":
+        results.sort((a, b) => b.views - a.views);
+        break;
+      case "recent":
+        // Keep original order (API returns recent first)
+        break;
+      case "upvotes":
+        results.sort((a, b) => b.upvotes - a.upvotes);
+        break;
+    }
+
+    return results;
+  }, [browseResults, browseSearchQuery, browseStrategyFilter, browseSortBy]);
 
   const handleToggleEnabled = async (order: BuildOrder) => {
     const updated = { ...order, enabled: !order.enabled };
@@ -147,6 +226,70 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     }
   };
 
+  // AOE4 Guides URL import handler
+  const handleAoe4GuidesUrlImport = async () => {
+    setAoe4GuidesUrlError(null);
+    setIsImporting(true);
+    try {
+      const imported = await importAoe4GuidesBuild(aoe4GuidesUrl);
+      const existingIds = new Set(buildOrders.map((o) => o.id));
+      if (existingIds.has(imported.id)) {
+        imported.id = `${imported.id}-${Date.now()}`;
+      }
+      await saveBuildOrder(imported);
+      setBuildOrders([...buildOrders, imported]);
+      setShowAoe4GuidesUrlDialog(false);
+      setAoe4GuidesUrl("");
+    } catch (error) {
+      setAoe4GuidesUrlError(error instanceof Error ? error.message : "Failed to import");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Browse builds handler
+  const handleBrowseBuilds = async () => {
+    setIsBrowsing(true);
+    setBrowseError(null);
+    try {
+      const results = await browseAoe4GuidesBuilds(
+        browseCivFilter ? { civ: browseCivFilter } : undefined
+      );
+      setBrowseResults(results);
+    } catch (error) {
+      setBrowseError(error instanceof Error ? error.message : "Failed to load builds");
+    } finally {
+      setIsBrowsing(false);
+    }
+  };
+
+  // Import from browse results handler
+  const handleImportFromBrowse = async (buildId: string) => {
+    setIsImporting(true);
+    setBrowseError(null);
+    try {
+      const imported = await importAoe4GuidesBuild(buildId);
+      const existingIds = new Set(buildOrders.map((o) => o.id));
+      if (existingIds.has(imported.id)) {
+        imported.id = `${imported.id}-${Date.now()}`;
+      }
+      await saveBuildOrder(imported);
+      setBuildOrders([...buildOrders, imported]);
+      setShowBrowseDialog(false);
+    } catch (error) {
+      setBrowseError(error instanceof Error ? error.message : "Failed to import");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Load browse results when dialog opens
+  useEffect(() => {
+    if (showBrowseDialog && browseResults.length === 0) {
+      handleBrowseBuilds();
+    }
+  }, [showBrowseDialog]);
+
   // Show editor if editing or creating
   if (editingOrder) {
     return (
@@ -167,14 +310,38 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Build Orders</h2>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => setShowUrlImportDialog(true)}>
-            <Link className="w-4 h-4 mr-1" />
-            Import URL
+          {/* Browse AOE4 Guides */}
+          <Button size="sm" variant="outline" onClick={() => setShowBrowseDialog(true)}>
+            <Library className="w-4 h-4 mr-1" />
+            Browse
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setShowImportDialog(true)}>
-            <Upload className="w-4 h-4 mr-1" />
-            Import JSON
-          </Button>
+
+          {/* Import dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline">
+                <Download className="w-4 h-4 mr-1" />
+                Import
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setShowUrlImportDialog(true)}>
+                <Globe className="w-4 h-4 mr-2" />
+                From aoe4world.com
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowAoe4GuidesUrlDialog(true)}>
+                <Globe className="w-4 h-4 mr-2" />
+                From aoe4guides.com
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowImportDialog(true)}>
+                <Upload className="w-4 h-4 mr-2" />
+                From JSON (age4builder)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button size="sm" onClick={handleCreateNew}>
             <Plus className="w-4 h-4 mr-1" />
             New
@@ -404,6 +571,425 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
                 </>
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import from AOE4 Guides URL dialog */}
+      <Dialog
+        open={showAoe4GuidesUrlDialog}
+        onOpenChange={(open) => {
+          setShowAoe4GuidesUrlDialog(open);
+          if (!open) {
+            setAoe4GuidesUrl("");
+            setAoe4GuidesUrlError(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import from AOE4 Guides</DialogTitle>
+            <DialogDescription>
+              Paste a build order URL from{" "}
+              <a
+                href="https://aoe4guides.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline"
+              >
+                aoe4guides.com
+              </a>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Input
+              placeholder="https://aoe4guides.com/build/ABC123"
+              value={aoe4GuidesUrl}
+              onChange={(e) => {
+                setAoe4GuidesUrl(e.target.value);
+                setAoe4GuidesUrlError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && aoe4GuidesUrl.trim() && !isImporting) {
+                  handleAoe4GuidesUrlImport();
+                }
+              }}
+            />
+
+            {aoe4GuidesUrlError && <p className="text-sm text-destructive">{aoe4GuidesUrlError}</p>}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAoe4GuidesUrlDialog(false)}
+              disabled={isImporting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAoe4GuidesUrlImport}
+              disabled={!aoe4GuidesUrl.trim() || isImporting}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Link className="w-4 h-4 mr-1" />
+                  Import Build Order
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Browse AOE4 Guides dialog */}
+      <Dialog
+        open={showBrowseDialog}
+        onOpenChange={(open) => {
+          setShowBrowseDialog(open);
+          if (!open) {
+            setBrowseResults([]);
+            setBrowseCivFilter("");
+            setBrowseSearchQuery("");
+            setBrowseStrategyFilter("");
+            setBrowseSortBy("popular");
+            setBrowseError(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+          {/* Stylish Header with gradient */}
+          <div className="relative bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border-b px-6 py-5 flex-shrink-0">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80" />
+            <div className="relative">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg">
+                  <Library className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Browse AOE4 Guides</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Discover and import community build orders from{" "}
+                    <a
+                      href="https://aoe4guides.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-500 hover:text-amber-400 underline underline-offset-2"
+                    >
+                      aoe4guides.com
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0 px-6 py-4 gap-4">
+            {/* Search and Filters Section */}
+            <div className="flex flex-col gap-3 flex-shrink-0">
+              {/* Search input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search builds by title, author, or description..."
+                  value={browseSearchQuery}
+                  onChange={(e) => setBrowseSearchQuery(e.target.value)}
+                  className="pl-10 bg-muted/50"
+                />
+                {browseSearchQuery && (
+                  <button
+                    onClick={() => setBrowseSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filters row */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Civilization filter */}
+                <Select
+                  value={browseCivFilter || "all"}
+                  onValueChange={(value) => setBrowseCivFilter(value === "all" ? "" : value)}
+                >
+                  <SelectTrigger className="w-[180px] bg-muted/50">
+                    <Globe className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="All Civilizations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Civilizations</SelectItem>
+                    {CIVILIZATIONS.map((civ) => (
+                      <SelectItem key={civ} value={civ}>
+                        {civ}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Strategy filter */}
+                <Select
+                  value={browseStrategyFilter || "all"}
+                  onValueChange={(value) => setBrowseStrategyFilter(value === "all" ? "" : value)}
+                >
+                  <SelectTrigger className="w-[160px] bg-muted/50">
+                    <Zap className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder="All Strategies" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Strategies</SelectItem>
+                    {STRATEGY_OPTIONS.map((strategy) => (
+                      <SelectItem key={strategy.value} value={strategy.value}>
+                        <span className="flex items-center gap-2">
+                          <strategy.icon className="w-3 h-3" />
+                          {strategy.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Sort dropdown */}
+                <Select
+                  value={browseSortBy}
+                  onValueChange={(value) => setBrowseSortBy(value as "popular" | "recent" | "upvotes")}
+                >
+                  <SelectTrigger className="w-[140px] bg-muted/50">
+                    <ArrowUpDown className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popular">
+                      <span className="flex items-center gap-2">
+                        <TrendingUp className="w-3 h-3" />
+                        Most Popular
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="recent">
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-3 h-3" />
+                        Most Recent
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="upvotes">
+                      <span className="flex items-center gap-2">
+                        <ThumbsUp className="w-3 h-3" />
+                        Most Liked
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Refresh button */}
+                <Button
+                  onClick={handleBrowseBuilds}
+                  disabled={isBrowsing}
+                  size="sm"
+                  className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-md"
+                >
+                  {isBrowsing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4" />
+                  )}
+                  <span className="ml-2">Refresh</span>
+                </Button>
+
+                {/* Results count */}
+                {filteredBrowseResults.length > 0 && !isBrowsing && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span className="font-medium">{filteredBrowseResults.length}</span>
+                    <span>build{filteredBrowseResults.length !== 1 ? "s" : ""}</span>
+                    {browseSearchQuery || browseStrategyFilter ? (
+                      <span className="text-xs">(filtered)</span>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+
+              {/* Active filters */}
+              {(browseSearchQuery || browseCivFilter || browseStrategyFilter) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">Active filters:</span>
+                  {browseSearchQuery && (
+                    <Badge variant="secondary" className="gap-1 pr-1">
+                      <Search className="w-3 h-3" />
+                      "{browseSearchQuery}"
+                      <button onClick={() => setBrowseSearchQuery("")} className="ml-1 hover:text-destructive">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  {browseCivFilter && (
+                    <Badge variant="secondary" className="gap-1 pr-1">
+                      <Globe className="w-3 h-3" />
+                      {browseCivFilter}
+                      <button onClick={() => setBrowseCivFilter("")} className="ml-1 hover:text-destructive">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  {browseStrategyFilter && (
+                    <Badge variant="secondary" className="gap-1 pr-1">
+                      <Zap className="w-3 h-3" />
+                      {STRATEGY_OPTIONS.find(s => s.value === browseStrategyFilter)?.label || browseStrategyFilter}
+                      <button onClick={() => setBrowseStrategyFilter("")} className="ml-1 hover:text-destructive">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  <button
+                    onClick={() => {
+                      setBrowseSearchQuery("");
+                      setBrowseCivFilter("");
+                      setBrowseStrategyFilter("");
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {browseError && (
+              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-3 flex-shrink-0">
+                <div className="p-2 rounded-full bg-destructive/20">
+                  <X className="w-4 h-4 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-destructive">Failed to load builds</p>
+                  <p className="text-xs text-destructive/80">{browseError}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Results list */}
+            <ScrollArea className="flex-1 min-h-0 -mx-2 px-2">
+              <div className="grid gap-3 pb-2">
+                {filteredBrowseResults.map((build) => (
+                  <div
+                    key={build.id}
+                    className="group p-4 rounded-xl border bg-card/50 hover:bg-card hover:shadow-lg hover:border-amber-500/30 transition-all duration-200"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-2">
+                          <h4 className="font-semibold text-base leading-tight group-hover:text-amber-500 transition-colors">
+                            {build.title}
+                          </h4>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <CivBadge civilization={getCivNameFromCode(build.civ)} size="sm" />
+                          {build.strategy && (
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/20"
+                            >
+                              <Flame className="w-3 h-3 mr-1 text-orange-500" />
+                              {build.strategy}
+                            </Badge>
+                          )}
+                          {build.season && (
+                            <Badge variant="outline" className="text-[10px]">
+                              {build.season}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {build.description && (
+                          <p className="text-sm text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+                            {build.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-4 mt-3">
+                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span className="font-medium">{build.views.toLocaleString()}</span>
+                          </span>
+                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                            <ThumbsUp className="w-3.5 h-3.5" />
+                            <span className="font-medium">{build.upvotes}</span>
+                          </span>
+                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <User className="w-3.5 h-3.5" />
+                            <span className="truncate">{build.author}</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        className="flex-shrink-0 shadow-md bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white opacity-80 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleImportFromBrowse(build.id)}
+                        disabled={isImporting}
+                      >
+                        {isImporting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4 mr-1.5" />
+                            Import
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {filteredBrowseResults.length === 0 && !isBrowsing && !browseError && (
+                  <div className="text-center py-16 text-muted-foreground">
+                    <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
+                      <Library className="w-10 h-10 opacity-50" />
+                    </div>
+                    <p className="text-sm font-medium">No builds found</p>
+                    <p className="text-xs mt-1">
+                      {browseSearchQuery || browseStrategyFilter
+                        ? "Try adjusting your filters"
+                        : "Click Refresh to load builds from AOE4 Guides"}
+                    </p>
+                  </div>
+                )}
+
+                {isBrowsing && (
+                  <div className="text-center py-16 text-muted-foreground">
+                    <div className="inline-flex p-4 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 mb-4">
+                      <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+                    </div>
+                    <p className="text-sm font-medium">Loading builds from AOE4 Guides...</p>
+                    <p className="text-xs mt-1 text-muted-foreground/70">This may take a moment</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          <DialogFooter className="flex-shrink-0 border-t px-6 py-4 bg-muted/30">
+            <div className="flex items-center justify-between w-full">
+              <p className="text-xs text-muted-foreground">
+                Powered by{" "}
+                <a
+                  href="https://aoe4guides.com/api"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-500 hover:underline"
+                >
+                  AOE4 Guides API
+                </a>
+              </p>
+              <Button variant="outline" onClick={() => setShowBrowseDialog(false)}>
+                Close
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

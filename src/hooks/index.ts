@@ -1,6 +1,7 @@
 export * from "./useGlobalHotkeys";
 export * from "./useConfig";
 export * from "./useBuildOrders";
+export * from "./useBuildOrderSync";
 export * from "./useWindowDrag";
 export * from "./useWindowSize";
 export * from "./useAutoResize";

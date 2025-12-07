@@ -38,7 +38,12 @@ export type Civilization =
   | "Jeanne d'Arc"
   | "Ayyubids"
   | "Zhu Xi's Legacy"
-  | "Order of the Dragon";
+  | "Order of the Dragon"
+  // Dynasties of the East DLC
+  | "Golden Horde"
+  | "Macedonian Dynasty"
+  | "Sengoku Daimyo"
+  | "Tughlaq Dynasty";
 
 export type Difficulty = "Beginner" | "Intermediate" | "Advanced" | "Expert";
 
@@ -59,6 +64,11 @@ export const CIVILIZATIONS: Civilization[] = [
   "Ayyubids",
   "Zhu Xi's Legacy",
   "Order of the Dragon",
+  // Dynasties of the East DLC
+  "Golden Horde",
+  "Macedonian Dynasty",
+  "Sengoku Daimyo",
+  "Tughlaq Dynasty",
 ];
 
 export const DIFFICULTIES: Difficulty[] = ["Beginner", "Intermediate", "Advanced", "Expert"];

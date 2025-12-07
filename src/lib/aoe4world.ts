@@ -161,6 +161,18 @@ const CIVILIZATION_MAP: Record<string, Civilization> = {
   zhu_xi: "Zhu Xi's Legacy",
   zhu_xis_legacy: "Zhu Xi's Legacy",
   order_of_the_dragon: "Order of the Dragon",
+  // Dynasties of the East DLC
+  golden_horde: "Golden Horde",
+  goldenhorde: "Golden Horde",
+  macedonian_dynasty: "Macedonian Dynasty",
+  macedoniandynasty: "Macedonian Dynasty",
+  macedonian: "Macedonian Dynasty",
+  sengoku_daimyo: "Sengoku Daimyo",
+  sengokudaimyo: "Sengoku Daimyo",
+  sengoku: "Sengoku Daimyo",
+  tughlaq_dynasty: "Tughlaq Dynasty",
+  tughlaqdynasty: "Tughlaq Dynasty",
+  tughlaq: "Tughlaq Dynasty",
 };
 
 // Difficulty mapping
