@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { LogicalSize } from "@tauri-apps/api/dpi";
+import { getCurrentWindow, LogicalSize } from "@/lib/tauri";
 
 export function useAutoResize() {
   const containerRef = useRef<HTMLDivElement>(null);

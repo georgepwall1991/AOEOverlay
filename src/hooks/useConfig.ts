@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/stores";
-import { CONFIG_CHANGED_EVENT, getConfig, saveConfig } from "@/lib/tauri";
+import { CONFIG_CHANGED_EVENT, getConfig, saveConfig, listen } from "@/lib/tauri";
 import type { AppConfig } from "@/types";
 
 export function useConfig() {

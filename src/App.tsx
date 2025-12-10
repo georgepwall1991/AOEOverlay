@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@/lib/tauri";
 import { Overlay, AnimatedOverlay } from "@/components/overlay";
 import { SettingsWindow } from "@/components/settings";
 import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize, useReminders } from "@/hooks";
@@ -18,10 +18,6 @@ function App() {
 
   useEffect(() => {
     const initWindow = async () => {
-      if (import.meta.env.VITE_MOCK_TAURI === 'true') {
-        setWindowLabel("overlay");
-        return;
-      }
       const win = getCurrentWindow();
       setWindowLabel(win.label);
     };

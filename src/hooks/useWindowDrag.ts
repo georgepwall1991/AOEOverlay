@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@/lib/tauri";
 import { useOverlayStore } from "@/stores";
 
 export function useWindowDrag() {

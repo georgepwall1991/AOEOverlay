@@ -1,11 +1,73 @@
 import { invoke } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
+import { emit as tauriEmit, listen as tauriListen, type UnlistenFn } from "@tauri-apps/api/event";
+import { getCurrentWindow as tauriGetCurrentWindow, type Window } from "@tauri-apps/api/window";
+import { LogicalSize as TauriLogicalSize } from "@tauri-apps/api/dpi";
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";
 
 // Event names for cross-window sync
 export const BUILD_ORDERS_CHANGED_EVENT = "build-orders-changed";
 export const CONFIG_CHANGED_EVENT = "config-changed";
+
+const IS_MOCK = import.meta.env.VITE_MOCK_TAURI === 'true';
+
+// Mock LogicalSize class for browser testing
+export class LogicalSize {
+  width: number;
+  height: number;
+  constructor(width: number, height: number) {
+    this.width = width;
+    this.height = height;
+  }
+}
+
+// Mock window interface for browser testing
+interface MockWindow {
+  label: string;
+  setSize: (size: LogicalSize) => Promise<void>;
+  startDragging: () => Promise<void>;
+}
+
+// Mock getCurrentWindow for browser testing
+export function getCurrentWindow(): Window | MockWindow {
+  if (IS_MOCK) {
+    return {
+      label: "overlay",
+      setSize: async () => {},
+      startDragging: async () => {},
+    };
+  }
+  return tauriGetCurrentWindow();
+}
+
+// Mock implementations for Tauri event APIs
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type EventCallback<T> = (event: { payload: T; event: string; id: number }) => void;
+
+// Mock listen - returns a no-op unlisten function
+export async function listen<T>(
+  event: string,
+  handler: EventCallback<T>
+): Promise<UnlistenFn> {
+  if (IS_MOCK) {
+    // In mock mode, just return a no-op unlisten function
+    // We don't actually listen to anything since Tauri isn't available
+    void event;
+    void handler;
+    return () => {};
+  }
+  return tauriListen(event, handler);
+}
+
+// Mock emit - no-op in mock mode
+export async function emit(event: string, payload?: unknown): Promise<void> {
+  if (IS_MOCK) {
+    void event;
+    void payload;
+    return;
+  }
+  return tauriEmit(event, payload);
+}
 
 const MOCK_BUILD_ORDERS: BuildOrder[] = [
   {
@@ -23,8 +85,6 @@ const MOCK_BUILD_ORDERS: BuildOrder[] = [
     ]
   }
 ];
-
-const IS_MOCK = import.meta.env.VITE_MOCK_TAURI === 'true';
 
 // Config commands
 export async function getConfig(): Promise<AppConfig> {

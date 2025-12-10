@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from "react";
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "@/lib/tauri";
 import {
   useBuildOrderStore,
   useOverlayStore,

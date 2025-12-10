@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { listen } from "@tauri-apps/api/event";
 import { useConfigStore } from "@/stores";
-import { getWindowSize, setWindowSize, saveConfig } from "@/lib/tauri";
+import { getCurrentWindow, getWindowSize, setWindowSize, saveConfig, listen } from "@/lib/tauri";
 
 export function useWindowSize() {
   const { config, updateConfig, isLoading } = useConfigStore();

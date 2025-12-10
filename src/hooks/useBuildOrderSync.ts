@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { listen } from "@tauri-apps/api/event";
-import { getBuildOrders, BUILD_ORDERS_CHANGED_EVENT } from "@/lib/tauri";
+import { getBuildOrders, BUILD_ORDERS_CHANGED_EVENT, listen } from "@/lib/tauri";
 import { useBuildOrderStore } from "@/stores";
 
 /**
