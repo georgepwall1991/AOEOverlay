@@ -31,8 +31,14 @@ exports.config = {
 
   maxInstances: 1,
 
+  // tauri-driver listens on port 4444 by default
+  hostname: 'localhost',
+  port: 4444,
+
   capabilities: [{
     maxInstances: 1,
+    // Required for WebdriverIO to work with tauri-driver
+    browserName: 'wry',
     'tauri:options': {
       application: getAppPath()
     }
