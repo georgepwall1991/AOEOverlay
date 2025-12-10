@@ -31,8 +31,14 @@ interface MockWindow {
 // Mock getCurrentWindow for browser testing
 export function getCurrentWindow(): Window | MockWindow {
   if (IS_MOCK) {
+    // Check for test override via window property or URL parameter
+    const testLabel = typeof window !== 'undefined'
+      ? (window as unknown as { __TEST_WINDOW_LABEL__?: string }).__TEST_WINDOW_LABEL__
+        || new URLSearchParams(window.location.search).get('window')
+      : null;
+
     return {
-      label: "overlay",
+      label: testLabel || "overlay",
       setSize: async () => {},
       startDragging: async () => {},
     };

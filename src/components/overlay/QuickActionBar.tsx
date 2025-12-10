@@ -11,13 +11,15 @@ interface ActionButtonProps {
   label: string;
   children: React.ReactNode;
   active?: boolean;
+  testId?: string;
 }
 
-function ActionButton({ onClick, disabled, hotkey, label, children, active }: ActionButtonProps) {
+function ActionButton({ onClick, disabled, hotkey, label, children, active, testId }: ActionButtonProps) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
+      data-testid={testId}
       className={cn(
         "p-1.5 rounded transition-all duration-200 group relative",
         "hover:bg-white/15 active:bg-white/20",
@@ -148,6 +150,7 @@ export function QuickActionBar() {
         hotkey=""
         label={resetLocked ? "Unlock reset" : "Lock reset"}
         active={resetLocked}
+        testId="reset-lock-button"
       >
         {resetLocked ? (
           <Lock className="w-3.5 h-3.5 text-amber-400" />
@@ -243,6 +246,7 @@ export function QuickActionBar() {
         onClick={handleCycleBuild}
         hotkey={hotkeys.cycle_build_order}
         label={cycleConfirm ? "Confirm cycle" : "Cycle Build Order"}
+        testId="cycle-build-button"
       >
         <RefreshCw className="w-3.5 h-3.5 text-white/60 group-hover:text-white/90" />
       </ActionButton>

@@ -44,10 +44,8 @@ export class OverlayPage {
   constructor(page: Page) {
     this.page = page;
 
-    // Main container - using general class selector as fallback
-    this.container = page.locator('[data-testid="overlay-container"]').or(
-      page.locator('.glass-panel, .floating-panel, .floating-panel-pro').first()
-    );
+    // Main container - using specific testid only (no fallback that might match multiple)
+    this.container = page.locator('[data-testid="overlay-container"]');
 
     // Header elements
     this.settingsButton = page.locator('[data-testid="settings-button"]').or(
@@ -76,8 +74,9 @@ export class OverlayPage {
     // Build order display
     this.buildSelector = page.locator('[data-testid="build-selector"]');
     this.stepsContainer = page.locator('[data-testid="steps-container"]');
-    this.steps = page.locator('[data-testid="build-step"]');
-    this.currentStep = page.locator('[data-testid="build-step"][data-active="true"]');
+    // Steps have testid like "step-0", "step-1", etc. (buttons within steps-container)
+    this.steps = page.locator('[data-testid="steps-container"] button[data-testid^="step-"]');
+    this.currentStep = page.locator('[data-testid="steps-container"] button.active-step');
 
     // Quick action bar - use structural relationship to find button container
     this.quickActionBar = page.locator('[data-testid="quick-action-bar"]').or(
@@ -107,7 +106,7 @@ export class OverlayPage {
       page.locator('[title*="Click-through"]')
     );
     this.keyboardShortcutsButton = page.locator('[data-testid="keyboard-shortcuts-button"]').or(
-      page.locator('button[title*="Keyboard shortcuts"], button[title*="Show shortcuts"]')
+      page.locator('button[title*="Keyboard Shortcuts"]')
     );
   }
 
@@ -115,7 +114,13 @@ export class OverlayPage {
    * Navigate to the overlay page
    */
   async goto() {
+    // Set localStorage to skip onboarding modal before navigating
+    await this.page.addInitScript(() => {
+      localStorage.setItem('aoe4-overlay-onboarding-seen', 'true');
+    });
     await this.page.goto('/');
+    // Wait for overlay container to be visible
+    await this.container.waitFor({ state: 'visible', timeout: 10000 });
   }
 
   /**

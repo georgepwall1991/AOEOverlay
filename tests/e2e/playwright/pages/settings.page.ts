@@ -28,8 +28,6 @@ export class SettingsPage {
   readonly importButton: Locator;
   readonly exportButton: Locator;
   readonly buildOrderList: Locator;
-  readonly starterBuildWizard: Locator;
-  readonly loadStarterBuildButton: Locator;
 
   // Player tab elements
   readonly playerStatsContainer: Locator;
@@ -62,147 +60,69 @@ export class SettingsPage {
   constructor(page: Page) {
     this.page = page;
 
-    // Main container
-    this.container = page.locator('[data-testid="settings-window"]').or(
-      page.locator('div.bg-background').filter({ hasText: 'Settings' }).first()
-    );
-    this.heading = page.locator('[data-testid="settings-heading"]').or(
-      page.getByRole('heading', { name: 'Settings', level: 1 })
-    );
+    // Main container - use data-testid from SettingsWindow.tsx
+    this.container = page.locator('[data-testid="settings-container"]');
+    this.heading = page.locator('h1').filter({ hasText: 'Settings' });
 
-    // Tab navigation
-    this.tabsList = page.locator('[data-testid="settings-tabs-list"]').or(
-      page.locator('[role="tablist"]')
-    );
-    this.buildOrdersTab = page.locator('[data-testid="tab-build-orders"]').or(
-      page.getByRole('tab', { name: /Build Orders/i })
-    );
-    this.playerTab = page.locator('[data-testid="tab-player"]').or(
-      page.getByRole('tab', { name: /Player/i })
-    );
-    this.gameplayTab = page.locator('[data-testid="tab-gameplay"]').or(
-      page.getByRole('tab', { name: /Gameplay/i })
-    );
-    this.voiceTab = page.locator('[data-testid="tab-voice"]').or(
-      page.getByRole('tab', { name: /Voice/i })
-    );
-    this.appearanceTab = page.locator('[data-testid="tab-appearance"]').or(
-      page.getByRole('tab', { name: /Appearance/i })
-    );
-    this.hotkeysTab = page.locator('[data-testid="tab-hotkeys"]').or(
-      page.getByRole('tab', { name: /Hotkeys/i })
-    );
+    // Tab navigation - TabsTrigger have data-value attributes
+    this.tabsList = page.locator('[role="tablist"]');
+    this.buildOrdersTab = page.locator('[data-value="build-orders"]');
+    this.playerTab = page.locator('[data-value="player"]');
+    this.gameplayTab = page.locator('[data-value="gameplay"]');
+    this.voiceTab = page.locator('[data-value="voice"]');
+    this.appearanceTab = page.locator('[data-value="appearance"]');
+    this.hotkeysTab = page.locator('[data-value="hotkeys"]');
 
-    // Build Orders tab
+    // Build Orders tab - filter selects with Label components (no htmlFor, use text)
+    // The filters are inside a div with Filter icon, containing grid with civilization and difficulty selects
     this.buildOrdersFilter = {
-      civilization: page.locator('[data-testid="filter-civilization"]').or(
-        page.getByLabel('Civilization')
-      ),
-      difficulty: page.locator('[data-testid="filter-difficulty"]').or(
-        page.getByLabel('Difficulty')
-      ),
+      // Find the select trigger inside the div that has "Civilization" label
+      civilization: page.locator('.space-y-1').filter({ hasText: 'Civilization' }).locator('button[role="combobox"]'),
+      difficulty: page.locator('.space-y-1').filter({ hasText: 'Difficulty' }).locator('button[role="combobox"]'),
     };
-    this.importButton = page.locator('[data-testid="import-button"]').or(
-      page.getByRole('button', { name: /Import/i })
-    );
-    this.exportButton = page.locator('[data-testid="export-button"]').or(
-      page.getByRole('button', { name: /Export/i })
-    );
-    this.buildOrderList = page.locator('[data-testid="build-order-list"]').or(
-      page.locator('[role="list"]').filter({ has: page.locator('[data-testid="build-order-item"]') })
-    );
-    this.starterBuildWizard = page.locator('[data-testid="starter-build-wizard"]').or(
+    this.importButton = page.locator('[data-testid="import-button"]');
+    this.exportButton = page.getByRole('button', { name: /Export/i });
+    // Build order list - look for build order cards or the first-launch wizard
+    // Mock data includes "English Longbow Rush" build order
+    this.buildOrderList = page.getByText('English Longbow Rush').or(
       page.getByText('First-launch wizard')
-    );
-    this.loadStarterBuildButton = page.locator('[data-testid="load-starter-build"]').or(
-      page.getByRole('button', { name: /Load starter build/i })
-    );
+    ).or(page.locator('[data-testid="build-order-list"]'));
 
-    // Player tab
+    // Player tab - PlayerStats component shows "Link Your Profile" card initially
     this.playerStatsContainer = page.locator('[data-testid="player-stats"]').or(
-      page.getByText('Player Statistics').locator('..')
-    );
+      page.getByText('Link Your Profile')
+    ).or(page.getByRole('heading', { name: 'Link Your Profile' }));
 
-    // Gameplay tab
-    this.gameplaySettingsContainer = page.locator('[data-testid="gameplay-settings"]').or(
-      page.getByText('Gameplay Settings').locator('..')
-    );
-    this.telemetryToggle = page.locator('[data-testid="telemetry-toggle"]').or(
-      page.locator('#telemetry, input[type="checkbox"][name*="telemetry"]')
-    );
-    this.upgradeBadgesSettings = page.locator('[data-testid="upgrade-badges-settings"]').or(
-      page.getByText('Upgrade Badges').locator('..')
-    );
+    // Gameplay tab - uses sections with bg-muted/30 and h2 headings
+    // Use .first() to handle multiple matching elements
+    this.gameplaySettingsContainer = page.getByRole('heading', { name: 'Overlay Behavior' });
+    this.telemetryToggle = page.locator('#telemetry');
+    this.upgradeBadgesSettings = page.getByRole('heading', { name: 'Upgrade Badges' });
 
     // Voice tab
-    this.voiceSettingsContainer = page.locator('[data-testid="voice-settings"]').or(
-      page.getByText('Voice Settings').locator('..')
-    );
-    this.reminderSettings = page.locator('[data-testid="reminder-settings"]').or(
-      page.getByText('Reminder Settings').locator('..')
-    );
+    this.voiceSettingsContainer = page.locator('section').filter({ hasText: 'Voice' }).first();
+    this.reminderSettings = page.locator('section').filter({ hasText: 'Reminder' }).first();
 
-    // Appearance tab
-    this.appearanceSettingsContainer = page.locator('[data-testid="appearance-settings"]').or(
-      page.getByText('Appearance Settings').locator('..')
+    // Appearance tab - using IDs and labels from AppearanceSettings.tsx
+    this.appearanceSettingsContainer = page.locator('section.bg-muted\\/30').filter({ hasText: 'Theme' }).first();
+    this.themeSelect = page.locator('.space-y-2').filter({ hasText: 'Color Theme' }).locator('button[role="combobox"]');
+    this.fontSizeSelect = page.locator('.space-y-2').filter({ hasText: 'Font Size' }).locator('button[role="combobox"]');
+    this.opacitySlider = page.locator('[data-testid="opacity-slider"]');
+    // The opacity value is a span with text-muted-foreground class inside the div that has "Overlay Opacity" label
+    this.opacityValue = page.getByLabel('Overlay Opacity').locator('xpath=..').locator('span.text-muted-foreground').or(
+      page.locator('label').filter({ hasText: 'Overlay Opacity' }).locator('xpath=..').locator('span')
     );
-    this.themeSelect = page.locator('[data-testid="theme-select"]').or(
-      page.getByLabel('Color Theme')
+    this.uiScaleSlider = page.locator('[data-testid="ui-scale-slider"]');
+    this.uiScaleValue = page.getByLabel('UI Scale').locator('xpath=..').locator('span.text-muted-foreground').or(
+      page.locator('label').filter({ hasText: 'UI Scale' }).locator('xpath=..').locator('span')
     );
-    this.fontSizeSelect = page.locator('[data-testid="font-size-select"]').or(
-      page.getByLabel('Font Size')
-    );
-    this.opacitySlider = page.locator('[data-testid="opacity-slider"]').or(
-      page.locator('#opacity')
-    );
-    this.opacityValue = page.locator('[data-testid="opacity-value"]').or(
-      page.locator('label[for="opacity"]').locator('..').locator('.text-muted-foreground')
-    );
-    this.uiScaleSlider = page.locator('[data-testid="ui-scale-slider"]').or(
-      page.locator('#scale')
-    );
-    this.uiScaleValue = page.locator('[data-testid="ui-scale-value"]').or(
-      page.locator('label[for="scale"]').locator('..').locator('.text-muted-foreground')
-    );
-    this.overlayPresetSelect = page.locator('[data-testid="overlay-preset-select"]').or(
-      page.getByLabel('Overlay Preset')
-    );
-    this.coachOnlyModeToggle = page.locator('[data-testid="coach-only-mode-toggle"]').or(
-      page.locator('#coach-mode')
-    );
+    this.overlayPresetSelect = page.locator('.space-y-2').filter({ hasText: 'Overlay Preset' }).locator('button[role="combobox"]');
+    this.coachOnlyModeToggle = page.locator('#coach-mode');
 
     // Hotkeys tab
-    this.hotkeysContainer = page.locator('[data-testid="hotkeys-settings"]').or(
-      page.getByText('Keyboard Shortcuts').locator('..')
-    );
-    this.aboutSection = page.locator('[data-testid="about-section"]').or(
-      page.getByText('About').locator('..')
-    );
-    this.resetAllSettingsButton = page.locator('[data-testid="reset-all-settings"]').or(
-      page.getByRole('button', { name: /Reset All Settings/i })
-    );
-  }
-
-  /**
-   * Navigate to the settings page.
-   *
-   * IMPORTANT: In the Tauri application, settings opens in a separate window which Playwright
-   * cannot access in browser mode. This method attempts multiple strategies:
-   * 1. Direct route navigation (if a /settings route exists for testing)
-   * 2. Clicking the settings button from overlay (may open new window in Tauri)
-   *
-   * For Tauri-specific testing, you may need to use Tauri's testing utilities or
-   * mock the window creation behavior. In browser mode, ensure your app has a
-   * /settings route or handles settings as a modal/panel instead of a new window.
-   */
-  async gotoSettings() {
-    // Attempt to navigate to settings route if it exists
-    await this.page.goto('/settings').catch(async () => {
-      // If route doesn't exist, try clicking settings button from overlay
-      await this.page.goto('/');
-      const settingsButton = this.page.locator('button[title="Open Settings"]');
-      await settingsButton.click();
-    });
+    this.hotkeysContainer = page.locator('section').filter({ hasText: 'Hotkey' }).first();
+    this.aboutSection = page.locator('section').filter({ hasText: 'About' }).first();
+    this.resetAllSettingsButton = page.getByRole('button', { name: /Reset All Settings/i });
   }
 
   /**
@@ -221,6 +141,8 @@ export class SettingsPage {
     const tab = tabMap[tabName];
     if (tab) {
       await tab.click();
+      // Wait for tab content to be visible
+      await this.page.waitForTimeout(100);
     }
   }
 
@@ -248,31 +170,23 @@ export class SettingsPage {
 
   /**
    * Set the overlay opacity using the slider.
-   * Uses Playwright's native slider support with keyboard navigation for precision.
    */
   async setOpacity(value: number) {
     // Ensure value is between 0.1 and 1
     const clampedValue = Math.max(0.1, Math.min(1, value));
 
-    // Navigate to appearance tab first
-    await this.selectTab('appearance');
-
     const slider = this.opacitySlider;
     await slider.waitFor({ state: 'visible' });
 
-    // Focus the slider
+    // For Radix UI sliders, we need to use keyboard navigation
     await slider.focus();
 
-    // Get the slider's step attribute for precise keyboard navigation
-    const step = parseFloat(await slider.getAttribute('step') || '0.01');
+    // Get current value and calculate steps
+    const currentText = await this.opacityValue.textContent();
+    const currentPercent = parseInt(currentText?.replace('%', '') || '100', 10) / 100;
+    const diff = clampedValue - currentPercent;
+    const steps = Math.round(diff / 0.1); // step is 0.1
 
-    // Calculate how many steps to move
-    const currentValue = parseFloat(await slider.inputValue());
-    const targetValue = clampedValue;
-    const diff = targetValue - currentValue;
-    const steps = Math.round(diff / step);
-
-    // Use arrow keys to adjust the value
     const key = steps > 0 ? 'ArrowRight' : 'ArrowLeft';
     for (let i = 0; i < Math.abs(steps); i++) {
       await slider.press(key);
@@ -283,7 +197,6 @@ export class SettingsPage {
    * Get the current opacity value
    */
   async getOpacity(): Promise<number> {
-    await this.selectTab('appearance');
     const text = await this.opacityValue.textContent();
     if (!text) return 0;
 
@@ -293,30 +206,20 @@ export class SettingsPage {
 
   /**
    * Set the UI scale using the slider.
-   * Uses Playwright's native slider support with keyboard navigation for precision.
    */
   async setUIScale(value: number) {
-    // Ensure value is between 0.85 and 1.2
     const clampedValue = Math.max(0.85, Math.min(1.2, value));
-
-    await this.selectTab('appearance');
 
     const slider = this.uiScaleSlider;
     await slider.waitFor({ state: 'visible' });
 
-    // Focus the slider
     await slider.focus();
 
-    // Get the slider's step attribute for precise keyboard navigation
-    const step = parseFloat(await slider.getAttribute('step') || '0.01');
+    const currentText = await this.uiScaleValue.textContent();
+    const currentPercent = parseInt(currentText?.replace('%', '') || '100', 10) / 100;
+    const diff = clampedValue - currentPercent;
+    const steps = Math.round(diff / 0.05); // step is 0.05
 
-    // Calculate how many steps to move
-    const currentValue = parseFloat(await slider.inputValue());
-    const targetValue = clampedValue;
-    const diff = targetValue - currentValue;
-    const steps = Math.round(diff / step);
-
-    // Use arrow keys to adjust the value
     const key = steps > 0 ? 'ArrowRight' : 'ArrowLeft';
     for (let i = 0; i < Math.abs(steps); i++) {
       await slider.press(key);
@@ -327,7 +230,6 @@ export class SettingsPage {
    * Get the current UI scale value
    */
   async getUIScale(): Promise<number> {
-    await this.selectTab('appearance');
     const text = await this.uiScaleValue.textContent();
     if (!text) return 0;
 
@@ -339,10 +241,8 @@ export class SettingsPage {
    * Set the theme
    */
   async setTheme(theme: 'dark' | 'light' | 'system') {
-    await this.selectTab('appearance');
     await this.themeSelect.click();
-
-    const option = this.page.getByRole('option', { name: new RegExp(theme, 'i') });
+    const option = this.page.getByRole('option', { name: new RegExp(`^${theme}$`, 'i') });
     await option.click();
   }
 
@@ -350,10 +250,8 @@ export class SettingsPage {
    * Set the font size
    */
   async setFontSize(size: 'small' | 'medium' | 'large') {
-    await this.selectTab('appearance');
     await this.fontSizeSelect.click();
-
-    const option = this.page.getByRole('option', { name: new RegExp(size, 'i') });
+    const option = this.page.getByRole('option', { name: new RegExp(`^${size}$`, 'i') });
     await option.click();
   }
 
@@ -361,9 +259,7 @@ export class SettingsPage {
    * Set the overlay preset
    */
   async setOverlayPreset(preset: 'info_dense' | 'minimal') {
-    await this.selectTab('appearance');
     await this.overlayPresetSelect.click();
-
     const displayName = preset === 'info_dense' ? 'Info dense' : 'Minimal';
     const option = this.page.getByRole('option', { name: displayName });
     await option.click();
@@ -373,7 +269,6 @@ export class SettingsPage {
    * Toggle coach-only mode
    */
   async toggleCoachOnlyMode() {
-    await this.selectTab('appearance');
     await this.coachOnlyModeToggle.click();
   }
 
@@ -381,9 +276,8 @@ export class SettingsPage {
    * Set civilization filter
    */
   async setCivilizationFilter(civilization: string) {
-    await this.selectTab('build-orders');
+    await this.buildOrdersFilter.civilization.waitFor({ state: 'visible' });
     await this.buildOrdersFilter.civilization.click();
-
     const option = this.page.getByRole('option', { name: civilization });
     await option.click();
   }
@@ -392,56 +286,8 @@ export class SettingsPage {
    * Set difficulty filter
    */
   async setDifficultyFilter(difficulty: string) {
-    await this.selectTab('build-orders');
     await this.buildOrdersFilter.difficulty.click();
-
     const option = this.page.getByRole('option', { name: difficulty });
     await option.click();
-  }
-
-  /**
-   * Import a build order
-   * Note: This will trigger the file dialog which needs to be handled in tests
-   */
-  async clickImport() {
-    await this.selectTab('build-orders');
-    await this.importButton.click();
-  }
-
-  /**
-   * Load a starter build
-   */
-  async loadStarterBuild() {
-    await this.selectTab('build-orders');
-    await this.loadStarterBuildButton.click();
-  }
-
-  /**
-   * Reset all settings to defaults
-   */
-  async resetAllSettings() {
-    await this.selectTab('hotkeys');
-    await this.resetAllSettingsButton.click();
-
-    // Handle confirmation dialog
-    const confirmButton = this.page.getByRole('button', { name: /Reset Settings/i });
-    await confirmButton.click();
-  }
-
-  /**
-   * Check if the first-launch wizard is visible
-   */
-  async isFirstLaunchWizardVisible(): Promise<boolean> {
-    await this.selectTab('build-orders');
-    return await this.starterBuildWizard.isVisible().catch(() => false);
-  }
-
-  /**
-   * Get the version number from the About section
-   */
-  async getVersion(): Promise<string> {
-    await this.selectTab('hotkeys');
-    const versionText = await this.aboutSection.locator('p').filter({ hasText: /v\d/ }).textContent();
-    return versionText?.match(/v[\d.]+/)?.[0] || '';
   }
 }

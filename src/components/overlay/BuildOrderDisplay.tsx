@@ -54,7 +54,7 @@ export function BuildOrderDisplay() {
           </div>
 
           {/* Progress indicator */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div data-testid="progress-indicator" className="flex items-center gap-2 flex-shrink-0">
             <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]"

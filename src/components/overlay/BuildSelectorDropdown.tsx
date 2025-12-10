@@ -55,7 +55,7 @@ export function BuildSelectorDropdown() {
   };
 
   return (
-    <div ref={dropdownRef} className="relative flex-1 min-w-0">
+    <div ref={dropdownRef} data-testid="build-selector" className="relative flex-1 min-w-0">
       {/* Trigger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
