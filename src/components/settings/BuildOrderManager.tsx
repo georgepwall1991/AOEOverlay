@@ -465,6 +465,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
                   </Button>
                   {onExport && (
                     <Button
+                      data-testid="export-button"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"

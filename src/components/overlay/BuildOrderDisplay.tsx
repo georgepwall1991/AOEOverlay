@@ -61,7 +61,7 @@ export function BuildOrderDisplay() {
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span className="text-xs font-mono text-amber-400 tabular-nums font-bold">
+            <span data-testid="step-counter" className="text-xs font-mono text-amber-400 tabular-nums font-bold">
               {activeSteps.length === 0 ? 0 : currentStepIndex + 1}/{activeSteps.length}
             </span>
           </div>
@@ -109,7 +109,7 @@ export function BuildOrderDisplay() {
       </div>
 
       {/* Step list */}
-      <div className="px-2 pb-2 space-y-1">
+      <div data-testid="steps-container" className="px-2 pb-2 space-y-1">
         {visibleSteps.map((step, idx) => {
           const actualIndex = startIndex + idx;
           return (

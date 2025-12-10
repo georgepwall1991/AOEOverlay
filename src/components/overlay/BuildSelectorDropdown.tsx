@@ -67,7 +67,7 @@ export function BuildSelectorDropdown() {
         title={`Select Build Order (${config.hotkeys.cycle_build_order} to cycle)`}
       >
         <CivBadge civilization={currentBuildOrder.civilization} size="md" glow />
-        <h2 className={cn(
+        <h2 data-testid="build-order-title" className={cn(
           "text-sm font-bold truncate flex-1 text-left",
           floatingStyle ? "text-gradient-gold" : "text-white"
         )}>

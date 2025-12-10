@@ -135,6 +135,7 @@ export function Overlay() {
   return (
     <div
       ref={containerRef}
+      data-testid="overlay-container"
       className="inline-block p-1"
       style={{
         opacity,
@@ -161,6 +162,7 @@ export function Overlay() {
         >
           {/* Settings button */}
           <button
+            data-testid="settings-button"
             onClick={(e) => { e.stopPropagation(); showSettings(); }}
             className="p-1 rounded hover:bg-white/10 transition-all duration-200 settings-icon-hover group relative"
             title="Open Settings"
@@ -173,6 +175,7 @@ export function Overlay() {
 
           {/* Drag area in center */}
           <div
+            data-testid="drag-handle"
             className="flex-1 flex items-center justify-center cursor-move hover:bg-white/5 rounded py-0.5"
             onMouseDown={startDrag}
             title={`Drag to move (${config.hotkeys.toggle_overlay} to hide)`}

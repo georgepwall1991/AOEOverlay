@@ -126,6 +126,7 @@ export function AppearanceSettings() {
               </span>
             </div>
             <Slider
+              data-testid="opacity-slider"
               id="opacity"
               min={0.1}
               max={1}
@@ -143,6 +144,7 @@ export function AppearanceSettings() {
               </span>
             </div>
             <Slider
+              data-testid="ui-scale-slider"
               id="scale"
               min={0.85}
               max={1.2}

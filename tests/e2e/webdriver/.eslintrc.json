@@ -1,0 +1,18 @@
+{
+  "env": {
+    "mocha": true,
+    "node": true
+  },
+  "globals": {
+    "browser": "readonly",
+    "$": "readonly",
+    "$$": "readonly",
+    "expect": "readonly"
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022
+  },
+  "rules": {
+    "no-undef": "off"
+  }
+}

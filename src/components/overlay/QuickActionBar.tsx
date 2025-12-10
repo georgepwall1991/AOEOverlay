@@ -141,7 +141,7 @@ export function QuickActionBar() {
   const hotkeys = config.hotkeys;
 
   return (
-    <div className="flex items-center justify-center gap-1 px-2 py-1 border-t border-white/5">
+    <div data-testid="quick-action-bar" className="flex items-center justify-center gap-1 px-2 py-1 border-t border-white/5">
       {/* Reset lock */}
       <ActionButton
         onClick={() => setResetLocked((prev) => !prev)}
@@ -157,54 +157,86 @@ export function QuickActionBar() {
       </ActionButton>
 
       {/* Reset */}
-      <ActionButton
+      <button
+        data-testid="reset-button"
         onClick={handleReset}
-        hotkey={hotkeys.reset_build_order}
-        label={
+        disabled={resetLocked}
+        className={cn(
+          "p-1.5 rounded transition-all duration-200 group relative",
+          "hover:bg-white/15 active:bg-white/20",
+          "disabled:opacity-30 disabled:cursor-not-allowed"
+        )}
+        title={
           resetLocked
             ? "Reset (locked)"
             : resetConfirm
               ? "Confirm reset"
-              : "Reset"
+              : `Reset (${hotkeys.reset_build_order})`
         }
-        disabled={resetLocked}
       >
         <SkipBack className="w-3.5 h-3.5 text-white/60 group-hover:text-white/90" />
-      </ActionButton>
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+          {hotkeys.reset_build_order}
+        </span>
+      </button>
 
       {/* Previous */}
-      <ActionButton
+      <button
+        data-testid="previous-step-button"
         onClick={handlePrevious}
         disabled={currentStepIndex === 0}
-        hotkey={hotkeys.previous_step}
-        label="Previous Step"
+        className={cn(
+          "p-1.5 rounded transition-all duration-200 group relative",
+          "hover:bg-white/15 active:bg-white/20",
+          "disabled:opacity-30 disabled:cursor-not-allowed"
+        )}
+        title={`Previous Step (${hotkeys.previous_step})`}
       >
         <ChevronLeft className="w-4 h-4 text-white/60 group-hover:text-white/90" />
-      </ActionButton>
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+          {hotkeys.previous_step}
+        </span>
+      </button>
 
       {/* Play/Pause */}
-      <ActionButton
+      <button
+        data-testid="play-pause-button"
         onClick={toggleTimer}
-        hotkey={hotkeys.toggle_pause}
-        label={playPauseLabel}
-        active={isRunning || isPaused}
+        className={cn(
+          "p-1.5 rounded transition-all duration-200 group relative",
+          "hover:bg-white/15 active:bg-white/20",
+          "disabled:opacity-30 disabled:cursor-not-allowed",
+          (isRunning || isPaused) && "bg-amber-500/20 text-amber-400"
+        )}
+        title={`${playPauseLabel} (${hotkeys.toggle_pause})`}
       >
         {isRunning ? (
           <Pause className="w-4 h-4 text-amber-400" />
         ) : (
           <Play className="w-4 h-4 text-white/60 group-hover:text-white/90" />
         )}
-      </ActionButton>
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+          {hotkeys.toggle_pause}
+        </span>
+      </button>
 
       {/* Next */}
-      <ActionButton
+      <button
+        data-testid="next-step-button"
         onClick={handleNext}
         disabled={currentStepIndex >= totalSteps - 1}
-        hotkey={hotkeys.next_step}
-        label="Next Step"
+        className={cn(
+          "p-1.5 rounded transition-all duration-200 group relative",
+          "hover:bg-white/15 active:bg-white/20",
+          "disabled:opacity-30 disabled:cursor-not-allowed"
+        )}
+        title={`Next Step (${hotkeys.next_step})`}
       >
         <ChevronRight className="w-4 h-4 text-white/60 group-hover:text-white/90" />
-      </ActionButton>
+        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+          {hotkeys.next_step}
+        </span>
+      </button>
 
       {/* Cycle Build */}
       <ActionButton

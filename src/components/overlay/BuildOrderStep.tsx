@@ -33,10 +33,11 @@ export function BuildOrderStep({
   if (compact) {
     return (
       <button
+        data-testid={`step-${stepNumber - 1}`}
         onClick={onClick}
         className={cn(
           "w-full text-left px-2 py-1.5 rounded-lg transition-all duration-200 step-hover-effect",
-          isActive && "step-active-glow scale-[1.02] origin-left py-2.5",
+          isActive && "step-active-glow scale-[1.02] origin-left py-2.5 active-step",
           isPast && "opacity-35",
           !isActive && !isPast && "opacity-70 hover:opacity-90",
           showHighlight && "step-enter"
@@ -83,10 +84,11 @@ export function BuildOrderStep({
 
   return (
     <button
+      data-testid={`step-${stepNumber - 1}`}
       onClick={onClick}
       className={cn(
         "w-full text-left transition-all duration-300 ease-out p-2 rounded-lg",
-        isActive ? "step-active-glow py-3" : "step-card step-hover-effect",
+        isActive ? "step-active-glow py-3 active-step" : "step-card step-hover-effect",
         isPast && "opacity-40",
         !isActive && !isPast && "opacity-75 hover:opacity-100",
         showHighlight && "step-enter"

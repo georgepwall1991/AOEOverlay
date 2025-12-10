@@ -169,32 +169,32 @@ export function SettingsWindow() {
   };
 
   return (
-    <div className="w-full h-screen p-6 bg-background text-foreground overflow-hidden flex flex-col">
+    <div data-testid="settings-container" className="w-full h-screen p-6 bg-background text-foreground overflow-hidden flex flex-col">
       <h1 className="text-2xl font-bold mb-6 shrink-0">Settings</h1>
 
       <Tabs defaultValue="build-orders" className="flex-1 flex flex-col min-h-0">
         <TabsList className="grid w-full grid-cols-6 mb-6 shrink-0">
-          <TabsTrigger value="build-orders" className="flex items-center gap-2">
+          <TabsTrigger value="build-orders" data-value="build-orders" className="flex items-center gap-2">
             <List className="w-4 h-4" />
             Build Orders
           </TabsTrigger>
-          <TabsTrigger value="player" className="flex items-center gap-2">
+          <TabsTrigger value="player" data-value="player" className="flex items-center gap-2">
             <User className="w-4 h-4" />
             Player
           </TabsTrigger>
-          <TabsTrigger value="gameplay" className="flex items-center gap-2">
+          <TabsTrigger value="gameplay" data-value="gameplay" className="flex items-center gap-2">
             <Gamepad2 className="w-4 h-4" />
             Gameplay
           </TabsTrigger>
-          <TabsTrigger value="voice" className="flex items-center gap-2">
+          <TabsTrigger value="voice" data-value="voice" className="flex items-center gap-2">
             <Volume2 className="w-4 h-4" />
             Voice
           </TabsTrigger>
-          <TabsTrigger value="appearance" className="flex items-center gap-2">
+          <TabsTrigger value="appearance" data-value="appearance" className="flex items-center gap-2">
             <Palette className="w-4 h-4" />
             Appearance
           </TabsTrigger>
-          <TabsTrigger value="hotkeys" className="flex items-center gap-2">
+          <TabsTrigger value="hotkeys" data-value="hotkeys" className="flex items-center gap-2">
             <Keyboard className="w-4 h-4" />
             Hotkeys
           </TabsTrigger>
@@ -296,7 +296,7 @@ export function SettingsWindow() {
                     </Select>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleImport} className="shrink-0">
+                <Button data-testid="import-button" variant="outline" size="sm" onClick={handleImport} className="shrink-0">
                   <Upload className="w-4 h-4 mr-2" />
                   Import
                 </Button>

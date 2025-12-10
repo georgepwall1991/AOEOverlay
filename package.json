@@ -12,6 +12,10 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
+    "test:e2e": "npm run test:e2e:web",
+    "test:e2e:web": "playwright test --config=tests/e2e/playwright/playwright.config.ts",
+    "test:e2e:native": "cd tests/e2e/webdriver && npm test",
+    "test:all": "npm run test:run && npm run test:e2e:web",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix"
   },

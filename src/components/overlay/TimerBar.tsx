@@ -121,7 +121,7 @@ export function TimerBar({ compact = false, targetTiming }: TimerBarProps) {
   }
 
   return (
-    <div className="px-3 py-1.5 border-b border-white/10">
+    <div data-testid="timer-bar" className="px-3 py-1.5 border-b border-white/10">
       <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3">
         {/* Timer display (fixed position to avoid jump) */}
         <div className="flex items-center gap-1.5">
