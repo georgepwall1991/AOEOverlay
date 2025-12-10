@@ -299,8 +299,12 @@ mod tests {
     #[test]
     fn test_escape_powershell_all_special_chars_combined() {
         // Combine all special chars that need escaping
+        // Input: $`"'\\\n\r\t\0
+        // Expected: `$ (escaped $) + `` (escaped `) + `" (escaped ") + '' (escaped ')
+        //           + `\ (escaped \) + `n (escaped newline) + `r (escaped CR) + `t (escaped tab)
+        //           + nothing for null
         let result = escape_powershell("$`\"'\\\n\r\t\0");
-        assert_eq!(result, "`$```\"`'''`\\`n`r`t");
+        assert_eq!(result, "`$```\"''`\\`n`r`t");
     }
 
     #[cfg(target_os = "windows")]

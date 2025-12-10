@@ -501,7 +501,12 @@ mod tests {
 
     #[test]
     fn test_pathbuf_root_only() {
+        // Use platform-appropriate root path
+        #[cfg(windows)]
+        let path = PathBuf::from("C:\\");
+        #[cfg(not(windows))]
         let path = PathBuf::from("/");
+
         assert!(path.is_absolute());
         assert_eq!(path.file_name(), None);
         assert_eq!(path.parent(), None);
