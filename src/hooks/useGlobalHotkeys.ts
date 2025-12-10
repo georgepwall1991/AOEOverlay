@@ -1,5 +1,5 @@
-import { useEffect, useCallback } from "react";
-import { listen } from "@/lib/tauri";
+import { useEffect, useCallback, useRef } from "react";
+import { listen, type UnlistenFn } from "@/lib/tauri";
 import {
   useBuildOrderStore,
   useOverlayStore,
@@ -19,6 +19,10 @@ export function useGlobalHotkeys() {
   const { updateConfig } = useConfigStore();
   const { startTimer, resetTimer, recordStepTime, togglePause } = useTimerStore();
   const { resetBadges } = useBadgeStore();
+
+  // Track unlisten functions to prevent race conditions during cleanup
+  const unlistenFnsRef = useRef<UnlistenFn[]>([]);
+  const isCleaningUpRef = useRef(false);
 
   // Convert icon markers to readable text for TTS (e.g., "[icon:town_center]" -> "town center")
   const convertIconMarkersForTTS = useCallback((text: string): string => {
@@ -93,71 +97,107 @@ export function useGlobalHotkeys() {
   }, [resetSteps, resetTimer, resetBadges]);
 
   useEffect(() => {
-    const unlistenPromises = [
-      listen("hotkey-toggle-overlay", () => {
-        toggleVisibility();
-        logTelemetryEvent("hotkey:overlay:toggle", { source: "hotkey" });
-      }),
-      listen("hotkey-previous-step", () => {
-        previousStep();
-        logTelemetryEvent("hotkey:step:previous", { source: "hotkey" });
-      }),
-      listen("hotkey-next-step", () => {
-        handleNextStep();
-        logTelemetryEvent("hotkey:step:next", { source: "hotkey" });
-      }),
-      listen("hotkey-cycle-build-order", () => {
-        cycleBuildOrder();
-        resetTimer();
-        resetBadges();
-        logTelemetryEvent("hotkey:build:cycle", { source: "hotkey" });
-      }),
-      listen("hotkey-toggle-click-through", async () => {
-        const newState = await toggleClickThrough();
-        updateConfig({ click_through: newState });
-        logTelemetryEvent("hotkey:overlay:click-through", {
-          source: "hotkey",
-          meta: { enabled: newState },
-        });
-      }),
-      listen("hotkey-toggle-compact", async () => {
-        const newState = await toggleCompactMode();
-        updateConfig({ compact_mode: newState });
-        logTelemetryEvent("hotkey:overlay:compact", {
-          source: "hotkey",
-          meta: { enabled: newState },
-        });
-      }),
-      listen("hotkey-reset-build-order", () => {
-        handleReset();
-      }),
-      listen("hotkey-toggle-pause", () => {
-        togglePause();
-        logTelemetryEvent("hotkey:timer:toggle-pause", { source: "hotkey" });
-      }),
-      // Tray icon events (frontend controls visibility, not native window)
-      listen("tray-toggle-overlay", () => {
-        toggleVisibility();
-        logTelemetryEvent("tray:overlay:toggle", { source: "tray" });
-      }),
-      listen("tray-show-overlay", () => {
-        setVisible(true);
-        logTelemetryEvent("tray:overlay:show", { source: "tray" });
-      }),
-      listen("tray-hide-overlay", () => {
-        setVisible(false);
-        logTelemetryEvent("tray:overlay:hide", { source: "tray" });
-      }),
-    ];
+    // Prevent setting up listeners if already cleaning up
+    if (isCleaningUpRef.current) return;
+
+    // Clear previous listeners synchronously before setting up new ones
+    unlistenFnsRef.current.forEach((unlisten) => {
+      try {
+        unlisten();
+      } catch (error) {
+        console.error("Failed to clean up hotkey listener:", error);
+      }
+    });
+    unlistenFnsRef.current = [];
+
+    const setupListeners = async () => {
+      // Don't set up if cleanup started while we were waiting
+      if (isCleaningUpRef.current) return;
+
+      const listeners = await Promise.all([
+        listen("hotkey-toggle-overlay", () => {
+          toggleVisibility();
+          logTelemetryEvent("hotkey:overlay:toggle", { source: "hotkey" });
+        }),
+        listen("hotkey-previous-step", () => {
+          previousStep();
+          logTelemetryEvent("hotkey:step:previous", { source: "hotkey" });
+        }),
+        listen("hotkey-next-step", () => {
+          handleNextStep();
+          logTelemetryEvent("hotkey:step:next", { source: "hotkey" });
+        }),
+        listen("hotkey-cycle-build-order", () => {
+          cycleBuildOrder();
+          resetTimer();
+          resetBadges();
+          logTelemetryEvent("hotkey:build:cycle", { source: "hotkey" });
+        }),
+        listen("hotkey-toggle-click-through", async () => {
+          const newState = await toggleClickThrough();
+          updateConfig({ click_through: newState });
+          logTelemetryEvent("hotkey:overlay:click-through", {
+            source: "hotkey",
+            meta: { enabled: newState },
+          });
+        }),
+        listen("hotkey-toggle-compact", async () => {
+          const newState = await toggleCompactMode();
+          updateConfig({ compact_mode: newState });
+          logTelemetryEvent("hotkey:overlay:compact", {
+            source: "hotkey",
+            meta: { enabled: newState },
+          });
+        }),
+        listen("hotkey-reset-build-order", () => {
+          handleReset();
+        }),
+        listen("hotkey-toggle-pause", () => {
+          togglePause();
+          logTelemetryEvent("hotkey:timer:toggle-pause", { source: "hotkey" });
+        }),
+        // Tray icon events (frontend controls visibility, not native window)
+        listen("tray-toggle-overlay", () => {
+          toggleVisibility();
+          logTelemetryEvent("tray:overlay:toggle", { source: "tray" });
+        }),
+        listen("tray-show-overlay", () => {
+          setVisible(true);
+          logTelemetryEvent("tray:overlay:show", { source: "tray" });
+        }),
+        listen("tray-hide-overlay", () => {
+          setVisible(false);
+          logTelemetryEvent("tray:overlay:hide", { source: "tray" });
+        }),
+      ]);
+
+      // Store unlisten functions for cleanup, but only if not cleaning up
+      if (!isCleaningUpRef.current) {
+        unlistenFnsRef.current = listeners;
+      } else {
+        // Cleanup started while setting up - unlisten immediately
+        listeners.forEach((unlisten) => unlisten());
+      }
+    };
+
+    setupListeners().catch((error) =>
+      console.error("Failed to set up hotkey listeners:", error)
+    );
 
     return () => {
-      unlistenPromises.forEach((promise) => {
-        promise
-          .then((unlisten) => unlisten())
-          .catch((error) =>
-            console.error("Failed to clean up hotkey listener:", error)
-          );
+      isCleaningUpRef.current = true;
+      unlistenFnsRef.current.forEach((unlisten) => {
+        try {
+          unlisten();
+        } catch (error) {
+          console.error("Failed to clean up hotkey listener:", error);
+        }
       });
+      unlistenFnsRef.current = [];
+      // Reset cleanup flag after a tick to allow re-setup
+      setTimeout(() => {
+        isCleaningUpRef.current = false;
+      }, 0);
     };
   }, [
     handleNextStep,

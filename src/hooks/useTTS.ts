@@ -3,6 +3,9 @@ import { useConfigStore } from "@/stores";
 import { speak as tauriSpeak, stopSpeaking as tauriStop } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
 
+// Maximum queue size to prevent memory leaks if TTS fails repeatedly
+const MAX_QUEUE_SIZE = 10;
+
 export function useTTS() {
   const isSpeakingRef = useRef(false);
   const queueRef = useRef<string[]>([]);
@@ -20,9 +23,16 @@ export function useTTS() {
         return;
       }
 
-      // Add to queue if currently speaking
+      // Add to queue if currently speaking (with bounded queue to prevent memory leaks)
       if (isSpeakingRef.current) {
-        queueRef.current.push(text);
+        if (queueRef.current.length < MAX_QUEUE_SIZE) {
+          queueRef.current.push(text);
+        } else {
+          // Queue is full - drop oldest item and add new one
+          queueRef.current.shift();
+          queueRef.current.push(text);
+          console.warn("TTS queue full, dropping oldest message");
+        }
         return;
       }
 

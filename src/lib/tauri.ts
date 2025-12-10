@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { emit as tauriEmit, listen as tauriListen, type UnlistenFn } from "@tauri-apps/api/event";
+export type { UnlistenFn };
 import { getCurrentWindow as tauriGetCurrentWindow, type Window } from "@tauri-apps/api/window";
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";

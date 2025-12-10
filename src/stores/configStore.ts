@@ -2,9 +2,13 @@ import { create } from "zustand";
 import type { AppConfig, FontSize, Theme } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 interface ConfigState {
   config: AppConfig;
   isLoading: boolean;
+  saveStatus: SaveStatus;
+  saveError: string | null;
 
   // Actions
   setConfig: (config: AppConfig) => void;
@@ -12,11 +16,14 @@ interface ConfigState {
   setOpacity: (opacity: number) => void;
   setFontSize: (size: FontSize) => void;
   setTheme: (theme: Theme) => void;
+  setSaveStatus: (status: SaveStatus, error?: string | null) => void;
 }
 
 export const useConfigStore = create<ConfigState>((set) => ({
   config: DEFAULT_CONFIG,
   isLoading: true,
+  saveStatus: 'idle',
+  saveError: null,
 
   setConfig: (config) =>
     set({
@@ -43,6 +50,12 @@ export const useConfigStore = create<ConfigState>((set) => ({
     set((state) => ({
       config: { ...state.config, theme },
     })),
+
+  setSaveStatus: (status, error = null) =>
+    set({
+      saveStatus: status,
+      saveError: error,
+    }),
 }));
 
 // Selectors
@@ -56,3 +69,9 @@ export const useTheme = () => useConfigStore((state) => state.config.theme);
 
 export const useHotkeys = () =>
   useConfigStore((state) => state.config.hotkeys);
+
+export const useSaveStatus = () =>
+  useConfigStore((state) => state.saveStatus);
+
+export const useSaveError = () =>
+  useConfigStore((state) => state.saveError);

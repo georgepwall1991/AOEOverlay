@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { GripVertical, Settings } from "lucide-react";
 import { useWindowDrag, useAutoResize, useTimer, useBuildOrderSync } from "@/hooks";
 import { useOpacity, useConfigStore, useCurrentStep } from "@/stores";
@@ -14,6 +14,9 @@ import { MatchupPanel } from "./MatchupPanel";
 import { showSettings, saveConfig, setClickThrough } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
+// Duration of the undo window in milliseconds
+const CLICK_THROUGH_UNDO_TIMEOUT = 5000;
+
 
 
 export function Overlay() {
@@ -26,14 +29,18 @@ export function Overlay() {
   const scale = config.ui_scale ?? 1;
   const coachOnly = config.coach_only_mode ?? false;
   const overlayPreset = config.overlay_preset ?? "info_dense";
-  const [clickUndoActive, setClickUndoActive] = useState(false);
-  const clickUndoTimer = useRef<number | null>(null);
-  const lastClickThrough = useRef<boolean>(config.click_through);
+  // Click-through undo state - stores the state to revert to if undo is triggered
+  const [clickUndoState, setClickUndoState] = useState<{
+    active: boolean;
+    revertTo: boolean;
+  }>({ active: false, revertTo: false });
+  const clickUndoTimerRef = useRef<number | null>(null);
 
+  // Clear undo timer on unmount
   useEffect(() => {
     return () => {
-      if (clickUndoTimer.current) {
-        clearTimeout(clickUndoTimer.current);
+      if (clickUndoTimerRef.current) {
+        clearTimeout(clickUndoTimerRef.current);
       }
     };
   }, []);
@@ -45,34 +52,63 @@ export function Overlay() {
     );
   }, [config.click_through]);
 
-  const toggleClickThroughWithUndo = () => {
-    lastClickThrough.current = config.click_through;
-    const next = !config.click_through;
-    updateConfig({ click_through: next });
-    // Persist so restart/settings stay in sync
-    saveConfig({ ...config, click_through: next }).catch((error) =>
+  // Clear undo state when click-through changes from external source (settings window, hotkey)
+  // Only clear if the change doesn't match what undo would do
+  useEffect(() => {
+    if (clickUndoState.active && config.click_through === clickUndoState.revertTo) {
+      // User manually changed it back to the revert state - clear undo
+      setClickUndoState({ active: false, revertTo: false });
+      if (clickUndoTimerRef.current) {
+        clearTimeout(clickUndoTimerRef.current);
+        clickUndoTimerRef.current = null;
+      }
+    }
+  }, [config.click_through, clickUndoState.active, clickUndoState.revertTo]);
+
+  const toggleClickThroughWithUndo = useCallback(() => {
+    // Store current state BEFORE toggling (this is what we'll revert to)
+    const currentState = config.click_through;
+    const nextState = !currentState;
+
+    // Clear any pending undo timer
+    if (clickUndoTimerRef.current) {
+      clearTimeout(clickUndoTimerRef.current);
+    }
+
+    // Apply the new state
+    updateConfig({ click_through: nextState });
+    saveConfig({ ...config, click_through: nextState }).catch((error) =>
       console.error("Failed to persist click-through toggle:", error)
     );
-    setClickUndoActive(true);
-    if (clickUndoTimer.current) {
-      clearTimeout(clickUndoTimer.current);
-    }
-    clickUndoTimer.current = window.setTimeout(() => setClickUndoActive(false), 5000);
-  };
 
-  const undoClickThrough = () => {
-    if (!clickUndoActive) return;
-    if (clickUndoTimer.current) {
-      clearTimeout(clickUndoTimer.current);
-      clickUndoTimer.current = null;
+    // Set up undo with the state to revert to
+    setClickUndoState({ active: true, revertTo: currentState });
+
+    // Auto-expire undo after timeout
+    clickUndoTimerRef.current = window.setTimeout(() => {
+      setClickUndoState({ active: false, revertTo: false });
+    }, CLICK_THROUGH_UNDO_TIMEOUT);
+  }, [config, updateConfig]);
+
+  const undoClickThrough = useCallback(() => {
+    if (!clickUndoState.active) return;
+
+    // Clear timer
+    if (clickUndoTimerRef.current) {
+      clearTimeout(clickUndoTimerRef.current);
+      clickUndoTimerRef.current = null;
     }
-    const revertTo = lastClickThrough.current;
+
+    // Revert to the stored state
+    const revertTo = clickUndoState.revertTo;
     updateConfig({ click_through: revertTo });
     saveConfig({ ...config, click_through: revertTo }).catch((error) =>
       console.error("Failed to persist click-through undo:", error)
     );
-    setClickUndoActive(false);
-  };
+
+    // Clear undo state
+    setClickUndoState({ active: false, revertTo: false });
+  }, [clickUndoState, config, updateConfig]);
 
   // Sync build orders when changed from settings window
   useBuildOrderSync();
@@ -187,7 +223,7 @@ export function Overlay() {
           {/* Status indicators */}
           <StatusIndicators
             onToggleClickThrough={toggleClickThroughWithUndo}
-            clickThroughUndoActive={clickUndoActive}
+            clickThroughUndoActive={clickUndoState.active}
             onUndoClickThrough={undoClickThrough}
           />
         </div>

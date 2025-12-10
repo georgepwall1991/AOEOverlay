@@ -1,10 +1,15 @@
-import { useEffect } from "react";
-import { useConfigStore } from "@/stores";
+import { useEffect, useRef } from "react";
+import { useConfigStore, useSaveStatus } from "@/stores";
 import { CONFIG_CHANGED_EVENT, getConfig, saveConfig, listen } from "@/lib/tauri";
 import type { AppConfig } from "@/types";
 
+// Auto-clear saved status after this duration
+const SAVE_STATUS_CLEAR_DELAY = 2000;
+
 export function useConfig() {
-  const { config, setConfig, isLoading } = useConfigStore();
+  const { config, setConfig, isLoading, setSaveStatus } = useConfigStore();
+  const saveStatus = useSaveStatus();
+  const clearTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const loadConfig = async () => {
@@ -34,16 +39,45 @@ export function useConfig() {
     };
   }, [setConfig]);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clearTimeoutRef.current) {
+        clearTimeout(clearTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const updateAndSave = async (updates: Partial<AppConfig>) => {
     const newConfig = { ...config, ...updates };
     useConfigStore.getState().updateConfig(updates);
 
+    // Clear any pending status clear
+    if (clearTimeoutRef.current) {
+      clearTimeout(clearTimeoutRef.current);
+    }
+
+    setSaveStatus('saving');
+
     try {
       await saveConfig(newConfig);
+      setSaveStatus('saved');
+
+      // Auto-clear saved status after delay
+      clearTimeoutRef.current = window.setTimeout(() => {
+        setSaveStatus('idle');
+      }, SAVE_STATUS_CLEAR_DELAY);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error("Failed to save config:", error);
+      setSaveStatus('error', errorMessage);
+
+      // Auto-clear error status after longer delay
+      clearTimeoutRef.current = window.setTimeout(() => {
+        setSaveStatus('idle');
+      }, SAVE_STATUS_CLEAR_DELAY * 2);
     }
   };
 
-  return { config, isLoading, updateAndSave };
+  return { config, isLoading, saveStatus, updateAndSave };
 }
