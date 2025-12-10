@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { GripVertical, Settings, MousePointer2, MousePointer2Off } from "lucide-react";
+import { GripVertical, Settings } from "lucide-react";
 import { useWindowDrag, useAutoResize, useTimer, useBuildOrderSync } from "@/hooks";
 import { useOpacity, useConfigStore, useCurrentStep } from "@/stores";
 import { BuildOrderDisplay } from "./BuildOrderDisplay";
@@ -14,32 +14,7 @@ import { MatchupPanel } from "./MatchupPanel";
 import { showSettings, saveConfig, setClickThrough } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
-function StatusPill({
-  active,
-  label,
-  onClick,
-  icon,
-}: {
-  active: boolean;
-  label: string;
-  onClick: () => void;
-  icon: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] border transition-colors",
-        active
-          ? "bg-emerald-500/15 border-emerald-400/50 text-emerald-50"
-          : "bg-white/5 border-white/15 text-white/70 hover:border-white/30"
-      )}
-    >
-      <span className="w-3.5 h-3.5 text-current">{icon}</span>
-      <span className="font-medium">{label}</span>
-    </button>
-  );
-}
+
 
 export function Overlay() {
   const { startDrag } = useWindowDrag();
@@ -212,27 +187,6 @@ export function Overlay() {
             clickThroughUndoActive={clickUndoActive}
             onUndoClickThrough={undoClickThrough}
           />
-        </div>
-
-        {/* Explicit state pills */}
-        <div className="px-2 pb-2 flex items-center gap-2 flex-wrap">
-          <StatusPill
-            active={config.click_through}
-            label={config.click_through ? "Click-through on" : "Click-through off"}
-            onClick={toggleClickThroughWithUndo}
-            icon={config.click_through ? <MousePointer2Off className="w-3.5 h-3.5" /> : <MousePointer2 className="w-3.5 h-3.5" />}
-          />
-          <span className="text-[11px] text-white/50">
-            Press {config.hotkeys.toggle_click_through} to toggle during play.
-          </span>
-          {clickUndoActive && (
-            <button
-              onClick={undoClickThrough}
-              className="text-[11px] px-2 py-1 rounded bg-white/10 text-white/80 hover:bg-white/15 border border-white/10 transition"
-            >
-              Undo click-through
-            </button>
-          )}
         </div>
 
         {/* Timer bar - shows when timer is running or has delta */}

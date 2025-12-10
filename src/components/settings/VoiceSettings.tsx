@@ -1,7 +1,6 @@
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Volume2 } from "lucide-react";
 import { useConfigStore } from "@/stores";
@@ -58,21 +57,16 @@ export function VoiceSettings() {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Volume2 className="w-5 h-5" />
+    <section className="bg-muted/30 rounded-xl p-4">
+      <h2 className="text-base font-medium flex items-center gap-2 mb-3">
+        <Volume2 className="w-5 h-5 text-muted-foreground" />
         Voice Coaching
       </h2>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Master toggle */}
         <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor="voice-enabled">Enable Voice Coaching</Label>
-            <p className="text-xs text-muted-foreground">
-              Use text-to-speech to read step descriptions
-            </p>
-          </div>
+          <Label htmlFor="voice-enabled">Enable Voice Coaching</Label>
           <Switch
             id="voice-enabled"
             checked={voiceConfig.enabled}
@@ -84,10 +78,10 @@ export function VoiceSettings() {
           <>
             {/* Quick profiles */}
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => applyVoiceProfile("step-only")}>
+              <Button size="sm" variant="ghost" onClick={() => applyVoiceProfile("step-only")}>
                 Step-only (silent reminders)
               </Button>
-              <Button size="sm" variant="outline" onClick={() => applyVoiceProfile("full")}>
+              <Button size="sm" variant="ghost" onClick={() => applyVoiceProfile("full")}>
                 Steps + reminders
               </Button>
             </div>
@@ -110,17 +104,10 @@ export function VoiceSettings() {
               />
             </div>
 
-            <Separator />
-
             {/* Speak options */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="speak-steps">Speak Step Descriptions</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Read the description when you advance steps
-                  </p>
-                </div>
+                <Label htmlFor="speak-steps">Speak Step Descriptions</Label>
                 <Switch
                   id="speak-steps"
                   checked={voiceConfig.speakSteps}
@@ -129,12 +116,7 @@ export function VoiceSettings() {
               </div>
 
               <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="speak-reminders">Speak Reminders</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Announce periodic coaching reminders
-                  </p>
-                </div>
+                <Label htmlFor="speak-reminders">Speak Reminders</Label>
                 <Switch
                   id="speak-reminders"
                   checked={voiceConfig.speakReminders}

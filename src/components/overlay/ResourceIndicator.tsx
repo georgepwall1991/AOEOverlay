@@ -26,8 +26,8 @@ export function ResourceIndicator({ resources, className = "", compact = false, 
 
   if (entries.length === 0) return null;
 
-  const iconSize = compact ? 30 : 32;
-  const textSize = compact ? "text-lg" : "text-lg";
+  const iconSize = compact ? 20 : 24;
+  const textSize = compact ? "text-sm" : "text-base";
 
   return (
     <div className={cn(

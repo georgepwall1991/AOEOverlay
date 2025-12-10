@@ -47,57 +47,65 @@ export function BuildOrderDisplay() {
   return (
     <div className="flex flex-col">
       {/* Header with build selector and progress */}
-      <div className="px-2 py-2 flex items-center gap-2">
-        {/* Build selector dropdown */}
-        <BuildSelectorDropdown />
-
-        {activeBranchName && (
-          <span className="px-2 py-1 rounded-full text-[11px] bg-amber-500/15 text-amber-200 border border-amber-400/40">
-            Branch: {activeBranchName}
-          </span>
-        )}
-
-        {currentOrder.branches && currentOrder.branches.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap">
-            <button
-              onClick={() => handleBranchSelect(null)}
-              className={`px-2 py-1 rounded text-xs border transition-colors ${
-                !activeBranchId
-                  ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
-                  : "border-white/10 text-white/70 hover:border-white/30"
-              }`}
-            >
-              Main
-            </button>
-            {currentOrder.branches.map((branch) => (
-              <button
-                key={branch.id}
-                onClick={() => handleBranchSelect(branch.id)}
-                className={`px-2 py-1 rounded text-xs border transition-colors ${
-                  activeBranchId === branch.id
-                    ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
-                    : "border-white/10 text-white/70 hover:border-white/30"
-                }`}
-                title={branch.trigger ? `Trigger: ${branch.trigger}` : undefined}
-              >
-                {branch.name}
-              </button>
-            ))}
+      <div className="px-2 py-2 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <BuildSelectorDropdown />
           </div>
-        )}
 
-        {/* Progress indicator */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-12 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
-              style={{ width: `${progressPercent}%` }}
-            />
+          {/* Progress indicator */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-xs font-mono text-amber-400 tabular-nums font-bold">
+              {activeSteps.length === 0 ? 0 : currentStepIndex + 1}/{activeSteps.length}
+            </span>
           </div>
-          <span className="text-xs font-mono text-amber-400 tabular-nums">
-            {activeSteps.length === 0 ? 0 : currentStepIndex + 1}/{activeSteps.length}
-          </span>
         </div>
+
+        {/* Branch controls */}
+        {(activeBranchName || (currentOrder.branches && currentOrder.branches.length > 0)) && (
+          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+            {activeBranchName && (
+              <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] bg-amber-500/15 text-amber-200 border border-amber-400/40 whitespace-nowrap">
+                {activeBranchName}
+              </span>
+            )}
+
+            {currentOrder.branches && currentOrder.branches.length > 0 && (
+              <div className="flex items-center gap-1 flex-nowrap">
+                <button
+                  onClick={() => handleBranchSelect(null)}
+                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors whitespace-nowrap ${
+                    !activeBranchId
+                      ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
+                      : "border-white/10 text-white/60 hover:border-white/30 hover:text-white/90"
+                  }`}
+                >
+                  Main
+                </button>
+                {currentOrder.branches.map((branch) => (
+                  <button
+                    key={branch.id}
+                    onClick={() => handleBranchSelect(branch.id)}
+                    className={`px-2 py-0.5 rounded text-[10px] border transition-colors whitespace-nowrap ${
+                      activeBranchId === branch.id
+                        ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
+                        : "border-white/10 text-white/60 hover:border-white/30 hover:text-white/90"
+                    }`}
+                    title={branch.trigger ? `Trigger: ${branch.trigger}` : undefined}
+                  >
+                    {branch.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Step list */}

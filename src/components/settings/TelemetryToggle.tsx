@@ -62,23 +62,26 @@ export function TelemetryToggle() {
   };
 
   return (
-    <section className="space-y-3 max-w-xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-muted-foreground" />
+    <section className="bg-muted/30 rounded-xl p-4">
+      <h2 className="text-base font-medium flex items-center gap-2 mb-4">
+        <Activity className="w-5 h-5 text-muted-foreground" />
+        Usage Logging
+      </h2>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div>
-            <Label htmlFor="telemetry">Usage logging (local only)</Label>
+            <Label htmlFor="telemetry">Enable Local Logging</Label>
             <p className="text-xs text-muted-foreground">
-              Capture hotkeys and overlay actions to spot friction. Never leaves your device.
+              Capture actions to spot friction. Never leaves your device.
             </p>
           </div>
+          <Switch
+            id="telemetry"
+            checked={telemetryConfig.enabled}
+            onCheckedChange={handleToggle}
+          />
         </div>
-        <Switch
-          id="telemetry"
-          checked={telemetryConfig.enabled}
-          onCheckedChange={handleToggle}
-        />
-      </div>
 
       {telemetryConfig.enabled && (
         <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
@@ -159,6 +162,7 @@ export function TelemetryToggle() {
           )}
         </div>
       )}
+      </div>
     </section>
   );
 }

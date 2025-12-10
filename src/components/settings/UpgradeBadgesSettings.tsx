@@ -1,8 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Badge } from "lucide-react";
+import { Award } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig } from "@/lib/tauri";
 import { DEFAULT_UPGRADE_BADGES_CONFIG } from "@/types";
@@ -116,21 +115,15 @@ export function UpgradeBadgesSettings() {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Badge className="w-5 h-5" />
-        Upgrade Reminder Badges
+    <section className="bg-muted/30 rounded-xl p-4">
+      <h2 className="text-base font-medium flex items-center gap-2 mb-4">
+        <Award className="w-5 h-5 text-muted-foreground" />
+        Upgrade Badges
       </h2>
 
-      <div className="space-y-4">
-        {/* Master toggle */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor="badges-enabled">Enable Upgrade Badges</Label>
-            <p className="text-xs text-muted-foreground">
-              Show upgrade reminders at specific game times
-            </p>
-          </div>
+          <Label htmlFor="badges-enabled">Enable Upgrade Badges</Label>
           <Switch
             id="badges-enabled"
             checked={badgesConfig.enabled}
@@ -139,27 +132,18 @@ export function UpgradeBadgesSettings() {
         </div>
 
         {badgesConfig.enabled && (
-          <>
-            <Separator />
-
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Badges appear when the timer reaches the specified time. Dismiss
-                them by clicking the X button.
-              </p>
-
-              {badgesConfig.badges.map((badge) => (
-                <BadgeRow
-                  key={badge.id}
-                  badge={badge}
-                  onToggle={() => handleBadgeToggle(badge.id)}
-                  onTimeChange={(seconds) =>
-                    handleBadgeTimeChange(badge.id, seconds)
-                  }
-                />
-              ))}
-            </div>
-          </>
+          <div className="space-y-3 ml-4">
+            {badgesConfig.badges.map((badge) => (
+              <BadgeRow
+                key={badge.id}
+                badge={badge}
+                onToggle={() => handleBadgeToggle(badge.id)}
+                onTimeChange={(seconds) =>
+                  handleBadgeTimeChange(badge.id, seconds)
+                }
+              />
+            ))}
+          </div>
         )}
       </div>
     </section>

@@ -9,7 +9,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useConfigStore, useBuildOrderStore } from "@/stores";
 import { saveConfig, importBuildOrder, exportBuildOrder, saveBuildOrder, getBuildOrders } from "@/lib/tauri";
 import { open, save } from "@tauri-apps/plugin-dialog";
@@ -22,7 +32,10 @@ import {
   Filter,
   User,
   Volume2,
+  Info,
+  RotateCcw,
 } from "lucide-react";
+import { DEFAULT_CONFIG } from "@/types";
 import { BuildOrderManager } from "./BuildOrderManager";
 import { PlayerStats } from "./PlayerStats";
 import { VoiceSettings } from "./VoiceSettings";
@@ -146,6 +159,15 @@ export function SettingsWindow() {
     }
   };
 
+  const handleResetAllSettings = async () => {
+    updateConfig(DEFAULT_CONFIG);
+    try {
+      await saveConfig(DEFAULT_CONFIG);
+    } catch (error) {
+      console.error("Failed to reset settings:", error);
+    }
+  };
+
   return (
     <div className="w-full h-screen p-6 bg-background text-foreground overflow-hidden flex flex-col">
       <h1 className="text-2xl font-bold mb-6 shrink-0">Settings</h1>
@@ -180,14 +202,14 @@ export function SettingsWindow() {
 
         {/* Build Orders Tab */}
         <TabsContent value="build-orders" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-2xl">
             {buildOrders.length === 0 && starterBuild && (
-              <div className="p-4 rounded-lg border bg-muted/40 space-y-3">
+              <div className="bg-muted/30 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold">First-launch wizard</p>
+                    <p className="text-base font-medium">First-launch wizard</p>
                     <p className="text-xs text-muted-foreground">
-                      Pick a civ and start with a recommended ladder-safe build. You can import more later.
+                      Pick a civ and start with a recommended ladder-safe build.
                     </p>
                   </div>
                   <div className="w-48">
@@ -207,13 +229,13 @@ export function SettingsWindow() {
                   </div>
                 </div>
 
-                <div className="rounded-md bg-background/60 border border-dashed border-white/10 p-3">
+                <div className="rounded-lg bg-background/60 p-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold">{starterBuild.name}</p>
+                      <p className="text-sm font-medium">{starterBuild.name}</p>
                       <p className="text-xs text-muted-foreground">{starterBuild.description}</p>
                     </div>
-                    <span className="text-[11px] px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                    <span className="text-[11px] px-2 py-1 rounded bg-amber-500/10 text-amber-300">
                       {starterBuild.difficulty}
                     </span>
                   </div>
@@ -230,61 +252,54 @@ export function SettingsWindow() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button onClick={handleStarterLoad} size="sm">
-                    Load starter build
-                  </Button>
-                  <p className="text-[11px] text-muted-foreground">
-                    Hotkeys keep the current defaults; you can customize them later.
-                  </p>
-                </div>
+                <Button onClick={handleStarterLoad} size="sm">
+                  Load starter build
+                </Button>
               </div>
             )}
 
-            {/* Import/Export */}
-            <div className="flex items-center gap-2 mb-4">
-              <Button variant="outline" size="sm" onClick={handleImport}>
-                <Upload className="w-4 h-4 mr-2" />
-                Import
-              </Button>
-            </div>
-
-            {/* Filters */}
-            <div className="flex items-center gap-4 mb-4 p-3 rounded-lg bg-muted/50">
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <div className="flex-1 grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-xs">Civilization</Label>
-                  <Select value={filterCiv} onValueChange={handleFilterCivChange}>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Civilizations</SelectItem>
-                      {CIVILIZATIONS.map((civ) => (
-                        <SelectItem key={civ} value={civ}>
-                          {civ}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+            {/* Filters + Import */}
+            <div className="bg-muted/30 rounded-xl p-4">
+              <div className="flex items-center gap-4">
+                <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Civilization</Label>
+                    <Select value={filterCiv} onValueChange={handleFilterCivChange}>
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Civilizations</SelectItem>
+                        {CIVILIZATIONS.map((civ) => (
+                          <SelectItem key={civ} value={civ}>
+                            {civ}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Difficulty</Label>
+                    <Select value={filterDiff} onValueChange={handleFilterDiffChange}>
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Difficulties</SelectItem>
+                        {DIFFICULTIES.map((diff) => (
+                          <SelectItem key={diff} value={diff}>
+                            {diff}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Difficulty</Label>
-                  <Select value={filterDiff} onValueChange={handleFilterDiffChange}>
-                    <SelectTrigger className="h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Difficulties</SelectItem>
-                      {DIFFICULTIES.map((diff) => (
-                        <SelectItem key={diff} value={diff}>
-                          {diff}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Button variant="outline" size="sm" onClick={handleImport} className="shrink-0">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import
+                </Button>
               </div>
             </div>
 
@@ -303,18 +318,17 @@ export function SettingsWindow() {
 
         {/* Gameplay Tab */}
         <TabsContent value="gameplay" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-          <GameplaySettings />
-          <Separator className="my-6" />
-          <UpgradeBadgesSettings />
-          <Separator className="my-6" />
-          <TelemetryToggle />
+          <div className="space-y-4 max-w-2xl">
+            <GameplaySettings />
+            <UpgradeBadgesSettings />
+            <TelemetryToggle />
+          </div>
         </TabsContent>
 
         {/* Voice Tab */}
         <TabsContent value="voice" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-          <div className="space-y-6 max-w-lg">
+          <div className="space-y-4 max-w-2xl">
             <VoiceSettings />
-            <Separator />
             <ReminderSettings />
           </div>
         </TabsContent>
@@ -326,20 +340,45 @@ export function SettingsWindow() {
 
         {/* Hotkeys Tab */}
         <TabsContent value="hotkeys" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-          <div className="space-y-6 max-w-md">
+          <div className="space-y-4 max-w-2xl">
             <HotkeySettings />
 
-            <Separator />
-
             {/* About Section */}
-            <section>
-              <h2 className="text-lg font-semibold mb-4">About</h2>
-              <p className="text-sm text-muted-foreground">
-                AoE4 Overlay v0.1.0
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Build order overlay for Age of Empires 4
-              </p>
+            <section className="bg-muted/30 rounded-xl p-4">
+              <h2 className="text-base font-medium flex items-center gap-2 mb-3">
+                <Info className="w-5 h-5 text-muted-foreground" />
+                About
+              </h2>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium">AoE4 Overlay v0.1.0</p>
+                  <p className="text-xs text-muted-foreground">
+                    Build order overlay for Age of Empires 4
+                  </p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Reset All Settings
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Reset All Settings?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will restore all settings to their default values. Your build orders will not be affected.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleResetAllSettings}>
+                        Reset Settings
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </section>
           </div>
         </TabsContent>

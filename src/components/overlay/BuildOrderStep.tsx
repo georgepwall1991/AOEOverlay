@@ -36,7 +36,7 @@ export function BuildOrderStep({
         onClick={onClick}
         className={cn(
           "w-full text-left px-2 py-1.5 rounded-lg transition-all duration-200 step-hover-effect",
-          isActive && "step-active-glow scale-[1.02] origin-left py-2",
+          isActive && "step-active-glow scale-[1.02] origin-left py-2.5",
           isPast && "opacity-35",
           !isActive && !isPast && "opacity-70 hover:opacity-90",
           showHighlight && "step-enter"
@@ -68,8 +68,8 @@ export function BuildOrderStep({
 
             <div
               className={cn(
-                "text-base leading-snug transition-all duration-200 flex flex-wrap items-center gap-x-1",
-                isActive ? "text-white font-medium" : "text-white/70",
+                "leading-snug transition-all duration-200 flex flex-wrap items-center gap-x-1",
+                isActive ? "text-base text-white font-bold" : "text-sm text-white/70",
                 floatingStyle && "text-shadow-strong"
               )}
             >
@@ -86,7 +86,7 @@ export function BuildOrderStep({
       onClick={onClick}
       className={cn(
         "w-full text-left transition-all duration-300 ease-out p-2 rounded-lg",
-        isActive ? "step-active-glow" : "step-card step-hover-effect",
+        isActive ? "step-active-glow py-3" : "step-card step-hover-effect",
         isPast && "opacity-40",
         !isActive && !isPast && "opacity-75 hover:opacity-100",
         showHighlight && "step-enter"
@@ -102,15 +102,15 @@ export function BuildOrderStep({
         <div className="flex-1 min-w-0">
           <p
             className={cn(
-              "text-sm leading-snug transition-colors duration-200 flex items-center flex-wrap gap-1",
-              isActive ? "text-white font-medium" : "text-white/80",
+              "leading-snug transition-all duration-200 flex items-center flex-wrap gap-1",
+              isActive ? "text-lg text-white font-bold" : "text-sm text-white/70",
               floatingStyle && "text-shadow-strong"
             )}
           >
-            {renderIconText(step.description, 24)}
+            {renderIconText(step.description, isActive ? 34 : 24)}
           </p>
 
-          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+          <div className={cn("flex items-center gap-3 mt-1.5 flex-wrap", isActive && "mt-2")}>
             <StepTiming
               timing={step.timing}
               displayTiming={displayTiming}

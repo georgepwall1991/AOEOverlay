@@ -89,17 +89,13 @@ export function HotkeySettings() {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Keyboard className="w-5 h-5" />
+    <section className="bg-muted/30 rounded-xl p-4">
+      <h2 className="text-base font-medium flex items-center gap-2 mb-3">
+        <Keyboard className="w-5 h-5 text-muted-foreground" />
         Global Hotkeys
       </h2>
 
-      <p className="text-sm text-muted-foreground mb-4">
-        These hotkeys work even when the game has focus.
-      </p>
-
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-3">
         <Button size="sm" variant="outline" onClick={() => applyPreset(PRESET_QWERTY)}>
           Competitive defaults (QWERTY)
         </Button>

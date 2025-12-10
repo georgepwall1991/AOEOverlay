@@ -1,7 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Bell } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig } from "@/lib/tauri";
@@ -122,21 +121,16 @@ export function ReminderSettings() {
   };
 
   return (
-    <section>
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <Bell className="w-5 h-5" />
+    <section className="bg-muted/30 rounded-xl p-4">
+      <h2 className="text-base font-medium flex items-center gap-2 mb-4">
+        <Bell className="w-4 h-4 text-muted-foreground" />
         Periodic Reminders
       </h2>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Master toggle */}
         <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor="reminders-enabled">Enable Reminders</Label>
-            <p className="text-xs text-muted-foreground">
-              Periodic coaching reminders while timer is running
-            </p>
-          </div>
+          <Label htmlFor="reminders-enabled">Enable Reminders</Label>
           <Switch
             id="reminders-enabled"
             checked={reminderConfig.enabled}
@@ -146,83 +140,85 @@ export function ReminderSettings() {
 
         {reminderConfig.enabled && (
           <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between gap-4 p-3 rounded-lg bg-muted/40">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={calmMode.enabled} onCheckedChange={handleCalmModeToggle} />
-                  <Label>Calm early game</Label>
+            <div className="bg-muted/40 rounded-lg p-3">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={calmMode.enabled} onCheckedChange={handleCalmModeToggle} />
+                    <Label>Calm early game</Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground ml-8 mt-1">
+                    Delay non-critical reminders until the timer reaches this mark.
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground ml-10">
-                  Delay non-critical reminders until the timer reaches this mark.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  min="30"
-                  max="600"
-                  value={calmMode.untilSeconds}
-                  onChange={(e) => handleCalmModeSeconds(e.target.value)}
-                  className="w-20 h-8"
-                  disabled={!calmMode.enabled}
-                />
-                <span className="text-xs text-muted-foreground">sec</span>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="30"
+                    max="600"
+                    value={calmMode.untilSeconds}
+                    onChange={(e) => handleCalmModeSeconds(e.target.value)}
+                    className="w-20 h-8"
+                    disabled={!calmMode.enabled}
+                  />
+                  <span className="text-xs text-muted-foreground">sec</span>
+                </div>
               </div>
             </div>
 
-            <ReminderRow
-              label="Keep queuing villagers"
-              enabled={reminderConfig.villagerQueue.enabled}
-              intervalSeconds={reminderConfig.villagerQueue.intervalSeconds}
-              onToggle={() => handleReminderItemToggle("villagerQueue")}
-              onIntervalChange={(v) => handleReminderIntervalChange("villagerQueue", v)}
-            />
+            <div className="space-y-3 pt-2">
+              <ReminderRow
+                label="Keep queuing villagers"
+                enabled={reminderConfig.villagerQueue.enabled}
+                intervalSeconds={reminderConfig.villagerQueue.intervalSeconds}
+                onToggle={() => handleReminderItemToggle("villagerQueue")}
+                onIntervalChange={(v) => handleReminderIntervalChange("villagerQueue", v)}
+              />
 
-            <ReminderRow
-              label="Check your scout"
-              enabled={reminderConfig.scout.enabled}
-              intervalSeconds={reminderConfig.scout.intervalSeconds}
-              onToggle={() => handleReminderItemToggle("scout")}
-              onIntervalChange={(v) => handleReminderIntervalChange("scout", v)}
-            />
+              <ReminderRow
+                label="Check your scout"
+                enabled={reminderConfig.scout.enabled}
+                intervalSeconds={reminderConfig.scout.intervalSeconds}
+                onToggle={() => handleReminderItemToggle("scout")}
+                onIntervalChange={(v) => handleReminderIntervalChange("scout", v)}
+              />
 
-            <ReminderRow
-              label="Don't get supply blocked"
-              enabled={reminderConfig.houses.enabled}
-              intervalSeconds={reminderConfig.houses.intervalSeconds}
-              onToggle={() => handleReminderItemToggle("houses")}
-              onIntervalChange={(v) => handleReminderIntervalChange("houses", v)}
-            />
+              <ReminderRow
+                label="Don't get supply blocked"
+                enabled={reminderConfig.houses.enabled}
+                intervalSeconds={reminderConfig.houses.intervalSeconds}
+                onToggle={() => handleReminderItemToggle("houses")}
+                onIntervalChange={(v) => handleReminderIntervalChange("houses", v)}
+              />
 
-            <ReminderRow
-              label="Build more military"
-              enabled={reminderConfig.military.enabled}
-              intervalSeconds={reminderConfig.military.intervalSeconds}
-              onToggle={() => handleReminderItemToggle("military")}
-              onIntervalChange={(v) => handleReminderIntervalChange("military", v)}
-            />
+              <ReminderRow
+                label="Build more military"
+                enabled={reminderConfig.military.enabled}
+                intervalSeconds={reminderConfig.military.intervalSeconds}
+                onToggle={() => handleReminderItemToggle("military")}
+                onIntervalChange={(v) => handleReminderIntervalChange("military", v)}
+              />
 
-            <ReminderRow
-              label="Control the map"
-              enabled={reminderConfig.mapControl.enabled}
-              intervalSeconds={reminderConfig.mapControl.intervalSeconds}
-              onToggle={() => handleReminderItemToggle("mapControl")}
-              onIntervalChange={(v) => handleReminderIntervalChange("mapControl", v)}
-            />
+              <ReminderRow
+                label="Control the map"
+                enabled={reminderConfig.mapControl.enabled}
+                intervalSeconds={reminderConfig.mapControl.intervalSeconds}
+                onToggle={() => handleReminderItemToggle("mapControl")}
+                onIntervalChange={(v) => handleReminderIntervalChange("mapControl", v)}
+              />
 
-            <ReminderRow
-              label="Check your production"
-              enabled={reminderConfig.macroCheck?.enabled ?? false}
-              intervalSeconds={reminderConfig.macroCheck?.intervalSeconds ?? 45}
-              onToggle={() => handleReminderItemToggle("macroCheck")}
-              onIntervalChange={(v) => handleReminderIntervalChange("macroCheck", v)}
-            />
-
-            <Separator className="my-3" />
+              <ReminderRow
+                label="Check your production"
+                enabled={reminderConfig.macroCheck?.enabled ?? false}
+                intervalSeconds={reminderConfig.macroCheck?.intervalSeconds ?? 45}
+                onToggle={() => handleReminderItemToggle("macroCheck")}
+                onIntervalChange={(v) => handleReminderIntervalChange("macroCheck", v)}
+              />
+            </div>
 
             {/* Sacred Sites - One-time alerts */}
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={reminderConfig.sacredSites?.enabled ?? false}
@@ -230,7 +226,7 @@ export function ReminderSettings() {
                   />
                   <Label>Sacred Site Alerts</Label>
                 </div>
-                <p className="text-xs text-muted-foreground ml-10">
+                <p className="text-xs text-muted-foreground ml-8 mt-1">
                   Alerts at 4:30 and 5:00 for sacred sites
                 </p>
               </div>

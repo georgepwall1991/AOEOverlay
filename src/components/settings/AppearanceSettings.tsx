@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Palette, Eye } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig } from "@/lib/tauri";
@@ -74,18 +73,18 @@ export function AppearanceSettings() {
   };
 
   return (
-    <div className="space-y-6 max-w-md">
-      <section>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Palette className="w-5 h-5" />
+    <div className="space-y-4 max-w-2xl">
+      <section className="bg-muted/30 rounded-xl p-4">
+        <h2 className="text-base font-medium flex items-center gap-2 mb-3">
+          <Palette className="w-5 h-5 text-muted-foreground" />
           Theme
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="space-y-2">
             <Label>Color Theme</Label>
             <Select value={config.theme} onValueChange={handleThemeChange}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -99,7 +98,7 @@ export function AppearanceSettings() {
           <div className="space-y-2">
             <Label>Font Size</Label>
             <Select value={config.font_size} onValueChange={handleFontSizeChange}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -112,15 +111,13 @@ export function AppearanceSettings() {
         </div>
       </section>
 
-      <Separator />
-
-      <section>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Eye className="w-5 h-5" />
+      <section className="bg-muted/30 rounded-xl p-4">
+        <h2 className="text-base font-medium flex items-center gap-2 mb-3">
+          <Eye className="w-5 h-5 text-muted-foreground" />
           Overlay
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="opacity">Overlay Opacity</Label>
@@ -153,44 +150,31 @@ export function AppearanceSettings() {
               value={[config.ui_scale ?? 1]}
               onValueChange={handleScaleChange}
             />
-            <p className="text-xs text-muted-foreground">
-              Quick presets: 0.9 (1080p), 1.0 (1440p), 1.1 (4K)
-            </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label>Overlay Preset</Label>
-              <Select
-                value={config.overlay_preset ?? "info_dense"}
-                onValueChange={(v) => handlePresetChange(v as OverlayPreset)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="info_dense">Info dense</SelectItem>
-                  <SelectItem value="minimal">Minimal</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                Minimal trims chrome; info-dense keeps all panels.
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label>Overlay Preset</Label>
+            <Select
+              value={config.overlay_preset ?? "info_dense"}
+              onValueChange={(v) => handlePresetChange(v as OverlayPreset)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="info_dense">Info dense</SelectItem>
+                <SelectItem value="minimal">Minimal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="coach-mode">Coach-only mode</Label>
-              <div className="flex items-center justify-between rounded-md border p-3">
-                <p className="text-xs text-muted-foreground">
-                  Hide overlay UI, keep voice + timers
-                </p>
-                <Switch
-                  id="coach-mode"
-                  checked={config.coach_only_mode ?? false}
-                  onCheckedChange={handleCoachOnlyToggle}
-                />
-              </div>
-            </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="coach-mode">Coach-only Mode</Label>
+            <Switch
+              id="coach-mode"
+              checked={config.coach_only_mode ?? false}
+              onCheckedChange={handleCoachOnlyToggle}
+            />
           </div>
         </div>
       </section>

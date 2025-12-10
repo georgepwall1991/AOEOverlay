@@ -1,8 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { MousePointer2Off, Minimize2, Gamepad2, Timer, TrendingUp } from "lucide-react";
+import { Gamepad2, Timer } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig, toggleClickThrough, toggleCompactMode } from "@/lib/tauri";
 import { DEFAULT_TIMER_DRIFT_CONFIG } from "@/types";
@@ -72,25 +71,18 @@ export function GameplaySettings() {
   };
 
   return (
-    <div className="space-y-6 max-w-md">
-      <section>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Gamepad2 className="w-5 h-5" />
+    <div className="space-y-4 max-w-2xl">
+      {/* Overlay Behavior Section */}
+      <section className="bg-muted/30 rounded-xl p-4">
+        <h2 className="text-base font-medium flex items-center gap-2 mb-3">
+          <Gamepad2 className="w-5 h-5 text-muted-foreground" />
           Overlay Behavior
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Click-Through Mode */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MousePointer2Off className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <Label htmlFor="click-through">Click-Through Mode</Label>
-                <p className="text-xs text-muted-foreground">
-                  Clicks pass through the overlay to the game
-                </p>
-              </div>
-            </div>
+            <Label htmlFor="click-through">Click-Through Mode</Label>
             <Switch
               id="click-through"
               checked={config.click_through}
@@ -100,15 +92,7 @@ export function GameplaySettings() {
 
           {/* Compact Mode */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Minimize2 className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <Label htmlFor="compact">Compact Mode</Label>
-                <p className="text-xs text-muted-foreground">
-                  Shows only the current step
-                </p>
-              </div>
-            </div>
+            <Label htmlFor="compact">Compact Mode</Label>
             <Switch
               id="compact"
               checked={config.compact_mode}
@@ -118,23 +102,17 @@ export function GameplaySettings() {
         </div>
       </section>
 
-      <Separator />
-
-      {/* Auto-Advance Section */}
-      <section>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Timer className="w-5 h-5" />
-          Auto-Advance
+      {/* Timing Section */}
+      <section className="bg-muted/30 rounded-xl p-4">
+        <h2 className="text-base font-medium flex items-center gap-2 mb-3">
+          <Timer className="w-5 h-5 text-muted-foreground" />
+          Timing
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
+          {/* Auto-Advance */}
           <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="auto-advance">Auto-Advance Steps</Label>
-              <p className="text-xs text-muted-foreground">
-                Automatically move to next step based on timing
-              </p>
-            </div>
+            <Label htmlFor="auto-advance">Auto-Advance Steps</Label>
             <Switch
               id="auto-advance"
               checked={config.auto_advance.enabled}
@@ -142,9 +120,12 @@ export function GameplaySettings() {
             />
           </div>
 
+          {/* Auto-Advance Child Settings */}
           {config.auto_advance.enabled && (
-            <div className="space-y-2">
-              <Label htmlFor="delay">Extra Delay (seconds)</Label>
+            <div className="ml-4 space-y-3">
+              <div>
+                <Label htmlFor="delay">Extra Delay (seconds)</Label>
+              </div>
               <Input
                 id="delay"
                 type="number"
@@ -154,24 +135,16 @@ export function GameplaySettings() {
                 onChange={(e) => handleAutoAdvanceDelayChange(e.target.value)}
                 className="w-24"
               />
-              <p className="text-xs text-muted-foreground">
-                Wait this many seconds after the step's timing before advancing
-              </p>
             </div>
           )}
 
-          <Separator className="my-4" />
-
           {/* Smart Timer Drift */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <Label htmlFor="timer-drift">Smart Timer Drift</Label>
-                <p className="text-xs text-muted-foreground">
-                  Adjust future step timings when you fall behind pace
-                </p>
-              </div>
+            <div>
+              <Label htmlFor="timer-drift">Smart Timer Drift</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Adjust future step timings when you fall behind pace
+              </p>
             </div>
             <Switch
               id="timer-drift"

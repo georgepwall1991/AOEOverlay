@@ -80,13 +80,18 @@ fn register_single_hotkey(
     if let Some(code) = string_to_code(key_str) {
         let app_handle = app.clone();
         let shortcut = Shortcut::new(None, code);
+        let key_owned = key_str.to_string(); // Own the string for the closure
+        println!("[Hotkeys] Registering {} -> {}", key_str, event_name);
         app.global_shortcut()
             .on_shortcut(shortcut, move |_app, _shortcut, event| {
                 if event.state == ShortcutState::Pressed {
+                    println!("[Hotkeys] {} pressed, emitting {}", key_owned, event_name);
                     let _ = app_handle.emit(event_name, ());
                 }
             })
             .map_err(|e| format!("Failed to register {}: {}", event_name, e))?;
+    } else {
+        eprintln!("[Hotkeys] Warning: Unknown key '{}' for {}", key_str, event_name);
     }
     Ok(())
 }
