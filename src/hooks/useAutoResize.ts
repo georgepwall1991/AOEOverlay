@@ -23,7 +23,8 @@ export function useAutoResize() {
 
       try {
         const window = getCurrentWindow();
-        await window.setSize(new LogicalSize(newWidth, newHeight));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await window.setSize(new LogicalSize(newWidth, newHeight) as any);
       } catch (e) {
         console.error("Failed to resize window:", e);
       }

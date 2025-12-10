@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useMatchupStore, useMatchupPanelState } from "./matchupStore";
+import { useMatchupStore } from "./matchupStore";
 import type { Civilization } from "@/types";
 
 describe("matchupStore", () => {
@@ -284,9 +284,9 @@ describe("matchupStore", () => {
       const state = useMatchupStore.getState();
       state.setOpen(false);
 
-      const panelState = useMatchupPanelState.getState
-        ? useMatchupPanelState.getState()
-        : useMatchupStore.getState();
+      // useMatchupPanelState is a hook selector, not a store
+      // Access state through useMatchupStore.getState() directly
+      const panelState = useMatchupStore.getState();
 
       expect(panelState.isOpen).toBe(false);
 

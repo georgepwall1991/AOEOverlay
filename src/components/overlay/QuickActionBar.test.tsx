@@ -54,10 +54,19 @@ vi.mock("@/hooks", () => ({
   useTimer: vi.fn(() => ({
     isRunning: false,
     isPaused: false,
+    elapsedSeconds: 0,
+    lastDelta: null,
+    timerDisplay: "0:00",
+    deltaDisplay: null,
+    deltaCompact: null,
+    deltaStatus: null,
     start: mockStart,
+    stop: vi.fn(),
     pause: mockPause,
     resume: mockResume,
+    toggle: vi.fn(),
     reset: mockReset,
+    recordStep: vi.fn(),
   })),
 }));
 
@@ -198,10 +207,19 @@ describe("QuickActionBar", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: true,
         isPaused: false,
+        elapsedSeconds: 10,
+        lastDelta: null,
+        timerDisplay: "0:10",
+        deltaDisplay: null,
+        deltaCompact: null,
+        deltaStatus: null,
         start: mockStart,
+        stop: vi.fn(),
         pause: mockPause,
         resume: mockResume,
+        toggle: vi.fn(),
         reset: mockReset,
+        recordStep: vi.fn(),
       });
 
       render(<QuickActionBar />);
@@ -218,10 +236,19 @@ describe("QuickActionBar", () => {
       vi.mocked(useTimer).mockReturnValue({
         isRunning: false,
         isPaused: true,
+        elapsedSeconds: 10,
+        lastDelta: null,
+        timerDisplay: "0:10",
+        deltaDisplay: null,
+        deltaCompact: null,
+        deltaStatus: null,
         start: mockStart,
+        stop: vi.fn(),
         pause: mockPause,
         resume: mockResume,
+        toggle: vi.fn(),
         reset: mockReset,
+        recordStep: vi.fn(),
       });
 
       render(<QuickActionBar />);

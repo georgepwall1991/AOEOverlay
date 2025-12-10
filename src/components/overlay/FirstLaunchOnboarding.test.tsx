@@ -68,7 +68,7 @@ describe("FirstLaunchOnboarding", () => {
 
   describe("visibility", () => {
     it("shows onboarding after delay when not seen before", async () => {
-      localStorageMock.getItem.mockReturnValue(null);
+      localStorageMock.getItem.mockReturnValue(null as unknown as string);
 
       render(<FirstLaunchOnboarding />);
 
@@ -99,7 +99,7 @@ describe("FirstLaunchOnboarding", () => {
 
   describe("content", () => {
     beforeEach(async () => {
-      localStorageMock.getItem.mockReturnValue(null);
+      localStorageMock.getItem.mockReturnValue(null as unknown as string);
       render(<FirstLaunchOnboarding />);
       await act(async () => {
         vi.advanceTimersByTime(600);
@@ -140,7 +140,7 @@ describe("FirstLaunchOnboarding", () => {
 
   describe("dismissal", () => {
     beforeEach(async () => {
-      localStorageMock.getItem.mockReturnValue(null);
+      localStorageMock.getItem.mockReturnValue(null as unknown as string);
       render(<FirstLaunchOnboarding />);
       await act(async () => {
         vi.advanceTimersByTime(600);
@@ -187,7 +187,7 @@ describe("resetOnboarding", () => {
 describe("Tip component rendering", () => {
   beforeEach(async () => {
     vi.useFakeTimers();
-    localStorageMock.getItem.mockReturnValue(null);
+    localStorageMock.getItem.mockReturnValue(null as unknown as string);
     render(<FirstLaunchOnboarding />);
     await act(async () => {
       vi.advanceTimersByTime(600);

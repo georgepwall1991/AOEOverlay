@@ -207,13 +207,19 @@ describe("TimerBar with different states", () => {
     vi.mocked(useTimer).mockReturnValue({
       isRunning: false,
       isPaused: true,
+      elapsedSeconds: 150,
+      lastDelta: null,
       timerDisplay: "2:30",
       deltaDisplay: null,
+      deltaCompact: null,
       deltaStatus: null,
       start: vi.fn(),
+      stop: vi.fn(),
       pause: vi.fn(),
       resume: vi.fn(),
+      toggle: vi.fn(),
       reset: vi.fn(),
+      recordStep: vi.fn(),
     });
 
     render(<TimerBar />);
@@ -226,13 +232,19 @@ describe("TimerBar with different states", () => {
     vi.mocked(useTimer).mockReturnValue({
       isRunning: true,
       isPaused: false,
+      elapsedSeconds: 150,
+      lastDelta: -10,
       timerDisplay: "2:30",
       deltaDisplay: "-0:10",
+      deltaCompact: "-10s",
       deltaStatus: "behind",
       start: vi.fn(),
+      stop: vi.fn(),
       pause: vi.fn(),
       resume: vi.fn(),
+      toggle: vi.fn(),
       reset: vi.fn(),
+      recordStep: vi.fn(),
     });
 
     render(<TimerBar />);
@@ -245,13 +257,19 @@ describe("TimerBar with different states", () => {
     vi.mocked(useTimer).mockReturnValue({
       isRunning: true,
       isPaused: false,
+      elapsedSeconds: 150,
+      lastDelta: 0,
       timerDisplay: "2:30",
       deltaDisplay: "0:00",
+      deltaCompact: "0s",
       deltaStatus: "on-pace",
       start: vi.fn(),
+      stop: vi.fn(),
       pause: vi.fn(),
       resume: vi.fn(),
+      toggle: vi.fn(),
       reset: vi.fn(),
+      recordStep: vi.fn(),
     });
 
     render(<TimerBar />);
@@ -279,13 +297,19 @@ describe("TimerBar with different states", () => {
     vi.mocked(useTimer).mockReturnValue({
       isRunning: false,
       isPaused: true,
+      elapsedSeconds: 105,
+      lastDelta: null,
       timerDisplay: "1:45",
       deltaDisplay: null,
+      deltaCompact: null,
       deltaStatus: null,
       start: vi.fn(),
+      stop: vi.fn(),
       pause: vi.fn(),
       resume: vi.fn(),
+      toggle: vi.fn(),
       reset: vi.fn(),
+      recordStep: vi.fn(),
     });
 
     render(<TimerBar compact />);
@@ -298,13 +322,19 @@ describe("TimerBar with different states", () => {
     vi.mocked(useTimer).mockReturnValue({
       isRunning: true,
       isPaused: false,
+      elapsedSeconds: 30,
+      lastDelta: null,
       timerDisplay: "0:30",
       deltaDisplay: null,
+      deltaCompact: null,
       deltaStatus: null,
       start: vi.fn(),
+      stop: vi.fn(),
       pause: vi.fn(),
       resume: vi.fn(),
+      toggle: vi.fn(),
       reset: vi.fn(),
+      recordStep: vi.fn(),
     });
 
     render(<TimerBar />);

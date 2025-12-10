@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { emit as tauriEmit, listen as tauriListen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow as tauriGetCurrentWindow, type Window } from "@tauri-apps/api/window";
-import { LogicalSize as TauriLogicalSize } from "@tauri-apps/api/dpi";
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";
 
@@ -24,7 +23,8 @@ export class LogicalSize {
 // Mock window interface for browser testing
 interface MockWindow {
   label: string;
-  setSize: (size: LogicalSize) => Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setSize: (size: any) => Promise<void>;
   startDragging: () => Promise<void>;
 }
 

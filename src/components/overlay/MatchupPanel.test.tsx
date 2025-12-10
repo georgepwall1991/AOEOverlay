@@ -294,7 +294,7 @@ describe("MatchupPanel edge cases", () => {
 
   it("returns null when no current build order", async () => {
     const { useCurrentBuildOrder, useMatchupStore } = await import("@/stores");
-    vi.mocked(useCurrentBuildOrder).mockReturnValue(null);
+    vi.mocked(useCurrentBuildOrder).mockReturnValue(null as unknown as ReturnType<typeof useCurrentBuildOrder>);
     vi.mocked(useMatchupStore).mockReturnValue({
       isOpen: true,
       opponentCiv: null,
