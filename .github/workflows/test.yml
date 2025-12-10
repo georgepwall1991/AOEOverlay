@@ -146,7 +146,7 @@ jobs:
 
       - name: Install WebdriverIO dependencies
         working-directory: tests/e2e/webdriver
-        run: npm ci
+        run: npm install
 
       - name: Build Tauri app
         run: npm run tauri build -- --debug --no-bundle
