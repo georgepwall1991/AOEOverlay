@@ -14,6 +14,8 @@ use commands::*;
 use hotkeys::register_hotkeys;
 use config::load_build_orders;
 use tray::setup_tray;
+#[cfg(target_os = "windows")]
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
