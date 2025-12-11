@@ -45,11 +45,17 @@ export function useTTS() {
       } finally {
         isSpeakingRef.current = false;
 
-        // Process queue
+        // Process queue - use setTimeout to prevent deep recursion stack
+        // This breaks the call stack chain while still processing sequentially
         if (queueRef.current.length > 0) {
           const next = queueRef.current.shift();
           if (next) {
-            speak(next);
+            // Schedule next speak on next tick to avoid stack overflow
+            setTimeout(() => {
+              speak(next).catch((error) => {
+                console.error("TTS queue processing failed:", error);
+              });
+            }, 0);
           }
         }
       }

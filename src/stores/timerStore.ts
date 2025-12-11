@@ -120,20 +120,25 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
   pauseTimer: () => {
     const { isRunning, startedAt, accumulatedTime } = get();
-    if (!isRunning || !startedAt) return;
+    // Guard: only pause if actually running with valid startedAt
+    if (!isRunning || startedAt === null) return;
 
-    // Save accumulated time and mark as paused
+    // Capture values before state change to avoid race conditions
+    const elapsed = accumulatedTime + (nowMs() - startedAt);
+
+    // Atomic state update - set all values in single update
     set({
       isRunning: false,
       isPaused: true,
       startedAt: null,
-      accumulatedTime: accumulatedTime + (nowMs() - startedAt),
+      accumulatedTime: elapsed,
     });
   },
 
   resumeTimer: () => {
-    const { isPaused } = get();
-    if (!isPaused) return;
+    const { isPaused, isRunning } = get();
+    // Guard: only resume if paused and not already running
+    if (!isPaused || isRunning) return;
 
     set({
       isRunning: true,
@@ -144,10 +149,25 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
   togglePause: () => {
     const { isRunning, isPaused } = get();
+    // Use direct state mutation through set() to ensure atomicity
     if (isRunning) {
-      get().pauseTimer();
+      // Inline pause logic to avoid potential race between get() calls
+      const { startedAt, accumulatedTime } = get();
+      if (startedAt !== null) {
+        const elapsed = accumulatedTime + (nowMs() - startedAt);
+        set({
+          isRunning: false,
+          isPaused: true,
+          startedAt: null,
+          accumulatedTime: elapsed,
+        });
+      }
     } else if (isPaused) {
-      get().resumeTimer();
+      set({
+        isRunning: true,
+        isPaused: false,
+        startedAt: nowMs(),
+      });
     }
     // If not running and not paused, do nothing (timer hasn't started)
   },

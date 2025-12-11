@@ -43,14 +43,16 @@ export function KeyboardShortcutsOverlay() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  // Auto-hide practice hints after 60s or on first keypress
+  // Auto-hide practice hints after 10s or on first interaction (key or click)
   useEffect(() => {
-    const timer = window.setTimeout(() => setShowHints(false), 60_000);
-    const handleFirstKey = () => setShowHints(false);
-    window.addEventListener("keydown", handleFirstKey, { once: true });
+    const timer = window.setTimeout(() => setShowHints(false), 10_000);
+    const handleFirstInteraction = () => setShowHints(false);
+    window.addEventListener("keydown", handleFirstInteraction, { once: true });
+    window.addEventListener("mousedown", handleFirstInteraction, { once: true });
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("keydown", handleFirstKey);
+      window.removeEventListener("keydown", handleFirstInteraction);
+      window.removeEventListener("mousedown", handleFirstInteraction);
     };
   }, []);
 

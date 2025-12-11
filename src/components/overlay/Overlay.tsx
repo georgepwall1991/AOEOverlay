@@ -17,6 +17,9 @@ import { cn } from "@/lib/utils";
 // Duration of the undo window in milliseconds
 const CLICK_THROUGH_UNDO_TIMEOUT = 5000;
 
+// Track undo timer generation to prevent stale timers from clearing state
+let undoTimerGeneration = 0;
+
 
 
 export function Overlay() {
@@ -73,6 +76,7 @@ export function Overlay() {
     // Clear any pending undo timer
     if (clickUndoTimerRef.current) {
       clearTimeout(clickUndoTimerRef.current);
+      clickUndoTimerRef.current = null;
     }
 
     // Apply the new state
@@ -84,9 +88,15 @@ export function Overlay() {
     // Set up undo with the state to revert to
     setClickUndoState({ active: true, revertTo: currentState });
 
-    // Auto-expire undo after timeout
+    // Increment generation to invalidate any stale timers
+    const currentGeneration = ++undoTimerGeneration;
+
+    // Auto-expire undo after timeout (with generation check to avoid race conditions)
     clickUndoTimerRef.current = window.setTimeout(() => {
-      setClickUndoState({ active: false, revertTo: false });
+      // Only clear if this timer's generation matches current
+      if (currentGeneration === undoTimerGeneration) {
+        setClickUndoState({ active: false, revertTo: false });
+      }
     }, CLICK_THROUGH_UNDO_TIMEOUT);
   }, [config, updateConfig]);
 

@@ -1,8 +1,9 @@
 import { useBuildOrderStore, useCurrentBuildOrder, useActiveSteps, useActiveBranchId } from "@/stores";
 import { BuildOrderStep } from "./BuildOrderStep";
 import { BuildSelectorDropdown } from "./BuildSelectorDropdown";
-import { logTelemetryEvent } from "@/lib/utils";
+import { logTelemetryEvent, cn } from "@/lib/utils";
 import { useTimer } from "@/hooks";
+import { CheckCircle2 } from "lucide-react";
 
 export function BuildOrderDisplay() {
   const currentOrder = useCurrentBuildOrder();
@@ -35,6 +36,7 @@ export function BuildOrderDisplay() {
 
   const progressPercent =
     activeSteps.length > 0 ? ((currentStepIndex + 1) / activeSteps.length) * 100 : 0;
+  const isComplete = activeSteps.length > 0 && currentStepIndex >= activeSteps.length - 1;
 
   const handleBranchSelect = (branchId: string | null) => {
     setActiveBranch(branchId);
@@ -55,13 +57,25 @@ export function BuildOrderDisplay() {
 
           {/* Progress indicator */}
           <div data-testid="progress-indicator" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div className={cn(
+              "w-20 h-2 rounded-full overflow-hidden transition-all duration-300",
+              isComplete ? "bg-emerald-900/30" : "bg-white/10"
+            )}>
               <div
-                className="h-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                className={cn(
+                  "h-full transition-all duration-300",
+                  isComplete
+                    ? "bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]"
+                    : "bg-gradient-to-r from-amber-500 to-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                )}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span data-testid="step-counter" className="text-xs font-mono text-amber-400 tabular-nums font-bold">
+            <span data-testid="step-counter" className={cn(
+              "text-sm font-mono tabular-nums font-bold flex items-center gap-1 transition-colors",
+              isComplete ? "text-emerald-400" : "text-amber-400"
+            )}>
+              {isComplete && <CheckCircle2 className="w-3.5 h-3.5" />}
               {activeSteps.length === 0 ? 0 : currentStepIndex + 1}/{activeSteps.length}
             </span>
           </div>

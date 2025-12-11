@@ -4,6 +4,7 @@ import { useWindowDrag, useAutoResize, useTimer } from "@/hooks";
 import { useOpacity, useConfigStore, useBuildOrderStore, useCurrentBuildOrder, useActiveSteps, useActiveBranchId } from "@/stores";
 import { ResourceIndicator } from "./ResourceIndicator";
 import { TimerBar } from "./TimerBar";
+import { renderIconText } from "./GameIcons";
 import { showSettings } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
@@ -21,12 +22,16 @@ export function CompactOverlay() {
   const containerRef = useAutoResize();
   const { isRunning, isPaused, start, deltaStatus, deltaCompact } = useTimer();
   const scale = config.ui_scale ?? 1;
+  // Larger fonts for compact mode since we only show one step
   const fontSize =
     config.font_size === "large"
-      ? "text-sm"
+      ? "text-lg"
       : config.font_size === "small"
-        ? "text-[11px]"
-        : "text-xs";
+        ? "text-sm"
+        : "text-base";
+
+  // Icon sizes for compact mode (larger than regular overlay)
+  const iconSize = config.font_size === "large" ? 24 : config.font_size === "small" ? 18 : 22;
 
   const currentStep = activeSteps[currentStepIndex];
   const nextStepPreview = activeSteps[currentStepIndex + 1];
@@ -54,7 +59,8 @@ export function CompactOverlay() {
   return (
     <div
       ref={containerRef}
-      className="inline-block p-1"
+      data-testid="compact-overlay"
+      className="inline-block p-1 pb-2"
       style={{
         opacity,
         minWidth: 320,
@@ -64,7 +70,7 @@ export function CompactOverlay() {
       }}
     >
       <div className={cn(
-        "flex flex-col overflow-hidden",
+        "flex flex-col",
         floatingStyle ? "floating-panel" : "glass-panel"
       )}>
         {/* Compact drag handle */}
@@ -111,23 +117,24 @@ export function CompactOverlay() {
 
         {/* Current step display */}
         {currentStep ? (
-          <div className={cn("p-2", animateStep && "compact-step-animate")}>
+          <div className={cn("p-2 pb-3", animateStep && "compact-step-animate")}>
             {/* Navigation, step counter, and timer */}
-            <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center justify-between mb-2" data-testid="compact-nav-bar">
               <button
                 onClick={previousStep}
                 disabled={currentStepIndex === 0}
-                className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                data-testid="compact-prev-button"
               >
-                <ChevronLeft className="w-4 h-4 text-white/70" />
+                <ChevronLeft className="w-6 h-6 text-white/80" />
               </button>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-amber-400 flex items-center gap-1">
-                  {currentStepIndex + 1}<span className="text-white/40">/{totalSteps}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-mono font-bold text-amber-400 flex items-center gap-1.5" data-testid="compact-step-counter">
+                  {currentStepIndex + 1}<span className="text-white/50">/{totalSteps}</span>
                   <span
                     className={cn(
-                      "inline-block w-2 h-2 rounded-full",
+                      "inline-block w-2.5 h-2.5 rounded-full",
                       paceDotClass
                     )}
                     title={
@@ -135,6 +142,7 @@ export function CompactOverlay() {
                         ? `Pace: ${deltaCompact}`
                         : "Pace status"
                     }
+                    data-testid="compact-pace-dot"
                   />
                 </span>
                 {/* Compact timer display */}
@@ -151,41 +159,42 @@ export function CompactOverlay() {
                   nextStep();
                 }}
                 disabled={currentStepIndex >= totalSteps - 1}
-                className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-1.5 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                data-testid="compact-next-button"
               >
-                <ChevronRight className="w-4 h-4 text-white/70" />
+                <ChevronRight className="w-6 h-6 text-white/80" />
               </button>
             </div>
 
             {/* Step content */}
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-3" data-testid="compact-step-content">
               {/* Timing badge */}
               {currentStep.timing && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-mono flex-shrink-0">
+                <span className="text-base px-2.5 py-1 rounded bg-amber-500/25 text-amber-300 font-mono font-bold flex-shrink-0 shadow-sm" data-testid="compact-timing-badge">
                   {currentStep.timing}
                 </span>
               )}
 
               {/* Description */}
-              <p className={cn(fontSize, "text-white leading-tight flex-1")}>
-                {currentStep.description}
+              <p className={cn(fontSize, "text-white leading-normal flex-1")} data-testid="compact-step-description">
+                {renderIconText(currentStep.description, iconSize)}
               </p>
             </div>
 
             {/* Resources */}
             {currentStep.resources && (
-              <div className="flex gap-2 mt-1.5">
+              <div className="flex gap-2 mt-1.5" data-testid="compact-resources">
                 <ResourceIndicator resources={currentStep.resources} compact glow />
               </div>
             )}
 
             {/* Next step preview */}
             {nextStepPreview && (
-              <div className="mt-2 pt-2 border-t border-white/10 opacity-50">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-white/40 font-mono">Next:</span>
-                  <span className="text-[11px] text-white/50 truncate flex-1">
-                    {nextStepPreview.description}
+              <div className="mt-3 pt-2 border-t border-white/10" data-testid="compact-next-preview">
+                <div className="flex items-start gap-2">
+                  <span className="text-xs text-white/50 font-mono flex-shrink-0 pt-0.5">Next:</span>
+                  <span className="text-sm text-white/60 leading-normal break-words" data-testid="compact-next-description">
+                    {renderIconText(nextStepPreview.description, 18)}
                   </span>
                 </div>
               </div>

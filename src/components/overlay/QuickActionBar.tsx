@@ -49,6 +49,9 @@ export function QuickActionBar() {
   const [cycleConfirm, setCycleConfirm] = useState(false);
   const [resetTimeoutId, setResetTimeoutId] = useState<number | null>(null);
   const [cycleTimeoutId, setCycleTimeoutId] = useState<number | null>(null);
+  // Prevent double-execution during rapid clicks
+  const [isResetting, setIsResetting] = useState(false);
+  const [isCycling, setIsCycling] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -84,17 +87,21 @@ export function QuickActionBar() {
   };
 
   const handleReset = () => {
-    if (resetLocked) return;
+    if (resetLocked || isResetting) return;
     if (!resetConfirm) {
       armConfirm("reset");
       return;
     }
+    // Prevent double-execution
+    setIsResetting(true);
     clearConfirm("reset");
     setResetConfirm(false);
     resetSteps();
     reset();
     resetBadges();
     logTelemetryEvent("action:build:reset", { source: "quick-action-bar" });
+    // Allow reset again after a short delay
+    setTimeout(() => setIsResetting(false), 100);
   };
 
   const handlePrevious = () => {
@@ -111,16 +118,21 @@ export function QuickActionBar() {
   };
 
   const handleCycleBuild = () => {
+    if (isCycling) return;
     if (!cycleConfirm) {
       armConfirm("cycle");
       return;
     }
+    // Prevent double-execution
+    setIsCycling(true);
     clearConfirm("cycle");
     setCycleConfirm(false);
     cycleBuildOrder();
     reset();
     resetBadges();
     logTelemetryEvent("action:build:cycle", { source: "quick-action-bar" });
+    // Allow cycle again after a short delay
+    setTimeout(() => setIsCycling(false), 100);
   };
 
   const playPauseLabel = isRunning ? "Pause Timer" : isPaused ? "Resume Timer" : "Start Timer";
@@ -143,7 +155,7 @@ export function QuickActionBar() {
   const hotkeys = config.hotkeys;
 
   return (
-    <div data-testid="quick-action-bar" className="flex items-center justify-center gap-1 px-2 py-1 border-t border-white/5">
+    <div data-testid="quick-action-bar" className="flex items-center justify-center gap-2 px-3 py-2 border-t border-white/5">
       {/* Reset lock */}
       <ActionButton
         onClick={() => setResetLocked((prev) => !prev)}
@@ -153,9 +165,9 @@ export function QuickActionBar() {
         testId="reset-lock-button"
       >
         {resetLocked ? (
-          <Lock className="w-3.5 h-3.5 text-amber-400" />
+          <Lock className="w-4.5 h-4.5 text-amber-400" />
         ) : (
-          <Unlock className="w-3.5 h-3.5 text-white/60 group-hover:text-white/90" />
+          <Unlock className="w-4.5 h-4.5 text-white/60 group-hover:text-white/90" />
         )}
       </ActionButton>
 
@@ -177,7 +189,7 @@ export function QuickActionBar() {
               : `Reset (${hotkeys.reset_build_order})`
         }
       >
-        <SkipBack className="w-3.5 h-3.5 text-white/60 group-hover:text-white/90" />
+        <SkipBack className="w-4.5 h-4.5 text-white/60 group-hover:text-white/90" />
         <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
           {hotkeys.reset_build_order}
         </span>
@@ -195,7 +207,7 @@ export function QuickActionBar() {
         )}
         title={`Previous Step (${hotkeys.previous_step})`}
       >
-        <ChevronLeft className="w-4 h-4 text-white/60 group-hover:text-white/90" />
+        <ChevronLeft className="w-5 h-5 text-white/60 group-hover:text-white/90" />
         <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
           {hotkeys.previous_step}
         </span>
@@ -214,9 +226,9 @@ export function QuickActionBar() {
         title={`${playPauseLabel} (${hotkeys.toggle_pause})`}
       >
         {isRunning ? (
-          <Pause className="w-4 h-4 text-amber-400" />
+          <Pause className="w-5 h-5 text-amber-400" />
         ) : (
-          <Play className="w-4 h-4 text-white/60 group-hover:text-white/90" />
+          <Play className="w-5 h-5 text-white/60 group-hover:text-white/90" />
         )}
         <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
           {hotkeys.toggle_pause}
@@ -235,7 +247,7 @@ export function QuickActionBar() {
         )}
         title={`Next Step (${hotkeys.next_step})`}
       >
-        <ChevronRight className="w-4 h-4 text-white/60 group-hover:text-white/90" />
+        <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white/90" />
         <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/90 text-[10px] text-white/80 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
           {hotkeys.next_step}
         </span>
@@ -248,7 +260,7 @@ export function QuickActionBar() {
         label={cycleConfirm ? "Confirm cycle" : "Cycle Build Order"}
         testId="cycle-build-button"
       >
-        <RefreshCw className="w-3.5 h-3.5 text-white/60 group-hover:text-white/90" />
+        <RefreshCw className="w-4.5 h-4.5 text-white/60 group-hover:text-white/90" />
       </ActionButton>
     </div>
   );

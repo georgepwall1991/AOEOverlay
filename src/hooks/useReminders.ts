@@ -130,6 +130,12 @@ export function useReminders() {
 
   // Start/stop the reminder interval based on timer state
   useEffect(() => {
+    // Clear any existing interval first to prevent duplicates
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     if (isTimerRunning) {
       // Only reset cadence on a fresh run (not resume)
       const now = Date.now();
@@ -144,19 +150,18 @@ export function useReminders() {
         };
       }
 
-      // Check reminders every second
-      intervalRef.current = window.setInterval(checkReminders, 1000);
+      // Check reminders every second - capture the ID immediately
+      const newIntervalId = window.setInterval(checkReminders, 1000);
+      intervalRef.current = newIntervalId;
     } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
       busyCooldownUntil.current = 0;
     }
 
     return () => {
+      // Cleanup: clear the interval we created in this effect run
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
       busyCooldownUntil.current = 0;
     };

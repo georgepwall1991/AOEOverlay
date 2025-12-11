@@ -892,4 +892,44 @@ test.describe('Overlay Window', () => {
       expect(classes).toMatch(/floating-panel|glass-panel/);
     });
   });
+
+  test.describe('Visual Screenshots', () => {
+    test('capture regular overlay at step 1', async ({ page }) => {
+      await page.waitForTimeout(500);
+      await page.screenshot({
+        path: 'tests/e2e/playwright/screenshots/regular-overlay-step1.png',
+        fullPage: true,
+      });
+    });
+
+    test('capture regular overlay at step 2', async ({ page }) => {
+      await overlayPage.nextStep();
+      await page.waitForTimeout(300);
+      await page.screenshot({
+        path: 'tests/e2e/playwright/screenshots/regular-overlay-step2.png',
+        fullPage: true,
+      });
+    });
+
+    test('capture regular overlay at last step', async ({ page }) => {
+      const totalSteps = await overlayPage.getTotalStepCount();
+      for (let i = 1; i < totalSteps; i++) {
+        await overlayPage.nextStep();
+      }
+      await page.waitForTimeout(300);
+      await page.screenshot({
+        path: 'tests/e2e/playwright/screenshots/regular-overlay-last-step.png',
+        fullPage: true,
+      });
+    });
+
+    test('capture overlay with timer running', async ({ page }) => {
+      await overlayPage.toggleTimer();
+      await page.waitForTimeout(1500);
+      await page.screenshot({
+        path: 'tests/e2e/playwright/screenshots/regular-overlay-timer-running.png',
+        fullPage: true,
+      });
+    });
+  });
 });

@@ -38,8 +38,8 @@ export function BuildOrderStep({
         className={cn(
           "w-full text-left px-2 py-1.5 rounded-lg transition-all duration-200 step-hover-effect",
           isActive && "step-active-glow scale-[1.02] origin-left py-2.5 active-step",
-          isPast && "opacity-35",
-          !isActive && !isPast && "opacity-70 hover:opacity-90",
+          isPast && "opacity-50",
+          !isActive && !isPast && "opacity-80 hover:opacity-95",
           showHighlight && "step-enter"
         )}
       >
@@ -70,7 +70,7 @@ export function BuildOrderStep({
             <div
               className={cn(
                 "leading-snug transition-all duration-200 flex flex-wrap items-center gap-x-1",
-                isActive ? "text-base text-white font-bold" : "text-sm text-white/70",
+                isActive ? "text-base text-white font-bold" : "text-sm text-white/85",
                 floatingStyle && "text-shadow-strong"
               )}
             >
@@ -89,8 +89,8 @@ export function BuildOrderStep({
       className={cn(
         "w-full text-left transition-all duration-300 ease-out p-2 rounded-lg",
         isActive ? "step-active-glow py-3 active-step" : "step-card step-hover-effect",
-        isPast && "opacity-40",
-        !isActive && !isPast && "opacity-75 hover:opacity-100",
+        isPast && "opacity-55",
+        !isActive && !isPast && "opacity-85 hover:opacity-100",
         showHighlight && "step-enter"
       )}
     >
@@ -105,7 +105,7 @@ export function BuildOrderStep({
           <p
             className={cn(
               "leading-snug transition-all duration-200 flex items-center flex-wrap gap-1",
-              isActive ? "text-lg text-white font-bold" : "text-sm text-white/70",
+              isActive ? "text-lg text-white font-bold" : "text-sm text-white/85",
               floatingStyle && "text-shadow-strong"
             )}
           >

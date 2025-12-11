@@ -18,6 +18,8 @@ export function useTimer() {
   const rafRef = useRef<number | null>(null);
   const carryRef = useRef<number>(0);
   const lastTsRef = useRef<number | null>(null);
+  // Track if the loop should continue - prevents stale RAF callbacks from scheduling new frames
+  const isLoopActiveRef = useRef(false);
 
   const { startTimer, stopTimer, resetTimer, pauseTimer, resumeTimer, togglePause, tick, recordStepTime } =
     useTimerStore();
@@ -38,6 +40,11 @@ export function useTimer() {
         : ((id: number) => clearTimeout(id));
 
     const loop = () => {
+      // Check if loop should continue (prevents stale RAF callbacks from running)
+      if (!isLoopActiveRef.current) {
+        return;
+      }
+
       const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
       if (lastTsRef.current === null) {
         lastTsRef.current = now;
@@ -52,16 +59,21 @@ export function useTimer() {
         carryRef.current -= target;
       }
 
-      if (useTimerStore.getState().isRunning) {
+      // Only schedule next frame if loop is still active AND timer is running
+      if (isLoopActiveRef.current && useTimerStore.getState().isRunning) {
         rafRef.current = schedule(loop);
       }
     };
 
     if (isRunning) {
+      // Mark loop as active before scheduling
+      isLoopActiveRef.current = true;
       lastTsRef.current = null;
       carryRef.current = 0;
       rafRef.current = schedule(loop);
     } else {
+      // Mark loop as inactive first to prevent any pending RAF from scheduling new frames
+      isLoopActiveRef.current = false;
       if (rafRef.current !== null) {
         cancel(rafRef.current);
         rafRef.current = null;
@@ -71,6 +83,8 @@ export function useTimer() {
     }
 
     return () => {
+      // Mark loop as inactive on cleanup
+      isLoopActiveRef.current = false;
       if (rafRef.current !== null) {
         cancel(rafRef.current);
       }
