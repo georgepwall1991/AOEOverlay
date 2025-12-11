@@ -119,6 +119,18 @@ vi.mock("lucide-react", () => ({
   ChevronsDownUp: ({ className }: { className?: string }) => (
     <span data-testid="collapse-icon" className={className}>⬆⬇</span>
   ),
+  AlertTriangle: ({ className }: { className?: string }) => (
+    <span data-testid="alert-icon" className={className}>⚠</span>
+  ),
+  Target: ({ className }: { className?: string }) => (
+    <span data-testid="target-icon" className={className}>🎯</span>
+  ),
+  Binoculars: ({ className }: { className?: string }) => (
+    <span data-testid="scout-icon" className={className}>🔭</span>
+  ),
+  Clock: ({ className }: { className?: string }) => (
+    <span data-testid="clock-icon" className={className}>⏰</span>
+  ),
 }));
 
 describe("MatchupPanel", () => {
@@ -129,7 +141,7 @@ describe("MatchupPanel", () => {
   describe("rendering when open", () => {
     it("renders panel title", () => {
       render(<MatchupPanel />);
-      expect(screen.getByText("Matchup Cheat Sheet")).toBeInTheDocument();
+      expect(screen.getByText("Intel Report")).toBeInTheDocument();
     });
 
     it("renders shield icon", () => {
@@ -139,7 +151,8 @@ describe("MatchupPanel", () => {
 
     it("renders player vs opponent", () => {
       render(<MatchupPanel />);
-      expect(screen.getByText(/English vs/)).toBeInTheDocument();
+      expect(screen.getByText("English")).toBeInTheDocument();
+      expect(screen.getByText("vs")).toBeInTheDocument();
     });
 
     it("renders opponent selector", () => {
@@ -176,17 +189,12 @@ describe("MatchupPanel", () => {
 
     it("renders scout for section", () => {
       render(<MatchupPanel />);
-      expect(screen.getByText("Scout For")).toBeInTheDocument();
-    });
-
-    it("renders counter tips section", () => {
-      render(<MatchupPanel />);
-      expect(screen.getByText("Counters")).toBeInTheDocument();
+      expect(screen.getByText("SCOUT FOR")).toBeInTheDocument();
     });
 
     it("renders danger timers section", () => {
       render(<MatchupPanel />);
-      expect(screen.getByText("Eco danger timers")).toBeInTheDocument();
+      expect(screen.getByText("CRITICAL TIMINGS")).toBeInTheDocument();
     });
 
     it("renders threat items", () => {
@@ -230,7 +238,9 @@ describe("MatchupPanel", () => {
       // In collapsed state, should show "Expand" button
       expect(screen.getByText("Expand")).toBeInTheDocument();
       // Should not show full content
-      expect(screen.queryByText("Matchup Cheat Sheet")).not.toBeInTheDocument();
+      expect(screen.queryByText("Intel Report")).toBeInTheDocument(); // Title is always visible now
+      // Should not show full content (Threats)
+      expect(screen.queryByText("Threats")).not.toBeInTheDocument();
     });
 
     it("expands panel when expand button clicked", () => {
@@ -241,14 +251,15 @@ describe("MatchupPanel", () => {
       // Then expand
       fireEvent.click(screen.getByText("Expand"));
 
-      expect(screen.getByText("Matchup Cheat Sheet")).toBeInTheDocument();
+      expect(screen.getByText("Intel Report")).toBeInTheDocument();
     });
 
     it("shows civ vs opponent in collapsed state", () => {
       render(<MatchupPanel />);
       fireEvent.click(screen.getByTitle("Collapse"));
 
-      expect(screen.getByText(/English vs/)).toBeInTheDocument();
+      expect(screen.getByText("English")).toBeInTheDocument();
+      expect(screen.getByText("vs")).toBeInTheDocument();
     });
   });
 
@@ -327,7 +338,7 @@ describe("MatchupPanel edge cases", () => {
     });
 
     render(<MatchupPanel />);
-    expect(screen.getByText(/No matchup tips yet/)).toBeInTheDocument();
+    expect(screen.getByText(/No tactical data available/)).toBeInTheDocument();
   });
 
   it("uses remembered opponent when available", async () => {

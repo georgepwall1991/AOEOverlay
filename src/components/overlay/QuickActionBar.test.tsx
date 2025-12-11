@@ -42,6 +42,10 @@ vi.mock("@/stores", () => ({
   useBadgeStore: vi.fn(() => ({
     resetBadges: mockResetBadges,
   })),
+  useMatchupStore: vi.fn(() => ({
+    isOpen: false,
+    toggle: vi.fn(),
+  })),
 }));
 
 // Mock hooks
@@ -95,6 +99,9 @@ vi.mock("lucide-react", () => ({
   ),
   Unlock: ({ className }: { className?: string }) => (
     <span data-testid="unlock" className={className}>🔓</span>
+  ),
+  Shield: ({ className }: { className?: string }) => (
+    <span data-testid="shield" className={className}>🛡️</span>
   ),
 }));
 

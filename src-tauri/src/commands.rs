@@ -1,19 +1,12 @@
+use crate::config::{
+    atomic_write, get_build_orders_dir, get_config_path, validate_build_order,
+    validate_build_order_id, AppConfig, BuildOrder, WindowPosition, WindowSize,
+};
+use crate::hotkeys::register_hotkeys;
+use crate::state::AppState;
 use std::fs;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager, State, Window, WebviewUrl, WebviewWindowBuilder, Emitter};
-use crate::config::{
-    AppConfig,
-    BuildOrder,
-    WindowPosition,
-    WindowSize,
-    atomic_write,
-    get_build_orders_dir,
-    get_config_path,
-    validate_build_order,
-    validate_build_order_id,
-};
-use crate::state::AppState;
-use crate::hotkeys::register_hotkeys;
+use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder, Window};
 
 const MAX_IMPORT_SIZE: u64 = 1024 * 1024; // 1MB limit
 const CONFIG_CHANGED_EVENT: &str = "config-changed";
@@ -26,7 +19,11 @@ pub fn get_config(state: State<AppState>) -> Result<AppConfig, String> {
 }
 
 #[tauri::command]
-pub fn save_config(config: AppConfig, state: State<AppState>, app: AppHandle) -> Result<(), String> {
+pub fn save_config(
+    config: AppConfig,
+    state: State<AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
     let config_path = get_config_path();
     let json = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
     atomic_write(&config_path, json).map_err(|e| e.to_string())?;
@@ -35,7 +32,8 @@ pub fn save_config(config: AppConfig, state: State<AppState>, app: AppHandle) ->
     *current = config;
 
     // Notify all windows that config changed so they can refresh state
-    app.emit(CONFIG_CHANGED_EVENT, &*current).map_err(|e| e.to_string())?;
+    app.emit(CONFIG_CHANGED_EVENT, &*current)
+        .map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -51,7 +49,11 @@ pub fn get_build_orders(state: State<AppState>) -> Result<Vec<BuildOrder>, Strin
 }
 
 #[tauri::command]
-pub fn save_build_order(order: BuildOrder, state: State<AppState>, app: AppHandle) -> Result<(), String> {
+pub fn save_build_order(
+    order: BuildOrder,
+    state: State<AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
     validate_build_order(&order)?;
     validate_build_order_id(&order.id)?;
 
@@ -70,13 +72,18 @@ pub fn save_build_order(order: BuildOrder, state: State<AppState>, app: AppHandl
     }
 
     // Broadcast build order change to all windows
-    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders).map_err(|e| e.to_string())?;
+    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders)
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
 
 #[tauri::command]
-pub fn delete_build_order(id: String, state: State<AppState>, app: AppHandle) -> Result<(), String> {
+pub fn delete_build_order(
+    id: String,
+    state: State<AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
     validate_build_order_id(&id)?;
 
     // Delete from file
@@ -94,7 +101,8 @@ pub fn delete_build_order(id: String, state: State<AppState>, app: AppHandle) ->
     orders.retain(|o| o.id != id);
 
     // Broadcast build order change to all windows
-    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders).map_err(|e| e.to_string())?;
+    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders)
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -113,6 +121,75 @@ pub fn set_window_position(window: Window, x: i32, y: i32) -> Result<(), String>
     window
         .set_position(tauri::Position::Physical(tauri::PhysicalPosition { x, y }))
         .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn reset_window_position(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("overlay") {
+        // Force basic properties
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+
+        // Reset to default size
+        window
+            .set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                width: 500,
+                height: 600,
+            }))
+            .map_err(|e| e.to_string())?;
+
+        // Reset position
+        window
+            .set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                x: 50,
+                y: 50,
+            }))
+            .map_err(|e| e.to_string())?;
+
+        // Force window state
+        window.set_always_on_top(true).map_err(|e| e.to_string())?;
+        window
+            .set_ignore_cursor_events(false)
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn recreate_overlay_window(app: AppHandle) -> Result<(), String> {
+    // 1. Close existing window if it exists
+    if let Some(window) = app.get_webview_window("overlay") {
+        let _ = window.close();
+    }
+
+    // 2. Re-create the window with default settings
+    // This matches the config in tauri.conf.json
+    let url = WebviewUrl::App("index.html".into());
+
+    let window = WebviewWindowBuilder::new(&app, "overlay", url)
+        .title("AoE4 Overlay")
+        .inner_size(500.0, 600.0)
+        .resizable(true)
+        .decorations(false)
+        .transparent(true)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .visible(false) // Start hidden to position first
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // Position explicitly using PhysicalPosition for consistency across platforms
+    window
+        .set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x: 50,
+            y: 50,
+        }))
+        .map_err(|e| e.to_string())?;
+
+    // Force verify visibility just in case
+    window.show().map_err(|e| e.to_string())?;
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -163,7 +240,9 @@ pub fn toggle_click_through(app: AppHandle, state: State<AppState>) -> Result<bo
     let new_state = config.click_through;
 
     if let Some(window) = app.get_webview_window("overlay") {
-        window.set_ignore_cursor_events(new_state).map_err(|e| e.to_string())?;
+        window
+            .set_ignore_cursor_events(new_state)
+            .map_err(|e| e.to_string())?;
     }
 
     // Save to file
@@ -172,7 +251,8 @@ pub fn toggle_click_through(app: AppHandle, state: State<AppState>) -> Result<bo
     atomic_write(&config_path, json).map_err(|e| e.to_string())?;
 
     // Broadcast config change
-    app.emit(CONFIG_CHANGED_EVENT, &*config).map_err(|e| e.to_string())?;
+    app.emit(CONFIG_CHANGED_EVENT, &*config)
+        .map_err(|e| e.to_string())?;
 
     Ok(new_state)
 }
@@ -189,7 +269,8 @@ pub fn toggle_compact_mode(app: AppHandle, state: State<AppState>) -> Result<boo
     atomic_write(&config_path, json).map_err(|e| e.to_string())?;
 
     // Broadcast config change
-    app.emit(CONFIG_CHANGED_EVENT, &*config).map_err(|e| e.to_string())?;
+    app.emit(CONFIG_CHANGED_EVENT, &*config)
+        .map_err(|e| e.to_string())?;
 
     Ok(new_state)
 }
@@ -211,12 +292,15 @@ pub fn set_window_size(window: Window, width: u32, height: u32) -> Result<(), St
 }
 
 #[tauri::command]
-pub fn import_build_order(path: String, state: State<AppState>, app: AppHandle) -> Result<BuildOrder, String> {
+pub fn import_build_order(
+    path: String,
+    state: State<AppState>,
+    app: AppHandle,
+) -> Result<BuildOrder, String> {
     let path = PathBuf::from(&path);
 
     // Validate file exists and get metadata
-    let metadata = fs::metadata(&path)
-        .map_err(|e| format!("Cannot access file: {}", e))?;
+    let metadata = fs::metadata(&path).map_err(|e| format!("Cannot access file: {}", e))?;
 
     // Validate it's a regular file
     if !metadata.is_file() {
@@ -233,10 +317,9 @@ pub fn import_build_order(path: String, state: State<AppState>, app: AppHandle) 
     }
 
     // Read and parse
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
-    let order: BuildOrder = serde_json::from_str(&content)
-        .map_err(|e| format!("Invalid build order format: {}", e))?;
+    let content = fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {}", e))?;
+    let order: BuildOrder =
+        serde_json::from_str(&content).map_err(|e| format!("Invalid build order format: {}", e))?;
 
     validate_build_order_id(&order.id)?;
     validate_build_order(&order)?;
@@ -259,7 +342,8 @@ pub fn import_build_order(path: String, state: State<AppState>, app: AppHandle) 
     orders.push(order.clone());
 
     // Broadcast build order change to all windows
-    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders).map_err(|e| e.to_string())?;
+    app.emit(BUILD_ORDERS_CHANGED_EVENT, &*orders)
+        .map_err(|e| e.to_string())?;
 
     Ok(order)
 }
@@ -345,7 +429,10 @@ mod tests {
     #[test]
     fn test_pathbuf_file_name() {
         let path = PathBuf::from("/path/to/my_build.json");
-        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some("my_build.json"));
+        assert_eq!(
+            path.file_name().and_then(|s| s.to_str()),
+            Some("my_build.json")
+        );
     }
 
     #[test]
@@ -373,8 +460,7 @@ mod tests {
         let file_size = 2_000_000u64;
         let error_msg = format!(
             "File too large: {} bytes (max {} bytes)",
-            file_size,
-            MAX_IMPORT_SIZE
+            file_size, MAX_IMPORT_SIZE
         );
         assert!(error_msg.contains("2000000"));
         assert!(error_msg.contains("1048576"));
@@ -392,7 +478,10 @@ mod tests {
     #[test]
     fn test_pathbuf_with_spaces() {
         let path = PathBuf::from("/path/with spaces/my build.json");
-        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some("my build.json"));
+        assert_eq!(
+            path.file_name().and_then(|s| s.to_str()),
+            Some("my build.json")
+        );
         assert_eq!(path.extension().and_then(|s| s.to_str()), Some("json"));
     }
 
@@ -406,13 +495,19 @@ mod tests {
     fn test_pathbuf_with_dots_in_name() {
         let path = PathBuf::from("/path/build.order.v1.0.json");
         assert_eq!(path.extension().and_then(|s| s.to_str()), Some("json"));
-        assert_eq!(path.file_stem().and_then(|s| s.to_str()), Some("build.order.v1.0"));
+        assert_eq!(
+            path.file_stem().and_then(|s| s.to_str()),
+            Some("build.order.v1.0")
+        );
     }
 
     #[test]
     fn test_pathbuf_hidden_file() {
         let path = PathBuf::from("/path/.hidden_build.json");
-        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some(".hidden_build.json"));
+        assert_eq!(
+            path.file_name().and_then(|s| s.to_str()),
+            Some(".hidden_build.json")
+        );
     }
 
     #[test]
@@ -539,13 +634,19 @@ mod tests {
     fn test_windows_path_with_drive_letter() {
         let path = PathBuf::from("D:\\Games\\AoE4\\builds\\english.json");
         assert!(path.is_absolute());
-        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some("english.json"));
+        assert_eq!(
+            path.file_name().and_then(|s| s.to_str()),
+            Some("english.json")
+        );
     }
 
     #[cfg(target_os = "windows")]
     #[test]
     fn test_windows_unc_path() {
         let path = PathBuf::from("\\\\server\\share\\builds\\english.json");
-        assert_eq!(path.file_name().and_then(|s| s.to_str()), Some("english.json"));
+        assert_eq!(
+            path.file_name().and_then(|s| s.to_str()),
+            Some("english.json")
+        );
     }
 }
