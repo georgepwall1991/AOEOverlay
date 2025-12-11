@@ -18,8 +18,22 @@ function App() {
 
   useEffect(() => {
     const initWindow = async () => {
-      const win = getCurrentWindow();
-      setWindowLabel(win.label);
+      try {
+        const win = getCurrentWindow();
+        // On some Windows builds the initial label can be "main" or briefly unavailable.
+        // Treat those cases as the overlay window so we don't render a blank transparent window.
+        const searchLabel =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("window")
+            : null;
+        const rawLabel = searchLabel || (win as { label?: string }).label;
+        const label =
+          !rawLabel || rawLabel === "main" ? "overlay" : rawLabel;
+        setWindowLabel(label);
+      } catch (error) {
+        console.error("Failed to get window label, defaulting to overlay:", error);
+        setWindowLabel("overlay");
+      }
     };
     initWindow();
   }, []);
@@ -47,7 +61,14 @@ function App() {
   }, [config.theme]);
 
   if (!windowLabel) {
-    return null;
+    // Avoid returning null (invisible transparent window) while label resolves.
+    return (
+      <div className="w-full h-full p-2">
+        <div className="floating-panel-pro px-3 py-2 text-xs text-white/70">
+          Loading overlay…
+        </div>
+      </div>
+    );
   }
 
   if (windowLabel === "overlay") {

@@ -5,14 +5,18 @@ export function useAutoResize() {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastSizeRef = useRef({ width: 0, height: 0 });
   const resizeTimeoutRef = useRef<number | null>(null);
+  const MIN_WIDTH = 320;
+  const MIN_HEIGHT = 200;
 
   const resize = useCallback(async () => {
     if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
+    // Avoid shrinking to a tiny window before layout is ready (notably on Windows/WebView2).
+    if (!rect.width || !rect.height) return;
     // Add small padding for window chrome
-    const newWidth = Math.ceil(rect.width) + 4;
-    const newHeight = Math.ceil(rect.height) + 4;
+    const newWidth = Math.max(MIN_WIDTH, Math.ceil(rect.width) + 4);
+    const newHeight = Math.max(MIN_HEIGHT, Math.ceil(rect.height) + 4);
 
     // Only resize if dimensions changed significantly (more than 2px)
     if (
@@ -23,8 +27,7 @@ export function useAutoResize() {
 
       try {
         const window = getCurrentWindow();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await window.setSize(new LogicalSize(newWidth, newHeight) as any);
+        await window.setSize(new LogicalSize(newWidth, newHeight));
       } catch (e) {
         console.error("Failed to resize window:", e);
       }
@@ -33,7 +36,7 @@ export function useAutoResize() {
 
   useEffect(() => {
     // Initial resize after mount
-    const initialTimeout = setTimeout(resize, 50);
+    const initialTimeout = setTimeout(resize, 150);
 
     // Setup ResizeObserver for content changes
     const observer = new ResizeObserver(() => {

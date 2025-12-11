@@ -1,6 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { emit as tauriEmit, listen as tauriListen, type UnlistenFn } from "@tauri-apps/api/event";
 export type { UnlistenFn };
+import { LogicalSize, PhysicalSize, Size } from "@tauri-apps/api/dpi";
+export { LogicalSize, PhysicalSize, Size };
 import { getCurrentWindow as tauriGetCurrentWindow, type Window } from "@tauri-apps/api/window";
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";
@@ -10,16 +12,6 @@ export const BUILD_ORDERS_CHANGED_EVENT = "build-orders-changed";
 export const CONFIG_CHANGED_EVENT = "config-changed";
 
 const IS_MOCK = import.meta.env.VITE_MOCK_TAURI === 'true';
-
-// Mock LogicalSize class for browser testing
-export class LogicalSize {
-  width: number;
-  height: number;
-  constructor(width: number, height: number) {
-    this.width = width;
-    this.height = height;
-  }
-}
 
 // Mock window interface for browser testing
 interface MockWindow {

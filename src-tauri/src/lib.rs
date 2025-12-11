@@ -39,6 +39,21 @@ pub fn run() {
                 eprintln!("Failed to register hotkeys: {}", e);
             }
 
+            // On Windows, the main transparent window can occasionally start hidden/invisible.
+            // Force-show it shortly after startup.
+            #[cfg(target_os = "windows")]
+            {
+                let app_handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    use std::time::Duration;
+                    tauri::async_runtime::sleep(Duration::from_millis(400)).await;
+                    if let Some(window) = app_handle.get_webview_window("overlay") {
+                        let _ = window.show();
+                        let _ = window.set_always_on_top(true);
+                    }
+                });
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

@@ -19,13 +19,21 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
         .on_menu_event(|app, event| {
             match event.id.as_ref() {
                 "show" => {
-                    // Emit event to frontend to show overlay (frontend controls visibility)
+                    // Ensure native overlay window is visible (Windows can start hidden/off-screen).
+                    if let Some(window) = app.get_webview_window("overlay") {
+                        let _ = window.show();
+                        let _ = window.set_always_on_top(true);
+                    }
+                    // Emit event to frontend to show overlay UI
                     if let Err(e) = app.emit("tray-show-overlay", ()) {
                         eprintln!("Failed to emit show overlay event: {}", e);
                     }
                 }
                 "hide" => {
-                    // Emit event to frontend to hide overlay (frontend controls visibility)
+                    if let Some(window) = app.get_webview_window("overlay") {
+                        let _ = window.hide();
+                    }
+                    // Emit event to frontend to hide overlay UI
                     if let Err(e) = app.emit("tray-hide-overlay", ()) {
                         eprintln!("Failed to emit hide overlay event: {}", e);
                     }
@@ -54,7 +62,15 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
             } = event
             {
                 let app = tray.app_handle();
-                // Emit toggle event to frontend (frontend controls visibility)
+                // Toggle native window visibility and keep frontend in sync.
+                if let Some(window) = app.get_webview_window("overlay") {
+                    if window.is_visible().unwrap_or(true) {
+                        let _ = window.hide();
+                    } else {
+                        let _ = window.show();
+                        let _ = window.set_always_on_top(true);
+                    }
+                }
                 if let Err(e) = app.emit("tray-toggle-overlay", ()) {
                     eprintln!("Failed to emit toggle overlay event: {}", e);
                 }
