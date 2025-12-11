@@ -46,9 +46,9 @@ pub fn run() {
             #[cfg(target_os = "windows")]
             {
                 let app_handle = app.handle().clone();
-                tauri::async_runtime::spawn(async move {
-                    use std::time::Duration;
-                    tauri::async_runtime::sleep(Duration::from_millis(400)).await;
+                std::thread::spawn(move || {
+                    use std::{thread, time::Duration};
+                    thread::sleep(Duration::from_millis(400));
                     if let Some(window) = app_handle.get_webview_window("overlay") {
                         let _ = window.show();
                         let _ = window.set_always_on_top(true);
