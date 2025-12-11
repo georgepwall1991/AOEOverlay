@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { SkipBack, ChevronLeft, Play, Pause, ChevronRight, RefreshCw, Lock, Unlock } from "lucide-react";
-import { useBuildOrderStore, useConfigStore, useActiveSteps, useBadgeStore } from "@/stores";
+import { SkipBack, ChevronLeft, Play, Pause, ChevronRight, RefreshCw, Lock, Unlock, Shield } from "lucide-react";
+import { useBuildOrderStore, useConfigStore, useActiveSteps, useBadgeStore, useMatchupStore } from "@/stores";
 import { useTimer } from "@/hooks";
 import { cn, logTelemetryEvent } from "@/lib/utils";
 
@@ -52,6 +52,7 @@ export function QuickActionBar() {
   // Prevent double-execution during rapid clicks
   const [isResetting, setIsResetting] = useState(false);
   const [isCycling, setIsCycling] = useState(false);
+  const { isOpen, toggle } = useMatchupStore();
 
   useEffect(() => {
     return () => {
@@ -156,6 +157,17 @@ export function QuickActionBar() {
 
   return (
     <div data-testid="quick-action-bar" className="flex items-center justify-center gap-2 px-3 py-2 border-t border-white/5">
+      {/* Matchup Panel Toggle */}
+      <ActionButton
+        onClick={toggle}
+        hotkey=""
+        label={isOpen ? "Hide Intel Report" : "Show Intel Report"}
+        active={isOpen}
+        testId="toggle-matchup-button"
+      >
+        <Shield className={cn("w-4.5 h-4.5", isOpen ? "text-amber-400" : "text-white/60 group-hover:text-amber-200")} />
+      </ActionButton>
+
       {/* Reset lock */}
       <ActionButton
         onClick={() => setResetLocked((prev) => !prev)}
