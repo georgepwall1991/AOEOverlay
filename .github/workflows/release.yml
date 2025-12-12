@@ -15,117 +15,7 @@ permissions:
   contents: write
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    outputs:
-      release_id: ${{ steps.create-release.outputs.result }}
-      version: ${{ steps.get-version.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Get version
-        id: get-version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          else
-            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create or get release
-        id: create-release
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const version = '${{ steps.get-version.outputs.version }}';
-            const tagName = `v${version}`;
-
-            // Check if release already exists
-            try {
-              const { data: existing } = await github.rest.repos.getReleaseByTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag: tagName
-              });
-              console.log(`Found existing release ${existing.id} for ${tagName}`);
-              // Update it to draft so we can add assets (only if it's not already a draft)
-              if (!existing.draft) {
-                await github.rest.repos.updateRelease({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  release_id: existing.id,
-                  draft: true
-                });
-                console.log(`Updated release ${existing.id} to draft`);
-              } else {
-                console.log(`Release ${existing.id} is already a draft`);
-              }
-              return existing.id.toString();
-            } catch (e) {
-              if (e.status !== 404) {
-                console.error('Error checking for existing release:', e);
-                throw e;
-              }
-              // Release doesn't exist, continue to create
-            }
-
-            // Check if tag exists but no release
-            try {
-              await github.rest.git.getRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: `tags/${tagName}`
-              });
-              console.log(`Tag ${tagName} exists but no release found`);
-              // Tag exists, we'll create a release for it
-            } catch (tagError) {
-              if (tagError.status === 404) {
-                console.log(`Tag ${tagName} does not exist, will be created with release`);
-              } else {
-                console.error('Error checking for tag:', tagError);
-                throw tagError;
-              }
-            }
-
-            // Create new release
-            try {
-              const { data } = await github.rest.repos.createRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag_name: tagName,
-                name: `AoE4 Overlay v${version}`,
-                body: `## AoE4 Build Order Overlay v${version}\n\n### Downloads\n\n**Windows:** Download the \`.msi\` installer\n**macOS:** Download the \`.dmg\` file\n**Linux:** Download the \`.AppImage\` or \`.deb\` file\n\n### What's New\n\nSee the [changelog](https://github.com/${{ github.repository }}/commits/v${version}) for details.`,
-                draft: true,
-                prerelease: false
-              });
-              console.log(`Created new release ${data.id} for ${tagName}`);
-              return data.id.toString();
-            } catch (createError) {
-              if (createError.status === 422 && createError.message?.includes('already_exists')) {
-                // Tag exists but release creation failed, try to get the release again
-                console.log('Release creation failed due to existing tag, attempting to fetch release...');
-                const { data: existing } = await github.rest.repos.getReleaseByTag({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  tag: tagName
-                });
-                console.log(`Found release ${existing.id} after creation attempt`);
-                // Update to draft if needed
-                if (!existing.draft) {
-                  await github.rest.repos.updateRelease({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    release_id: existing.id,
-                    draft: true
-                  });
-                }
-                return existing.id.toString();
-              }
-              throw createError;
-            }
-
   build-tauri:
-    needs: create-release
     strategy:
       fail-fast: false
       matrix:
@@ -168,16 +58,6 @@ jobs:
           workspaces: src-tauri -> target
           shared-key: ${{ matrix.platform }}-${{ matrix.target }}
 
-      - name: Cache Linux apt packages
-        if: matrix.platform == 'ubuntu-22.04'
-        uses: actions/cache@v4
-        with:
-          path: |
-            /var/cache/apt/archives
-          key: apt-${{ matrix.platform }}-tauri-deps
-          restore-keys: |
-            apt-${{ matrix.platform }}-
-
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
@@ -187,40 +67,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Get version
+        id: get-version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: ${{ matrix.args }}
+          tagName: v${{ steps.get-version.outputs.version }}
+          releaseName: "AoE4 Overlay v${{ steps.get-version.outputs.version }}"
+          releaseBody: |
+            ## AoE4 Build Order Overlay v${{ steps.get-version.outputs.version }}
 
-  publish-release:
-    runs-on: ubuntu-latest
-    needs: [create-release, build-tauri]
-    steps:
-      - name: Publish release
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const releaseId = ${{ needs.create-release.outputs.release_id }};
-            
-            // Get current release status
-            const { data: release } = await github.rest.repos.getRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: releaseId
-            });
-            
-            // Only update if it's still a draft
-            if (release.draft) {
-              await github.rest.repos.updateRelease({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: releaseId,
-                draft: false
-              });
-              console.log(`Published release ${releaseId}`);
-            } else {
-              console.log(`Release ${releaseId} is already published`);
-            }
+            ### Downloads
+
+            **Windows:** Download the `.msi` installer or `.exe` setup
+            **macOS:** Download the `.dmg` file
+            **Linux:** Download the `.AppImage` or `.deb` file
+
+            ### What's New
+
+            See the [changelog](https://github.com/${{ github.repository }}/commits/v${{ steps.get-version.outputs.version }}) for details.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
