@@ -48,29 +48,81 @@ jobs:
                 tag: tagName
               });
               console.log(`Found existing release ${existing.id} for ${tagName}`);
-              // Update it to draft so we can add assets
-              await github.rest.repos.updateRelease({
+              // Update it to draft so we can add assets (only if it's not already a draft)
+              if (!existing.draft) {
+                await github.rest.repos.updateRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: existing.id,
+                  draft: true
+                });
+                console.log(`Updated release ${existing.id} to draft`);
+              } else {
+                console.log(`Release ${existing.id} is already a draft`);
+              }
+              return existing.id.toString();
+            } catch (e) {
+              if (e.status !== 404) {
+                console.error('Error checking for existing release:', e);
+                throw e;
+              }
+              // Release doesn't exist, continue to create
+            }
+
+            // Check if tag exists but no release
+            try {
+              await github.rest.git.getRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                release_id: existing.id,
-                draft: true
+                ref: `tags/${tagName}`
               });
-              return existing.id;
-            } catch (e) {
-              if (e.status !== 404) throw e;
+              console.log(`Tag ${tagName} exists but no release found`);
+              // Tag exists, we'll create a release for it
+            } catch (tagError) {
+              if (tagError.status === 404) {
+                console.log(`Tag ${tagName} does not exist, will be created with release`);
+              } else {
+                console.error('Error checking for tag:', tagError);
+                throw tagError;
+              }
             }
 
             // Create new release
-            const { data } = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: tagName,
-              name: `AoE4 Overlay v${version}`,
-              body: `## AoE4 Build Order Overlay v${version}\n\n### Downloads\n\n**Windows:** Download the \`.msi\` installer\n**macOS:** Download the \`.dmg\` file\n**Linux:** Download the \`.AppImage\` or \`.deb\` file\n\n### What's New\n\nSee the [changelog](https://github.com/${{ github.repository }}/commits/v${version}) for details.`,
-              draft: true,
-              prerelease: false
-            });
-            return data.id;
+            try {
+              const { data } = await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tagName,
+                name: `AoE4 Overlay v${version}`,
+                body: `## AoE4 Build Order Overlay v${version}\n\n### Downloads\n\n**Windows:** Download the \`.msi\` installer\n**macOS:** Download the \`.dmg\` file\n**Linux:** Download the \`.AppImage\` or \`.deb\` file\n\n### What's New\n\nSee the [changelog](https://github.com/${{ github.repository }}/commits/v${version}) for details.`,
+                draft: true,
+                prerelease: false
+              });
+              console.log(`Created new release ${data.id} for ${tagName}`);
+              return data.id.toString();
+            } catch (createError) {
+              if (createError.status === 422 && createError.message?.includes('already_exists')) {
+                // Tag exists but release creation failed, try to get the release again
+                console.log('Release creation failed due to existing tag, attempting to fetch release...');
+                const { data: existing } = await github.rest.repos.getReleaseByTag({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag: tagName
+                });
+                console.log(`Found release ${existing.id} after creation attempt`);
+                // Update to draft if needed
+                if (!existing.draft) {
+                  await github.rest.repos.updateRelease({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    release_id: existing.id,
+                    draft: true
+                  });
+                }
+                return existing.id.toString();
+              }
+              throw createError;
+            }
 
   build-tauri:
     needs: create-release
@@ -151,9 +203,24 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.repos.updateRelease({
+            const releaseId = ${{ needs.create-release.outputs.release_id }};
+            
+            // Get current release status
+            const { data: release } = await github.rest.repos.getRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              release_id: ${{ needs.create-release.outputs.release_id }},
-              draft: false
+              release_id: releaseId
             });
+            
+            // Only update if it's still a draft
+            if (release.draft) {
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: releaseId,
+                draft: false
+              });
+              console.log(`Published release ${releaseId}`);
+            } else {
+              console.log(`Release ${releaseId} is already published`);
+            }
