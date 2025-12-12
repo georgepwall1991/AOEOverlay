@@ -30,6 +30,7 @@ export function Overlay() {
   const currentStep = useCurrentStep();
   const { isRunning } = useTimer();
   const scale = config.ui_scale ?? 1;
+
   const coachOnly = config.coach_only_mode ?? false;
   const overlayPreset = config.overlay_preset ?? "info_dense";
   // Click-through undo state - stores the state to revert to if undo is triggered

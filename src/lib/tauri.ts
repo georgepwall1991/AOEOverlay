@@ -159,6 +159,16 @@ export async function setWindowSize(width: number, height: number): Promise<void
   return invoke("set_window_size", { width, height });
 }
 
+export async function resetOverlayWindow(): Promise<void> {
+  if (IS_MOCK) return Promise.resolve();
+  return invoke("reset_window_position");
+}
+
+export async function recreateOverlayWindow(): Promise<void> {
+  if (IS_MOCK) return Promise.resolve();
+  return invoke("recreate_overlay_window");
+}
+
 export async function showSettings(): Promise<void> {
   if (IS_MOCK) return Promise.resolve();
   return invoke("show_settings");

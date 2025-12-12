@@ -164,7 +164,11 @@ pub fn recreate_overlay_window(app: AppHandle) -> Result<(), String> {
 
     // 2. Re-create the window with default settings
     // This matches the config in tauri.conf.json
-    let url = WebviewUrl::App("index.html".into());
+    let url = if cfg!(debug_assertions) {
+        WebviewUrl::External("http://localhost:1420/".parse().unwrap())
+    } else {
+        WebviewUrl::App("index.html".into())
+    };
 
     let window = WebviewWindowBuilder::new(&app, "overlay", url)
         .title("AoE4 Overlay")
@@ -172,6 +176,7 @@ pub fn recreate_overlay_window(app: AppHandle) -> Result<(), String> {
         .resizable(true)
         .decorations(false)
         .transparent(true)
+        .shadow(false) // Critical for Windows WebView2 transparency
         .always_on_top(true)
         .skip_taskbar(true)
         .visible(false) // Start hidden to position first
@@ -188,6 +193,13 @@ pub fn recreate_overlay_window(app: AppHandle) -> Result<(), String> {
 
     // Force verify visibility just in case
     window.show().map_err(|e| e.to_string())?;
+
+    // Windows-specific: force alpha channel and focus for transparent windows
+    #[cfg(target_os = "windows")]
+    {
+        crate::force_layered_alpha_opaque(&window);
+        let _ = window.set_focus();
+    }
 
     Ok(())
 }

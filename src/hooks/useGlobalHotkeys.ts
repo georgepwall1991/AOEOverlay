@@ -156,7 +156,6 @@ export function useGlobalHotkeys() {
           togglePause();
           logTelemetryEvent("hotkey:timer:toggle-pause", { source: "hotkey" });
         }),
-        // Tray icon events (frontend controls visibility, not native window)
         listen("tray-toggle-overlay", () => {
           toggleVisibility();
           logTelemetryEvent("tray:overlay:toggle", { source: "tray" });

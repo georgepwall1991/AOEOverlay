@@ -21,7 +21,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useConfigStore, useBuildOrderStore } from "@/stores";
-import { saveConfig, importBuildOrder, exportBuildOrder, saveBuildOrder, getBuildOrders } from "@/lib/tauri";
+import {
+  saveConfig,
+  importBuildOrder,
+  exportBuildOrder,
+  saveBuildOrder,
+  getBuildOrders,
+  resetOverlayWindow,
+  recreateOverlayWindow,
+} from "@/lib/tauri";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   Gamepad2,
@@ -34,6 +42,7 @@ import {
   Volume2,
   Info,
   RotateCcw,
+  Wrench,
 } from "lucide-react";
 import { DEFAULT_CONFIG } from "@/types";
 import { BuildOrderManager } from "./BuildOrderManager";
@@ -165,6 +174,22 @@ export function SettingsWindow() {
       await saveConfig(DEFAULT_CONFIG);
     } catch (error) {
       console.error("Failed to reset settings:", error);
+    }
+  };
+
+  const handleResetOverlayWindow = async () => {
+    try {
+      await resetOverlayWindow();
+    } catch (error) {
+      console.error("Failed to reset overlay window:", error);
+    }
+  };
+
+  const handleRecreateOverlayWindow = async () => {
+    try {
+      await recreateOverlayWindow();
+    } catch (error) {
+      console.error("Failed to recreate overlay window:", error);
     }
   };
 
@@ -342,6 +367,25 @@ export function SettingsWindow() {
         <TabsContent value="hotkeys" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <div className="space-y-4 max-w-2xl">
             <HotkeySettings />
+
+            {/* Overlay Troubleshooting */}
+            <section className="bg-muted/30 rounded-xl p-4">
+              <h2 className="text-base font-medium flex items-center gap-2 mb-3">
+                <Wrench className="w-5 h-5 text-muted-foreground" />
+                Overlay Troubleshooting
+              </h2>
+              <p className="text-xs text-muted-foreground mb-3">
+                If the overlay window is missing/off-screen/invisible on Windows, try these repair actions.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={handleResetOverlayWindow}>
+                  Reset overlay position/size
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleRecreateOverlayWindow}>
+                  Recreate overlay window
+                </Button>
+              </div>
+            </section>
 
             {/* About Section */}
             <section className="bg-muted/30 rounded-xl p-4">

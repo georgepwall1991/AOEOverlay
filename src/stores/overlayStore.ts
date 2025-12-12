@@ -19,7 +19,8 @@ export const useOverlayStore = create<OverlayState>((set) => ({
 
   setVisible: (isVisible) => set({ isVisible }),
 
-  toggleVisibility: () => set((state) => ({ isVisible: !state.isVisible })),
+  toggleVisibility: () =>
+    set((state) => ({ isVisible: !state.isVisible })),
 
   setDragging: (isDragging) => set({ isDragging }),
 
