@@ -5,6 +5,9 @@ import { useSound } from './useSound';
 import { invoke } from '@tauri-apps/api/core';
 import { DEFAULT_METRONOME_CONFIG } from '@/types';
 
+// Duration to show pulse effect after tick (ms)
+const PULSE_DURATION_MS = 1000;
+
 export function useMetronome() {
   const { config } = useConfigStore();
   const metronomeConfig = config.metronome ?? DEFAULT_METRONOME_CONFIG;
@@ -46,7 +49,7 @@ export function useMetronome() {
       if (pulseTimeoutRef.current) {
         clearTimeout(pulseTimeoutRef.current);
       }
-      pulseTimeoutRef.current = setTimeout(() => setPulsing(false), 1000); // Pulse for 1 second
+      pulseTimeoutRef.current = setTimeout(() => setPulsing(false), PULSE_DURATION_MS);
     };
 
     // Initial clear to avoid double intervals

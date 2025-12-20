@@ -41,12 +41,10 @@ export function useBuildOrderFiltering({
   const importedAoe4GuidesIds = useMemo(() => {
     const ids = new Set<string>();
     for (const order of buildOrders) {
-      if (order.id.startsWith("aoe4guides-")) {
-        const match = order.id.match(/^aoe4guides-([a-zA-Z0-9]+)/);
-        if (match) {
-          ids.add(match[1]);
-        }
-      }
+      if (!order.id.startsWith("aoe4guides-")) continue;
+      const match = order.id.match(/^aoe4guides-([a-zA-Z0-9]+)/);
+      if (!match) continue;
+      ids.add(match[1]);
     }
     return ids;
   }, [buildOrders]);

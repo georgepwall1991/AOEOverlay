@@ -7,6 +7,9 @@ import { useSound, type SoundEvent } from "./useSound";
 // Maximum queue size to prevent memory leaks if TTS fails repeatedly
 const MAX_QUEUE_SIZE = 10;
 
+// Only speak delta warnings when significantly behind pace
+const SPEAK_DELTA_THRESHOLD_SECONDS = 30;
+
 export function useTTS() {
   const isSpeakingRef = useRef(false);
   const queueRef = useRef<string[]>([]);
@@ -93,7 +96,7 @@ export function useTTS() {
     async (deltaSeconds: number) => {
       const voiceConfig = getVoiceConfig();
       if (!voiceConfig.speakDelta) return;
-      if (deltaSeconds <= 30) return; // Only speak if >30s behind
+      if (deltaSeconds <= SPEAK_DELTA_THRESHOLD_SECONDS) return;
 
       const message = `You're ${deltaSeconds} seconds behind pace`;
       await speak(message, 'behindPace');

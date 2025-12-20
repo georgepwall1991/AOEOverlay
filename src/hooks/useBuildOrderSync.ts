@@ -12,28 +12,28 @@ export function useBuildOrderSync() {
   useEffect(() => {
     const unlistenPromise = listen(BUILD_ORDERS_CHANGED_EVENT, async () => {
       try {
-        // Preserve current build order ID if possible
         const currentOrderId = buildOrders[currentOrderIndex]?.id;
-
-        // Reload build orders from backend
         const orders = await getBuildOrders();
 
-        // Try to find the same build order after reload
-        if (currentOrderId) {
-          const newIndex = orders.findIndex(o => o.id === currentOrderId);
-          if (newIndex !== -1) {
-            // Update orders but keep the same build order selected
-            useBuildOrderStore.setState({
-              buildOrders: orders,
-              currentOrderIndex: newIndex,
-              isLoading: false,
-            });
-            return;
-          }
+        // Try to preserve current selection
+        if (!currentOrderId) {
+          setBuildOrders(orders);
+          return;
         }
 
-        // Fallback: just set the orders
-        setBuildOrders(orders);
+        const newIndex = orders.findIndex(o => o.id === currentOrderId);
+        if (newIndex === -1) {
+          // Current order was deleted, just set orders
+          setBuildOrders(orders);
+          return;
+        }
+
+        // Keep the same build order selected
+        useBuildOrderStore.setState({
+          buildOrders: orders,
+          currentOrderIndex: newIndex,
+          isLoading: false,
+        });
       } catch (error) {
         console.error("Failed to reload build orders:", error);
       }

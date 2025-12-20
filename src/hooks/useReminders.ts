@@ -4,6 +4,13 @@ import { useTTS } from "./useTTS";
 import { DEFAULT_REMINDER_CONFIG } from "@/types";
 import type { SoundEvent } from "./useSound";
 
+// Timing constants
+const BUSY_COOLDOWN_MS = 1500; // Cooldown after speaking to prevent contention
+const SACRED_SITE_SPAWN_WARNING_SECONDS = 270; // 4:30 - "Sacred sites spawn in 30 seconds"
+const SACRED_SITE_ACTIVE_SECONDS = 300; // 5:00 - "Sacred sites are active!"
+const SACRED_SITE_WARNING_WINDOW = 5; // Seconds after trigger time to still show warning
+const REMINDER_CHECK_INTERVAL_MS = 1000; // How often to check reminders
+
 type ReminderKey =
   | "villagerQueue"
   | "scout"
@@ -84,25 +91,33 @@ export function useReminders() {
     }
 
     if (isSpeaking()) {
-      busyCooldownUntil.current = now + 1500;
+      busyCooldownUntil.current = now + BUSY_COOLDOWN_MS;
       return;
     }
 
     // Sacred Site Alerts (one-time, time-based)
     if (reminderConfig.sacredSites?.enabled) {
-      // 4:30 (270 seconds) - Warning
-      if (elapsedSeconds >= 270 && elapsedSeconds < 275 && !sacredSiteState.current.spawnWarningSpoken) {
+      // 4:30 - Warning
+      if (
+        elapsedSeconds >= SACRED_SITE_SPAWN_WARNING_SECONDS &&
+        elapsedSeconds < SACRED_SITE_SPAWN_WARNING_SECONDS + SACRED_SITE_WARNING_WINDOW &&
+        !sacredSiteState.current.spawnWarningSpoken
+      ) {
         await speakReminder("Sacred sites spawn in 30 seconds");
         sacredSiteState.current.spawnWarningSpoken = true;
-        busyCooldownUntil.current = Date.now() + 1500;
+        busyCooldownUntil.current = Date.now() + BUSY_COOLDOWN_MS;
         return; // Don't speak other reminders this tick
       }
 
-      // 5:00 (300 seconds) - Active
-      if (elapsedSeconds >= 300 && elapsedSeconds < 305 && !sacredSiteState.current.activeSpoken) {
+      // 5:00 - Active
+      if (
+        elapsedSeconds >= SACRED_SITE_ACTIVE_SECONDS &&
+        elapsedSeconds < SACRED_SITE_ACTIVE_SECONDS + SACRED_SITE_WARNING_WINDOW &&
+        !sacredSiteState.current.activeSpoken
+      ) {
         await speakReminder("Sacred sites are active!");
         sacredSiteState.current.activeSpoken = true;
-        busyCooldownUntil.current = Date.now() + 1500;
+        busyCooldownUntil.current = Date.now() + BUSY_COOLDOWN_MS;
         return; // Don't speak other reminders this tick
       }
     }
@@ -131,7 +146,7 @@ export function useReminders() {
         // Speak the reminder
         await speakReminder(REMINDER_MESSAGES[key], REMINDER_SOUNDS[key]);
         reminderStates.current[key].lastSpoken = now;
-        busyCooldownUntil.current = Date.now() + 1500;
+        busyCooldownUntil.current = Date.now() + BUSY_COOLDOWN_MS;
         // Only speak one reminder per interval check
         break;
       }
@@ -160,8 +175,8 @@ export function useReminders() {
         };
       }
 
-      // Check reminders every second - capture the ID immediately
-      const newIntervalId = window.setInterval(checkReminders, 1000);
+      // Check reminders at regular interval - capture the ID immediately
+      const newIntervalId = window.setInterval(checkReminders, REMINDER_CHECK_INTERVAL_MS);
       intervalRef.current = newIntervalId;
     } else {
       busyCooldownUntil.current = 0;

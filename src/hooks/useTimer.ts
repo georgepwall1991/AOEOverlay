@@ -10,6 +10,14 @@ import {
   formatDeltaCompact,
 } from "@/stores";
 
+// Timer loop constants
+const TICK_TARGET_MS = 1000; // Target tick interval (1 second)
+const FALLBACK_FRAME_DELAY_MS = 16; // ~60fps fallback when RAF unavailable
+
+// Delta status thresholds (in seconds)
+const DELTA_AHEAD_THRESHOLD = -10; // Below this = "ahead"
+const DELTA_BEHIND_THRESHOLD = 10; // Above this = "behind"
+
 export function useTimer() {
   const isRunning = useIsTimerRunning();
   const isPaused = useIsTimerPaused();
@@ -26,14 +34,13 @@ export function useTimer() {
 
   // High-resolution, drift-corrected loop (guards against tab throttling)
   useEffect(() => {
-    const target = 1000; // 1s
     const schedule =
       typeof requestAnimationFrame === "function"
         ? requestAnimationFrame
         : ((cb: FrameRequestCallback) =>
             (typeof window !== "undefined"
-              ? window.setTimeout(cb, 16)
-              : setTimeout(cb, 16)) as unknown as number);
+              ? window.setTimeout(cb, FALLBACK_FRAME_DELAY_MS)
+              : setTimeout(cb, FALLBACK_FRAME_DELAY_MS)) as unknown as number);
     const cancel =
       typeof cancelAnimationFrame === "function"
         ? cancelAnimationFrame
@@ -54,9 +61,9 @@ export function useTimer() {
       carryRef.current += delta;
 
       // Catch up if the tab was throttled
-      while (carryRef.current >= target) {
+      while (carryRef.current >= TICK_TARGET_MS) {
         tick();
-        carryRef.current -= target;
+        carryRef.current -= TICK_TARGET_MS;
       }
 
       // Only schedule next frame if loop is still active AND timer is running
@@ -135,9 +142,9 @@ export function useTimer() {
   const deltaStatus =
     lastDelta === null
       ? null
-      : lastDelta < -10
+      : lastDelta < DELTA_AHEAD_THRESHOLD
         ? "ahead"
-        : lastDelta > 10
+        : lastDelta > DELTA_BEHIND_THRESHOLD
           ? "behind"
           : "on-pace";
 
