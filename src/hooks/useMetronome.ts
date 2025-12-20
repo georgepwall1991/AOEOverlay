@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useConfigStore } from '@/stores/configStore';
 import { useSound } from './useSound';
+import { useInterval } from './useInterval';
 import { invoke } from '@tauri-apps/api/core';
 import { DEFAULT_METRONOME_CONFIG } from '@/types';
 
@@ -14,56 +15,38 @@ export function useMetronome() {
   const { enabled, intervalSeconds: interval } = metronomeConfig;
   const { recordTick, setPulsing } = useMetronomeStore();
   const { playSound } = useSound();
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pulseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (!enabled) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+  const tick = useCallback(async () => {
+    // Trigger Audio
+    try {
+      const played = await playSound('metronomeTick');
+      if (!played) {
+        await invoke('speak', { text: 'Tick', rate: 1.0 });
       }
-      if (pulseTimeoutRef.current) {
-        clearTimeout(pulseTimeoutRef.current);
-        pulseTimeoutRef.current = null;
-      }
-      return;
+    } catch (error) {
+      console.error('Failed to play metronome tick:', error);
     }
 
-    const tick = async () => {
-      // Trigger Audio
-      try {
-        const played = await playSound('metronomeTick');
-        if (!played) {
-          await invoke('speak', { text: 'Tick', rate: 1.0 });
-        }
-      } catch (error) {
-        console.error('Failed to play metronome tick:', error);
-      }
+    // Trigger Visual
+    recordTick(Date.now());
+    setPulsing(true);
 
-      // Trigger Visual
-      recordTick(Date.now());
-      setPulsing(true);
+    // Clear any pending pulse timeout before setting a new one
+    if (pulseTimeoutRef.current) {
+      clearTimeout(pulseTimeoutRef.current);
+    }
+    pulseTimeoutRef.current = setTimeout(() => setPulsing(false), PULSE_DURATION_MS);
+  }, [playSound, recordTick, setPulsing]);
 
-      // Clear any pending pulse timeout before setting a new one
-      if (pulseTimeoutRef.current) {
-        clearTimeout(pulseTimeoutRef.current);
-      }
-      pulseTimeoutRef.current = setTimeout(() => setPulsing(false), PULSE_DURATION_MS);
-    };
+  // Use interval hook (null delay pauses the interval)
+  useInterval(tick, enabled ? interval * 1000 : null);
 
-    // Initial clear to avoid double intervals
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    timerRef.current = setInterval(tick, interval * 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (pulseTimeoutRef.current) {
-        clearTimeout(pulseTimeoutRef.current);
-      }
-    };
-  }, [enabled, interval, recordTick, setPulsing, playSound]);
+  // Cleanup pulse timeout when disabled
+  useEffect(() => {
+    if (!enabled && pulseTimeoutRef.current) {
+      clearTimeout(pulseTimeoutRef.current);
+      pulseTimeoutRef.current = null;
+    }
+  }, [enabled]);
 }

@@ -3,6 +3,7 @@ import { useConfigStore } from "@/stores";
 import { speak as tauriSpeak, stopSpeaking as tauriStop } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
 import { useSound, type SoundEvent } from "./useSound";
+import { useBoundedQueue } from "./useBoundedQueue";
 
 // Maximum queue size to prevent memory leaks if TTS fails repeatedly
 const MAX_QUEUE_SIZE = 10;
@@ -12,7 +13,7 @@ const SPEAK_DELTA_THRESHOLD_SECONDS = 30;
 
 export function useTTS() {
   const isSpeakingRef = useRef(false);
-  const queueRef = useRef<string[]>([]);
+  const queue = useBoundedQueue<string>(MAX_QUEUE_SIZE);
   const { playSound } = useSound();
 
   const getVoiceConfig = useCallback(() => {
@@ -34,16 +35,12 @@ export function useTTS() {
         return;
       }
 
-      // Add to queue if currently speaking (with bounded queue to prevent memory leaks)
+      // Add to queue if currently speaking (bounded queue prevents memory leaks)
       if (isSpeakingRef.current) {
-        if (queueRef.current.length < MAX_QUEUE_SIZE) {
-          queueRef.current.push(text);
-        } else {
-          // Queue is full - drop oldest item and add new one
-          queueRef.current.shift();
-          queueRef.current.push(text);
+        if (queue.isFull()) {
           console.warn("TTS queue full, dropping oldest message");
         }
+        queue.push(text);
         return;
       }
 
@@ -57,9 +54,8 @@ export function useTTS() {
         isSpeakingRef.current = false;
 
         // Process queue - use setTimeout to prevent deep recursion stack
-        // This breaks the call stack chain while still processing sequentially
-        if (queueRef.current.length > 0) {
-          const next = queueRef.current.shift();
+        if (!queue.isEmpty()) {
+          const next = queue.shift();
           if (next) {
             // Schedule next speak on next tick to avoid stack overflow
             setTimeout(() => {
@@ -71,7 +67,7 @@ export function useTTS() {
         }
       }
     },
-    [getVoiceConfig, playSound]
+    [getVoiceConfig, playSound, queue]
   );
 
   const speakStep = useCallback(
@@ -105,14 +101,14 @@ export function useTTS() {
   );
 
   const stopSpeaking = useCallback(async () => {
-    queueRef.current = [];
+    queue.clear();
     isSpeakingRef.current = false;
     try {
       await tauriStop();
     } catch (error) {
       console.error("TTS stop failed:", error);
     }
-  }, []);
+  }, [queue]);
 
   const isSpeaking = useCallback(() => isSpeakingRef.current, []);
 

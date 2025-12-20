@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useConfigStore, useIsTimerRunning, useTimerStore } from "@/stores";
 import { useTTS } from "./useTTS";
+import { useInterval } from "./useInterval";
 import { DEFAULT_REMINDER_CONFIG } from "@/types";
 import type { SoundEvent } from "./useSound";
 
@@ -64,8 +65,6 @@ export function useReminders() {
     spawnWarningSpoken: false,
     activeSpoken: false,
   });
-
-  const intervalRef = useRef<number | null>(null);
 
   const getReminderConfig = useCallback(() => {
     const config = useConfigStore.getState().config;
@@ -153,19 +152,16 @@ export function useReminders() {
     }
   }, [getReminderConfig, isSpeaking, speakReminder]);
 
-  // Start/stop the reminder interval based on timer state
-  useEffect(() => {
-    // Clear any existing interval first to prevent duplicates
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+  // Use interval hook for reminder checks (null delay pauses the interval)
+  useInterval(checkReminders, isTimerRunning ? REMINDER_CHECK_INTERVAL_MS : null);
 
+  // Reset states when timer starts fresh or stops
+  useEffect(() => {
     if (isTimerRunning) {
       // Only reset cadence on a fresh run (not resume)
-      const now = Date.now();
       const { elapsedSeconds } = useTimerStore.getState();
       if (elapsedSeconds === 0) {
+        const now = Date.now();
         Object.keys(reminderStates.current).forEach((key) => {
           reminderStates.current[key as ReminderKey].lastSpoken = now;
         });
@@ -174,23 +170,10 @@ export function useReminders() {
           activeSpoken: false,
         };
       }
-
-      // Check reminders at regular interval - capture the ID immediately
-      const newIntervalId = window.setInterval(checkReminders, REMINDER_CHECK_INTERVAL_MS);
-      intervalRef.current = newIntervalId;
     } else {
       busyCooldownUntil.current = 0;
     }
-
-    return () => {
-      // Cleanup: clear the interval we created in this effect run
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      busyCooldownUntil.current = 0;
-    };
-  }, [isTimerRunning, checkReminders]);
+  }, [isTimerRunning]);
 
   // Reset all reminder timers
   const resetReminders = useCallback(() => {
