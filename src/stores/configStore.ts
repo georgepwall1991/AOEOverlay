@@ -58,6 +58,8 @@ export const useConfigStore = create<ConfigState>((set) => ({
     }),
 }));
 
+import { useShallow } from "zustand/react/shallow";
+
 // Selectors
 export const useOpacity = () =>
   useConfigStore((state) => state.config.overlay_opacity);
@@ -68,7 +70,7 @@ export const useFontSize = () =>
 export const useTheme = () => useConfigStore((state) => state.config.theme);
 
 export const useHotkeys = () =>
-  useConfigStore((state) => state.config.hotkeys);
+  useConfigStore(useShallow((state) => state.config.hotkeys));
 
 export const useSaveStatus = () =>
   useConfigStore((state) => state.saveStatus);

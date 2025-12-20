@@ -29,8 +29,8 @@ import {
   getBuildOrders,
   resetOverlayWindow,
   recreateOverlayWindow,
+  dialog,
 } from "@/lib/tauri";
-import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   Gamepad2,
   List,
@@ -126,7 +126,7 @@ export function SettingsWindow() {
 
   const handleImport = async () => {
     try {
-      const selected = await open({
+      const selected = await dialog.open({
         filters: [{ name: "JSON", extensions: ["json"] }],
         multiple: false,
       });
@@ -161,7 +161,7 @@ export function SettingsWindow() {
     if (!order) return;
 
     try {
-      const selected = await save({
+      const selected = await dialog.save({
         filters: [{ name: "JSON", extensions: ["json"] }],
         defaultPath: `${order.name.replace(/\s+/g, "-").toLowerCase()}.json`,
       });
@@ -198,11 +198,13 @@ export function SettingsWindow() {
     }
   };
 
+  const [activeTab, setActiveTab] = useState<string>("build-orders");
+
   return (
     <div data-testid="settings-container" className="w-full h-screen p-6 bg-background text-foreground overflow-hidden flex flex-col">
       <h1 className="text-2xl font-bold mb-6 shrink-0">Settings</h1>
 
-      <Tabs defaultValue="build-orders" className="flex-1 flex flex-col min-h-0">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
         <TabsList className="grid w-full grid-cols-7 mb-6 shrink-0">
           <TabsTrigger value="build-orders" data-value="build-orders" className="flex items-center gap-2">
             <List className="w-4 h-4" />

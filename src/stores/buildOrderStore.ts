@@ -142,8 +142,13 @@ export const useEnabledBuildOrders = () =>
   useBuildOrderStore(useShallow((state) => state.buildOrders.filter((o) => o.enabled)));
 
 export const useActiveSteps = () =>
-  useBuildOrderStore((state) =>
-    resolveActiveSteps(state.buildOrders[state.currentOrderIndex], state.activeBranchId)
+  useBuildOrderStore(
+    useShallow((state) =>
+      resolveActiveSteps(
+        state.buildOrders[state.currentOrderIndex],
+        state.activeBranchId
+      )
+    )
   );
 
 export const useActiveBranchId = () =>

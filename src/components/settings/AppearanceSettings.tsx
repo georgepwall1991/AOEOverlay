@@ -178,6 +178,22 @@ export function AppearanceSettings() {
               onCheckedChange={handleCoachOnlyToggle}
             />
           </div>
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="show-clock">Show System Clock</Label>
+            <Switch
+              id="show-clock"
+              checked={config.show_clock ?? true}
+              onCheckedChange={async (enabled) => {
+                updateConfig({ show_clock: enabled });
+                try {
+                  await saveConfig({ ...config, show_clock: enabled });
+                } catch (error) {
+                  console.error("Failed to save clock config:", error);
+                }
+              }}
+            />
+          </div>
         </div>
       </section>
     </div>

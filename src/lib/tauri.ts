@@ -4,14 +4,41 @@ export type { UnlistenFn };
 import { LogicalSize, PhysicalSize, Size } from "@tauri-apps/api/dpi";
 export { LogicalSize, PhysicalSize, Size };
 import { getCurrentWindow as tauriGetCurrentWindow, type Window } from "@tauri-apps/api/window";
+import { open as tauriOpen, save as tauriSave } from "@tauri-apps/plugin-dialog";
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";
+
+const IS_MOCK =
+  import.meta.env.VITE_MOCK_TAURI === "true" ||
+  (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__ && !(window as any).__TAURI__);
+
+export { IS_MOCK };
+
+// Mock event sync for browser testing using BroadcastChannel
+const mockChannel = typeof window !== "undefined" ? new BroadcastChannel("tauri-mock-events") : null;
+const mockListeners = new Set<EventCallback<any>>();
+
+// Mock version of tauri-apps/plugin-dialog for browser testing
+export const dialog = {
+  open: async (options?: any): Promise<string | string[] | null> => {
+    if (IS_MOCK) {
+      console.log("Mock dialog.open called", options);
+      return null;
+    }
+    return tauriOpen(options);
+  },
+  save: async (options?: any): Promise<string | null> => {
+    if (IS_MOCK) {
+      console.log("Mock dialog.save called", options);
+      return null;
+    }
+    return tauriSave(options);
+  }
+};
 
 // Event names for cross-window sync
 export const BUILD_ORDERS_CHANGED_EVENT = "build-orders-changed";
 export const CONFIG_CHANGED_EVENT = "config-changed";
-
-const IS_MOCK = import.meta.env.VITE_MOCK_TAURI === 'true';
 
 // Mock window interface for browser testing
 interface MockWindow {
@@ -47,11 +74,30 @@ export async function listen<T>(
   handler: EventCallback<T>
 ): Promise<UnlistenFn> {
   if (IS_MOCK) {
-    // In mock mode, just return a no-op unlisten function
-    // We don't actually listen to anything since Tauri isn't available
-    void event;
-    void handler;
-    return () => { };
+    const wrappedHandler: EventCallback<T> = (ev) => {
+      if (ev.event === event) {
+        handler(ev);
+      }
+    };
+
+    mockListeners.add(wrappedHandler);
+
+    if (mockChannel) {
+      const channelListener = (msg: MessageEvent) => {
+        if (msg.data.event === event) {
+          handler({ payload: msg.data.payload, event, id: Date.now() });
+        }
+      };
+      mockChannel.addEventListener("message", channelListener);
+      return () => {
+        mockListeners.delete(wrappedHandler);
+        mockChannel.removeEventListener("message", channelListener);
+      };
+    }
+
+    return () => {
+      mockListeners.delete(wrappedHandler);
+    };
   }
   return tauriListen(event, handler);
 }
@@ -59,8 +105,13 @@ export async function listen<T>(
 // Mock emit - no-op in mock mode
 export async function emit(event: string, payload?: unknown): Promise<void> {
   if (IS_MOCK) {
-    void event;
-    void payload;
+    const ev = { payload, event, id: Date.now() };
+    // Notify local listeners
+    mockListeners.forEach((handler) => handler(ev));
+    // Notify other windows
+    if (mockChannel) {
+      mockChannel.postMessage({ event, payload });
+    }
     return;
   }
   return tauriEmit(event, payload);
@@ -83,14 +134,31 @@ const MOCK_BUILD_ORDERS: BuildOrder[] = [
   }
 ];
 
+const MOCK_CONFIG_KEY = "aoe4-overlay-config-mock";
+const MOCK_BUILDS_KEY = "aoe4-overlay-builds-mock";
+
 // Config commands
 export async function getConfig(): Promise<AppConfig> {
-  if (IS_MOCK) return Promise.resolve(DEFAULT_CONFIG);
+  if (IS_MOCK) {
+    const saved = localStorage.getItem(MOCK_CONFIG_KEY);
+    if (saved) {
+      try {
+        return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
+      } catch (e) {
+        console.error("Failed to parse mock config", e);
+      }
+    }
+    return Promise.resolve(DEFAULT_CONFIG);
+  }
   return invoke<AppConfig>("get_config");
 }
 
 export async function saveConfig(config: AppConfig): Promise<void> {
-  if (IS_MOCK) return Promise.resolve();
+  if (IS_MOCK) {
+    localStorage.setItem(MOCK_CONFIG_KEY, JSON.stringify(config));
+    await emit(CONFIG_CHANGED_EVENT, config);
+    return;
+  }
   return invoke("save_config", { config });
 }
 
@@ -101,19 +169,47 @@ export async function reloadHotkeys(): Promise<void> {
 
 // Build order commands
 export async function getBuildOrders(): Promise<BuildOrder[]> {
-  if (IS_MOCK) return Promise.resolve(MOCK_BUILD_ORDERS);
+  if (IS_MOCK) {
+    const saved = localStorage.getItem(MOCK_BUILDS_KEY);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse mock build orders", e);
+      }
+    }
+    return Promise.resolve(MOCK_BUILD_ORDERS);
+  }
   return invoke<BuildOrder[]>("get_build_orders");
 }
 
 export async function saveBuildOrder(order: BuildOrder): Promise<void> {
-  if (IS_MOCK) return Promise.resolve();
+  if (IS_MOCK) {
+    const current = await getBuildOrders();
+    const existing = current.findIndex(o => o.id === order.id);
+    const next = [...current];
+    if (existing >= 0) {
+      next[existing] = order;
+    } else {
+      next.push(order);
+    }
+    localStorage.setItem(MOCK_BUILDS_KEY, JSON.stringify(next));
+    await emit(BUILD_ORDERS_CHANGED_EVENT);
+    return;
+  }
   await invoke("save_build_order", { order });
   // Emit event to notify other windows
   await emit(BUILD_ORDERS_CHANGED_EVENT);
 }
 
 export async function deleteBuildOrder(id: string): Promise<void> {
-  if (IS_MOCK) return Promise.resolve();
+  if (IS_MOCK) {
+    const current = await getBuildOrders();
+    const next = current.filter(o => o.id !== id);
+    localStorage.setItem(MOCK_BUILDS_KEY, JSON.stringify(next));
+    await emit(BUILD_ORDERS_CHANGED_EVENT);
+    return;
+  }
   await invoke("delete_build_order", { id });
   // Emit event to notify other windows
   await emit(BUILD_ORDERS_CHANGED_EVENT);
@@ -174,17 +270,31 @@ export async function showSettings(): Promise<void> {
 
 // Click-through and compact mode commands
 export async function setClickThrough(enabled: boolean): Promise<void> {
-  if (IS_MOCK) return Promise.resolve();
+  if (IS_MOCK) {
+    const config = await getConfig();
+    await saveConfig({ ...config, click_through: enabled });
+    return;
+  }
   return invoke("set_click_through", { enabled });
 }
 
 export async function toggleClickThrough(): Promise<boolean> {
-  if (IS_MOCK) return Promise.resolve(true);
+  if (IS_MOCK) {
+    const config = await getConfig();
+    const next = !config.click_through;
+    await saveConfig({ ...config, click_through: next });
+    return next;
+  }
   return invoke<boolean>("toggle_click_through");
 }
 
 export async function toggleCompactMode(): Promise<boolean> {
-  if (IS_MOCK) return Promise.resolve(true);
+  if (IS_MOCK) {
+    const config = await getConfig();
+    const next = !config.compact_mode;
+    await saveConfig({ ...config, compact_mode: next });
+    return next;
+  }
   return invoke<boolean>("toggle_compact_mode");
 }
 

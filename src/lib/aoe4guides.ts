@@ -230,7 +230,7 @@ function normalizeCivilization(civCode: string): Civilization {
   if (!mapped) {
     console.warn(
       `Unknown civilization code "${civCode}" from AOE4 Guides API. ` +
-        `Falling back to "English". Please report this if it's a valid civilization.`
+      `Falling back to "English". Please report this if it's a valid civilization.`
     );
     return "English";
   }
@@ -665,10 +665,11 @@ function convertHtmlToIconMarkers(html: string): string {
 
     // Extract filename from src path
     // e.g., /assets/pictures/unit_worker/villager.png -> villager
-    const pathMatch = src.match(/\/([^/]+)\.(png|webp|jpg)$/i);
-    const filename = pathMatch ? pathMatch[1].toLowerCase() : "";
+    // We handle both absolute and relative paths
+    const filenameMatch = src.match(/(?:^|\/)([^/]+)\.(png|webp|jpg)$/i);
+    const filename = filenameMatch ? filenameMatch[1].toLowerCase() : "";
 
-    // Also check parent folder for context
+    // Also check parent folder for context if possible
     // e.g., /assets/pictures/resource/resource_gold.png
     const parentMatch = src.match(/\/([^/]+)\/[^/]+\.(png|webp|jpg)$/i);
     const parentFolder = parentMatch ? parentMatch[1].toLowerCase() : "";
@@ -706,6 +707,9 @@ function convertHtmlToIconMarkers(html: string): string {
 
   // Convert <br /> tags to newlines or spaces
   result = result.replace(/<br\s*\/?>/gi, " | ");
+
+  // Condense multiple separators (e.g., " | | | " -> " | ")
+  result = result.replace(/(\s*\|\s*)+/g, " | ");
 
   // Decode HTML entities
   result = result
@@ -787,7 +791,7 @@ function convertBuild(build: Aoe4GuidesBuild): BuildOrder {
       if (stepNumber > MAX_BUILD_ORDER_STEPS) {
         throw new Error(
           `Build order exceeds maximum of ${MAX_BUILD_ORDER_STEPS} steps. ` +
-            `Please choose a shorter build order.`
+          `Please choose a shorter build order.`
         );
       }
 
@@ -901,8 +905,9 @@ export async function fetchAoe4GuidesBuild(buildId: string): Promise<BuildOrder>
       lastError = error;
       // Don't retry on 404s or validation errors
       if (error instanceof Error && (
-        error.message.includes("not found") || 
-        error.message.includes("no steps")
+        error.message.includes("not found") ||
+        error.message.includes("no steps") ||
+        error.message.includes("exceeds maximum")
       )) {
         break;
       }

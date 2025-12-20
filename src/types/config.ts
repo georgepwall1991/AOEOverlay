@@ -130,6 +130,7 @@ export interface AppConfig {
   telemetry?: TelemetryConfig;
   metronome?: MetronomeConfig;
   coach_pack?: CoachPackConfig;
+  show_clock?: boolean;
 }
 
 export type FontSize = "small" | "medium" | "large";
@@ -225,4 +226,5 @@ export const DEFAULT_CONFIG: AppConfig = {
   telemetry: DEFAULT_TELEMETRY_CONFIG,
   metronome: DEFAULT_METRONOME_CONFIG,
   coach_pack: DEFAULT_COACH_PACK_CONFIG,
+  show_clock: true,
 };

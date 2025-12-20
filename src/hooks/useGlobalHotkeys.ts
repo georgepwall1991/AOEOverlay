@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from "react";
-import { listen, type UnlistenFn } from "@/lib/tauri";
+import { listen, type UnlistenFn, IS_MOCK, emit } from "@/lib/tauri";
 import {
   useBuildOrderStore,
   useOverlayStore,
@@ -269,4 +269,47 @@ export function useGlobalHotkeys() {
     togglePause,
     setActiveBranch,
   ]);
+
+  useEffect(() => {
+    if (!IS_MOCK) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger hotkeys if typing in an input
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      const { config } = useConfigStore.getState();
+      const h = config.hotkeys;
+
+      // Map local keys to Tauri event names
+      const keyMap: Record<string, string> = {
+        [h.toggle_overlay]: "hotkey-toggle-overlay",
+        [h.previous_step]: "hotkey-previous-step",
+        [h.next_step]: "hotkey-next-step",
+        [h.cycle_build_order]: "hotkey-cycle-build-order",
+        [h.toggle_click_through]: "hotkey-toggle-click-through",
+        [h.toggle_compact]: "hotkey-toggle-compact",
+        [h.reset_build_order]: "hotkey-reset-build-order",
+        [h.toggle_pause]: "hotkey-toggle-pause",
+        [h.activate_branch_main]: "hotkey-activate-branch-main",
+        [h.activate_branch_1]: "hotkey-activate-branch-1",
+        [h.activate_branch_2]: "hotkey-activate-branch-2",
+        [h.activate_branch_3]: "hotkey-activate-branch-3",
+        [h.activate_branch_4]: "hotkey-activate-branch-4",
+      };
+
+      const eventName = keyMap[e.key];
+      if (eventName) {
+        e.preventDefault();
+        emit(eventName);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 }

@@ -9,6 +9,7 @@ import { UpgradeBadges } from "./UpgradeBadges";
 import { ScoutGuide } from "./ScoutGuide";
 import { QuickActionBar } from "./QuickActionBar";
 import { StatusIndicators } from "./StatusIndicators";
+import { SystemClock } from "./SystemClock";
 import { KeyboardShortcutsOverlay } from "./KeyboardShortcutsOverlay";
 import { FirstLaunchOnboarding } from "./FirstLaunchOnboarding";
 import { MatchupPanel } from "./MatchupPanel";
@@ -127,7 +128,7 @@ export function Overlay() {
   // Sync build orders when changed from settings window
   useBuildOrderSync();
 
-  const civThemeClass = currentBuild 
+  const civThemeClass = currentBuild
     ? `civ-theme-${currentBuild.civilization.toLowerCase().replace(/\s+/g, '-')}`
     : "civ-theme-default";
 
@@ -227,6 +228,12 @@ export function Overlay() {
           >
             <Settings className="w-3.5 h-3.5 text-white/50 group-hover:text-white/80" />
           </button>
+
+          {config.show_clock && (
+            <div className="ml-1 px-1 border-l border-white/10">
+              <SystemClock />
+            </div>
+          )}
 
           {/* Keyboard shortcuts button */}
           <KeyboardShortcutsOverlay />

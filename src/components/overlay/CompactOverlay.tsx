@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { GripVertical, ChevronLeft, ChevronRight, MousePointer2Off, Settings } from "lucide-react";
+import { GripVertical, ChevronLeft, ChevronRight, MousePointer2Off, Settings, Maximize2 } from "lucide-react";
 import { useWindowDrag, useAutoResize, useTimer } from "@/hooks";
 import { useOpacity, useConfigStore, useBuildOrderStore, useCurrentBuildOrder, useActiveSteps, useActiveBranchId } from "@/stores";
 import { ResourceIndicator } from "./ResourceIndicator";
 import { TimerBar } from "./TimerBar";
+import { SystemClock } from "./SystemClock";
 import { renderIconText } from "./GameIcons";
-import { showSettings } from "@/lib/tauri";
+import { showSettings, toggleCompactMode as tauriToggleCompactMode } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 
 export function CompactOverlay() {
   const { startDrag } = useWindowDrag();
   const opacity = useOpacity();
-  const { config } = useConfigStore();
+  const { config, updateConfig } = useConfigStore();
   const { currentStepIndex, nextStep, previousStep } = useBuildOrderStore();
   const currentBuildOrder = useCurrentBuildOrder();
   const activeSteps = useActiveSteps();
@@ -76,11 +77,27 @@ export function CompactOverlay() {
         {/* Compact drag handle */}
         <div
           className={cn(
-            "flex items-center gap-1 px-1 py-1 transition-colors",
+            "flex items-center gap-1.5 px-1 py-1 transition-colors",
             !floatingStyle && "border-b border-white/10",
             config.click_through && !floatingStyle && "border-amber-500/30"
           )}
         >
+          {/* Expand button */}
+          <button
+            onClick={async () => {
+              try {
+                const next = await tauriToggleCompactMode();
+                updateConfig({ compact_mode: next });
+              } catch (error) {
+                console.error("Failed to toggle compact mode:", error);
+              }
+            }}
+            className="p-0.5 rounded hover:bg-white/10 transition-colors flex-shrink-0"
+            title="Expand Mode (F6)"
+          >
+            <Maximize2 className="w-3 h-3 text-white/60 hover:text-white/90" />
+          </button>
+
           {/* Settings button */}
           <button
             onClick={() => showSettings()}
@@ -89,6 +106,12 @@ export function CompactOverlay() {
           >
             <Settings className="w-3 h-3 text-white/60 hover:text-white/90" />
           </button>
+
+          {config.show_clock && (
+            <div className="px-1 border-r border-white/10">
+              <SystemClock showIcon={false} />
+            </div>
+          )}
 
           {/* Drag area */}
           <div

@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
 import { StatusIndicators } from "./StatusIndicators";
 
-// Mock saveConfig from tauri lib
+// Mock tauri lib
 vi.mock("@/lib/tauri", () => ({
   saveConfig: vi.fn().mockResolvedValue(undefined),
+  toggleClickThrough: vi.fn().mockResolvedValue(true),
+  toggleCompactMode: vi.fn().mockResolvedValue(true),
 }));
 
 // Mock the stores
@@ -72,11 +74,6 @@ vi.mock("lucide-react", () => ({
 describe("StatusIndicators", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   describe("rendering", () => {
@@ -132,7 +129,9 @@ describe("StatusIndicators", () => {
       const clickThroughButton = screen.getByTitle("Click-Through Off (F5)");
       fireEvent.click(clickThroughButton);
 
-      expect(mockUpdateConfig).toHaveBeenCalledWith({ click_through: true });
+      await waitFor(() => {
+        expect(mockUpdateConfig).toHaveBeenCalledWith({ click_through: true });
+      });
     });
   });
 
@@ -140,10 +139,12 @@ describe("StatusIndicators", () => {
     it("toggles compact mode when clicked", async () => {
       render(<StatusIndicators />);
 
-      const compactButton = screen.getByTitle("Expanded Mode (F6)");
+      const compactButton = screen.getByTitle("Compact Mode (F6)");
       fireEvent.click(compactButton);
 
-      expect(mockUpdateConfig).toHaveBeenCalledWith({ compact_mode: true });
+      await waitFor(() => {
+        expect(mockUpdateConfig).toHaveBeenCalledWith({ compact_mode: true });
+      });
     });
   });
 
@@ -159,6 +160,14 @@ describe("StatusIndicators", () => {
   });
 
   describe("speaking indicator", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("shows speaking indicator when TTS is active", () => {
       mockIsSpeaking.mockReturnValue(true);
 
@@ -239,7 +248,7 @@ describe("StatusIndicators", () => {
 
     it("shows hotkey in compact mode button title", () => {
       render(<StatusIndicators />);
-      expect(screen.getByTitle("Expanded Mode (F6)")).toBeInTheDocument();
+      expect(screen.getByTitle("Compact Mode (F6)")).toBeInTheDocument();
     });
   });
 });

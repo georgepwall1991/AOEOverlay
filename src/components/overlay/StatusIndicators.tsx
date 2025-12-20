@@ -3,7 +3,7 @@ import { Volume2, VolumeX, MousePointer2Off, MousePointer2, Minimize2, Maximize2
 import { useTTS } from "@/hooks";
 import { useConfigStore, useMatchupStore } from "@/stores";
 import { cn, logTelemetryEvent } from "@/lib/utils";
-import { saveConfig } from "@/lib/tauri";
+import { toggleClickThrough as tauriToggleClickThrough, toggleCompactMode as tauriToggleCompactMode } from "@/lib/tauri";
 
 interface StatusIndicatorsProps {
   onToggleClickThrough?: () => void;
@@ -82,25 +82,14 @@ export function StatusIndicators({
     if (onToggleClickThrough) {
       onToggleClickThrough();
     } else {
-      const next = !clickThrough;
+      const next = await tauriToggleClickThrough();
       updateConfig({ click_through: next });
-      // Persist so restart/settings stay in sync
-      try {
-        await saveConfig({ ...config, click_through: next });
-      } catch (error) {
-        console.error("Failed to persist click-through toggle:", error);
-      }
     }
   };
 
   const toggleCompact = async () => {
-    const next = !compactMode;
+    const next = await tauriToggleCompactMode();
     updateConfig({ compact_mode: next });
-    try {
-      await saveConfig({ ...config, compact_mode: next });
-    } catch (error) {
-      console.error("Failed to persist compact toggle:", error);
-    }
   };
 
   const handleMatchupToggle = () => {
@@ -136,12 +125,12 @@ export function StatusIndicators({
         onClick={toggleClickThrough}
       />
 
-      {/* Compact mode status */}
+      {/* Compact mode toggle */}
       <StatusIcon
         active={compactMode}
         activeIcon={<Minimize2 className="w-3.5 h-3.5" />}
         inactiveIcon={<Maximize2 className="w-3.5 h-3.5" />}
-        label={compactMode ? "Compact Mode" : "Expanded Mode"}
+        label={compactMode ? "Expanded Mode" : "Compact Mode"}
         hotkey={config.hotkeys.toggle_compact}
         onClick={toggleCompact}
       />

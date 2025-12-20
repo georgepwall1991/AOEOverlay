@@ -600,6 +600,90 @@ describe("aoe4guides API", () => {
       expect(result.steps[0].description).toContain("'");
     });
 
+    it("handles multiple icons in one description", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description:
+                    '<img src="villager.png" title="Villager" /> and <img src="sheep.png" title="Sheep" />',
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+      expect(result.steps[0].description).toBe("[icon:villager] and [icon:sheep]");
+    });
+
+    it("handles icons with camelCase titles or varying formats", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description:
+                    '<img src="town_center.png" title="TownCenter" /> and <img src="longbowman.png" title="Longbowman" />',
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+      // town_center is mapped to town_center, so it gets [icon:town_center]
+      // longbowman is in text fallbacks, so it gets just "Longbowman"
+      expect(result.steps[0].description).toContain("[icon:town_center]");
+      expect(result.steps[0].description).toContain("Longbowman");
+    });
+
+    it("handles repeated line breaks and whitespace", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "test",
+          title: "Test",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [
+                {
+                  description: "First line<br /><br /><br />Last line",
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const result = await fetchAoe4GuidesBuild("test");
+      // Repeated BRs should be condensed to single | or similar
+      expect(result.steps[0].description).toBe("First line | Last line");
+    });
+
     it("handles timing with HTML tags", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -768,7 +852,7 @@ describe("aoe4guides API", () => {
       });
 
       // Should fall back to English and log a warning
-      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
       const result = await fetchAoe4GuidesBuild("test");
 
       expect(result.civilization).toBe("English");
@@ -963,6 +1047,256 @@ describe("aoe4guides API", () => {
       expect(result.description).toContain("TestAuthor");
       expect(result.description).toContain("Rush");
       expect(result.description).toContain("aoe4guides.com");
+      expect(result.description).toContain("aoe4guides.com");
+    });
+  });
+
+  describe("importAoe4GuidesBuild", () => {
+    it("extracts ID and fetches build", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "ABC123",
+          title: "Test Build",
+          civ: "ENG",
+          steps: [
+            {
+              type: "age",
+              age: 1,
+              gameplan: "",
+              steps: [{ description: "Test" }],
+            },
+          ],
+        }),
+      });
+
+      const result = await importAoe4GuidesBuild("https://aoe4guides.com/build/ABC123");
+
+      expect(result.id).toBe("aoe4guides-ABC123");
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://aoe4guides.com/api/builds/ABC123",
+        expect.anything()
+      );
+    });
+
+    it("throws error for invalid URL", async () => {
+      await expect(importAoe4GuidesBuild("invalid")).rejects.toThrow(
+        "Invalid AOE4Guides link"
+      );
+    });
+  });
+
+  describe("browseAoe4GuidesBuilds", () => {
+    it("fetches builds without filter", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          { id: "1", title: "Build 1", civ: "ENG", isDraft: false },
+          { id: "2", title: "Build 2", civ: "FRE", isDraft: false },
+        ],
+      });
+
+      const result = await browseAoe4GuidesBuilds();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://aoe4guides.com/api/builds",
+        expect.anything()
+      );
+      expect(result).toHaveLength(2);
+    });
+
+    it("filters by civilization code", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      });
+
+      await browseAoe4GuidesBuilds({ civ: "ENG" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://aoe4guides.com/api/builds?civ=ENG",
+        expect.anything()
+      );
+    });
+
+    it("converts full civilization name to code", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      });
+
+      await browseAoe4GuidesBuilds({ civ: "English" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://aoe4guides.com/api/builds?civ=ENG",
+        expect.anything()
+      );
+    });
+
+    it("excludes draft builds", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          { id: "1", title: "Published", isDraft: false },
+          { id: "2", title: "Draft", isDraft: true },
+        ],
+      });
+
+      const result = await browseAoe4GuidesBuilds();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe("Published");
+    });
+
+    it("returns summary data only", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: "1",
+            title: "Test Build",
+            description: "Description",
+            author: "User",
+            civ: "ENG",
+            strategy: "Rush",
+            season: "S7",
+            views: 100,
+            likes: 10,
+            upvotes: 5,
+            downvotes: 1,
+            score: 4,
+            isDraft: false,
+            // These should not be in summary
+            steps: [{ type: "age", age: 1, steps: [] }],
+            authorUid: "uid",
+          },
+        ],
+      });
+
+      const result = await browseAoe4GuidesBuilds();
+
+      expect(result[0]).toEqual({
+        id: "1",
+        title: "Test Build",
+        description: "Description",
+        author: "User",
+        civ: "ENG",
+        strategy: "Rush",
+        season: "S7",
+        views: 100,
+        likes: 10,
+        upvotes: 5,
+        downvotes: 1,
+        score: 4,
+      });
+    });
+
+    it("throws error on API failure", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+      });
+
+      await expect(browseAoe4GuidesBuilds()).rejects.toThrow("500");
+    });
+
+    it("handles null values from API gracefully", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: "1",
+            title: null,
+            description: null,
+            author: null,
+            civ: null,
+            strategy: null,
+            season: null,
+            views: null,
+            likes: null,
+            upvotes: null,
+            downvotes: null,
+            score: null,
+            isDraft: null,
+          },
+        ],
+      });
+
+      const result = await browseAoe4GuidesBuilds();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe("");
+      expect(result[0].description).toBe("");
+      expect(result[0].author).toBe("");
+      expect(result[0].views).toBe(0);
+    });
+  });
+
+  describe("enforcement", () => {
+    it("throws error when build exceeds MAX_BUILD_ORDER_STEPS", async () => {
+      // Create a build with many steps
+      const manySteps = Array.from({ length: MAX_BUILD_ORDER_STEPS / 10 + 1 }, (_, i) => ({
+        type: "age",
+        age: 1,
+        gameplan: "",
+        steps: Array.from({ length: 15 }, (_, j) => ({ description: `Step ${i}-${j}` })),
+      }));
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "toomany-123",
+          title: "Too Many Steps",
+          civ: "ENG",
+          steps: manySteps,
+        }),
+      });
+
+      await expect(fetchAoe4GuidesBuild("toomany-123")).rejects.toThrow(
+        `Build order exceeds maximum of ${MAX_BUILD_ORDER_STEPS} steps`
+      );
+    });
+  });
+
+  describe("caching", () => {
+    it("returns cached build when API fetch fails after initial success", async () => {
+      const buildId = "cached-build-123";
+      const mockApiResponse = {
+        id: buildId,
+        title: "Initial Build",
+        civ: "ENG",
+        steps: [
+          {
+            type: "age",
+            age: 1,
+            gameplan: "Initial plan",
+            steps: [{ description: "Initial step" }],
+          },
+        ],
+      };
+
+      // First call: Success
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockApiResponse,
+      });
+
+      const firstResult = await fetchAoe4GuidesBuild(buildId);
+      expect(firstResult.name).toBe("Initial Build");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Second call: API Failure (retries 3 times then uses cache)
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+      });
+
+      const secondResult = await fetchAoe4GuidesBuild(buildId);
+      expect(secondResult).toEqual(firstResult);
+      // Should have called fetch 4 times total (1 success + 3 retries)
+      expect(mockFetch).toHaveBeenCalledTimes(4);
     });
   });
 });

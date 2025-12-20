@@ -281,7 +281,7 @@ describe("aoe4world API", () => {
     });
 
     it("logs warning and defaults to English for unknown civilization", async () => {
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -418,6 +418,40 @@ describe("aoe4world API", () => {
 
       const result = await fetchAoe4WorldBuild(123);
       expect(result.steps).toHaveLength(MAX_BUILD_ORDER_STEPS);
+    });
+
+    describe("caching", () => {
+      it("returns cached build when API fetch fails after initial success", async () => {
+        const buildId = 123;
+        const mockApiResponse = {
+          id: buildId,
+          title: "Initial Build",
+          civilization: "english",
+          steps: [{ id: 1, position: 1, description: "Initial step" }],
+        };
+
+        // First call: Success
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockApiResponse,
+        });
+
+        const firstResult = await fetchAoe4WorldBuild(buildId);
+        expect(firstResult.name).toBe("Initial Build");
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+
+        // Second call: API Failure (retries 3 times then uses cache)
+        mockFetch.mockResolvedValue({
+          ok: false,
+          status: 500,
+          statusText: "Internal Server Error",
+        });
+
+        const secondResult = await fetchAoe4WorldBuild(buildId);
+        expect(secondResult).toEqual(firstResult);
+        // Should have called fetch 4 times total (1 success + 3 retries)
+        expect(mockFetch).toHaveBeenCalledTimes(4);
+      });
     });
   });
 
