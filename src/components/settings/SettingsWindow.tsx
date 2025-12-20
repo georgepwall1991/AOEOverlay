@@ -46,19 +46,20 @@ import {
   Wrench,
 } from "lucide-react";
 import { DEFAULT_CONFIG } from "@/types";
-import { BuildOrderManager } from "./BuildOrderManager";
-import { BuildOrderBrowser } from "./BuildOrderBrowser";
+import { BuildOrderManager, BuildOrderBrowser } from "./build-order-editor";
 import { PlayerStats } from "./PlayerStats";
-import { VoiceSettings } from "./VoiceSettings";
-import { CoachPackSettings } from "./CoachPackSettings";
-import { ReminderSettings } from "./ReminderSettings";
-import { UpgradeBadgesSettings } from "./UpgradeBadgesSettings";
-import { HotkeySettings } from "./HotkeySettings";
-import { AppearanceSettings } from "./AppearanceSettings";
+import {
+  VoiceSettings,
+  CoachPackSettings,
+  ReminderSettings,
+  UpgradeBadgesSettings,
+  HotkeySettings,
+  AppearanceSettings,
+  GameplaySettings,
+  MetronomeSettings,
+  TelemetryToggle,
+} from "./settings-panels";
 import { SessionHistory } from "./SessionHistory";
-import { GameplaySettings } from "./GameplaySettings";
-import { MetronomeSettings } from "./MetronomeSettings";
-import { TelemetryToggle } from "./TelemetryToggle";
 import { CIVILIZATIONS, DIFFICULTIES, type BuildOrder } from "@/types";
 
 type StarterTemplate = Omit<BuildOrder, "id" | "enabled">;

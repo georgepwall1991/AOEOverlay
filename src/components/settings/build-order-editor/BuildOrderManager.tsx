@@ -11,9 +11,9 @@ import {
 import type { BuildOrder } from "@/types";
 import { useBuildOrderFiltering, useBrowseFiltering } from "@/hooks/useBuildOrderFiltering";
 import { BuildOrderEditor } from "./BuildOrderEditor";
-import { BuildOrderHeader } from "./build-order/BuildOrderHeader";
-import { BuildOrderDialogs } from "./build-order/BuildOrderDialogs";
-import { BuildOrderList } from "./build-order/BuildOrderList";
+import { BuildOrderHeader } from "./BuildOrderHeader";
+import { BuildOrderDialogs } from "./BuildOrderDialogs";
+import { BuildOrderList } from "./BuildOrderList";
 
 interface BuildOrderManagerProps {
   filterCiv?: string;

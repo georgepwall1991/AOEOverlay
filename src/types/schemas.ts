@@ -35,12 +35,4 @@ export const BuildOrderSchema = z.object({
   branches: z.array(BuildOrderBranchSchema).optional(),
 });
 
-export function validateBuildOrder(input: unknown) {
-  return BuildOrderSchema.parse(input);
-}
-
-
-
-
-
 

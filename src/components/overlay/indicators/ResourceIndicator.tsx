@@ -1,6 +1,6 @@
 import type { Resources } from "@/types";
 import { cn } from "@/lib/utils";
-import { ResourceIcon } from "./ResourceIcons";
+import { ResourceIcon } from "../icons/ResourceIcons";
 
 interface ResourceIndicatorProps {
   resources?: Resources;
@@ -30,12 +30,16 @@ export function ResourceIndicator({ resources, className = "", compact = false, 
   const textSize = compact ? "text-sm" : "text-base";
 
   return (
-    <div className={cn(
-      "flex items-center flex-shrink-0",
-      compact ? "gap-3" : "gap-4",
-      glow && "resource-icon-glow",
-      className
-    )}>
+    <div
+      data-testid="resource-indicator"
+      data-glow={glow ? "true" : undefined}
+      className={cn(
+        "flex items-center flex-shrink-0",
+        compact ? "gap-3" : "gap-4",
+        glow && "resource-icon-glow",
+        className
+      )}
+    >
       {entries.map(([type, value]) => {
         const styles = RESOURCE_STYLES[type];
         return (

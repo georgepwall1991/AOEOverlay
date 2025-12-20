@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { useBuildOrderStore, useConfigStore, useCurrentBuildOrder } from "@/stores";
-import { CivBadge } from "./CivBadge";
+import { CivBadge } from "../badges/CivBadge";
 import { cn } from "@/lib/utils";
 
 export function BuildSelectorDropdown() {

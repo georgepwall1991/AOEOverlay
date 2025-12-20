@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ResourceIndicator } from "../ResourceIndicator";
+import { ResourceIndicator } from "../indicators/ResourceIndicator";
 import { TimerBar } from "../TimerBar";
-import { renderIconText } from "../GameIcons";
+import { renderIconText } from "../icons/GameIcons";
 import { cn } from "@/lib/utils";
 import type { BuildOrderStep } from "@/types";
 

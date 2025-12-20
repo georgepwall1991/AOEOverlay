@@ -1,13 +1,13 @@
 import { cn } from "@/lib/utils";
 import type { BuildOrderStep as StepType } from "@/types";
-import { ResourceIndicator } from "./ResourceIndicator";
-import { VillagerDistributionBar } from "./VillagerDistributionBar";
+import { ResourceIndicator } from "../indicators/ResourceIndicator";
+import { VillagerDistributionBar } from "../indicators/VillagerDistributionBar";
 import { StepNumber } from "./StepNumber";
 import { StepTiming } from "./StepTiming";
 import { useConfigStore } from "@/stores";
 import { useStepHighlight } from "@/hooks/useStepHighlight";
 import { useAdjustedTiming } from "@/hooks/useAdjustedTiming";
-import { renderIconText } from "./GameIcons";
+import { renderIconText } from "../icons/GameIcons";
 
 interface BuildOrderStepProps {
   step: StepType;

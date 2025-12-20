@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CivBadge } from "@/components/overlay/CivBadge";
+import { CivBadge } from "@/components/overlay/badges/CivBadge";
 import {
     Pin, Star, StarOff, Pencil, Trash2,
     ToggleLeft, ToggleRight, List, Download

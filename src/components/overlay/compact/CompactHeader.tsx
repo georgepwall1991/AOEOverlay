@@ -1,5 +1,5 @@
 import { GripVertical, MousePointer2Off, Settings, Maximize2 } from "lucide-react";
-import { SystemClock } from "../SystemClock";
+import { SystemClock } from "../clock/SystemClock";
 import { showSettings, toggleCompactMode as tauriToggleCompactMode } from "@/lib/tauri";
 import { cn } from "@/lib/utils";
 import type { AppConfig } from "@/types";

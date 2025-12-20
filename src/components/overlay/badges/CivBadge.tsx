@@ -138,6 +138,7 @@ export function CivBadge({ civilization, className, size = "md", glow = false }:
 
   return (
     <span
+      data-testid="civ-badge"
       className={cn(
         "inline-flex items-center gap-1 rounded font-bold transition-all duration-200",
         size === "sm" ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-1",

@@ -7,13 +7,4 @@ export interface TelemetryEvent {
   timestamp: number;
 }
 
-export interface TelemetrySnapshot {
-  events: TelemetryEvent[];
-  total: number;
-}
-
-
-
-
-
 

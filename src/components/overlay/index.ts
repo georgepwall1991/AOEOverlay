@@ -1,10 +1,16 @@
+// Main overlay components
 export * from "./Overlay";
 export * from "./CompactOverlay";
-export * from "./AnimatedOverlay";
-export * from "./BuildOrderDisplay";
-export * from "./BuildOrderStep";
-export * from "./ResourceIndicator";
-export * from "./ResourceIcons";
-export * from "./CivBadge";
 export * from "./TimerBar";
-export * from "./UpgradeBadges";
+
+// Sub-components
+export * from "./containers";
+export * from "./features";
+export * from "./clock";
+export * from "./build-display";
+export * from "./badges";
+export * from "./icons";
+export * from "./indicators";
+export * from "./dialogs";
+export * from "./compact";
+export * from "./timer";
