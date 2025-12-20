@@ -14,8 +14,8 @@ test.describe('Compact Overlay', () => {
     // Wait for regular overlay to load first
     await page.locator('[data-testid="overlay-container"]').waitFor({ state: 'visible', timeout: 10000 });
 
-    // Click the compact mode toggle button to switch to compact mode
-    const compactToggle = page.locator('button[title*="Expanded Mode"]');
+    // Click the compact mode toggle button to switch to compact mode (look for the title which is "Compact Mode" initially)
+    const compactToggle = page.locator('button[title*="Compact Mode"]');
     await compactToggle.click();
     await page.waitForTimeout(200);
 

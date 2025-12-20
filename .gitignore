@@ -1,30 +1,85 @@
-# Logs
-logs
+# Node / General
+node_modules/
+.npm
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+.pnpm-store/
+.pnpm-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Vite / Frontend Build
+dist/
+dist-ssr/
 *.local
+.vite/
+.vercel/
+.netlify/
 
-# Editor directories and files
+# Tauri / Rust
+/src-tauri/target/
+/src-tauri/gen/schemas/
+/src-tauri/gen/android/
+/src-tauri/bin/
+*.pdb
+*.dll
+*.exe
+*.exp
+*.lib
+
+# Tests
+coverage/
+.vitest-cache/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+tests/e2e/playwright/test-results/
+tests/e2e/playwright/playwright-report/
+tests/e2e/playwright/video/
+tests/e2e/playwright/screenshots/*.png
+# But keep the screenshots directory if we want reference images
+!tests/e2e/playwright/screenshots/
+# If using Playwright's native visual regression, we would commit *-snapshots/
+# but ignore the actual test outputs.
+
+
+# IDEs / OS
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.DS_Store
+Thumbs.db
+.project
+.settings/
+.classpath
 
-# Test coverage and reports
-coverage/
-playwright-report/
-test-results/
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Agentic / AI Tools
+.claude/
+.gemini/
 .gemini-clipboard/
+.complexity-log.md
+.plugin-config/
+
+# Python (if using .venv)
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class

@@ -148,6 +148,7 @@ export function Overlay() {
           {/* Drag area in center */}
           <div
             data-testid="drag-handle"
+            data-tauri-drag-region
             className="flex-1 flex items-center justify-center cursor-move hover:bg-white/5 rounded py-0.5"
             onMouseDown={startDrag}
             title={`Drag to move (${config.hotkeys.toggle_overlay} to hide)`}

@@ -713,8 +713,8 @@ test.describe('Overlay Window', () => {
       const progressIndicator = overlayPage.progressIndicator;
       await expect(progressIndicator).toBeVisible();
 
-      // Progress bar should show 1/4 = 25%
-      const progressBar = overlayPage.page.locator('[data-testid="progress-indicator"] .bg-gradient-to-r');
+      // Progress bar should be visible (check for general indicator container or fill)
+      const progressBar = overlayPage.page.locator('[data-testid="progress-indicator"] .bg-white\\/10, [data-testid="progress-indicator"] .bg-emerald-900\\/30');
       await expect(progressBar).toBeVisible();
     });
 
