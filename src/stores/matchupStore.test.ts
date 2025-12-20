@@ -282,7 +282,9 @@ describe("matchupStore", () => {
     it("returns current panel state", () => {
       // Use getState for non-reactive access in tests
       const state = useMatchupStore.getState();
-      state.setOpen(false);
+      act(() => {
+        state.setOpen(false);
+      });
 
       // useMatchupPanelState is a hook selector, not a store
       // Access state through useMatchupStore.getState() directly
@@ -290,7 +292,9 @@ describe("matchupStore", () => {
 
       expect(panelState.isOpen).toBe(false);
 
-      state.setOpen(true);
+      act(() => {
+        state.setOpen(true);
+      });
       const updatedState = useMatchupStore.getState();
       expect(updatedState.isOpen).toBe(true);
     });
@@ -298,7 +302,9 @@ describe("matchupStore", () => {
     it("returns opponentCiv", () => {
       const state = useMatchupStore.getState();
 
-      state.setOpponent("English" as Civilization, "French" as Civilization);
+      act(() => {
+        state.setOpponent("English" as Civilization, "French" as Civilization);
+      });
 
       const updatedState = useMatchupStore.getState();
       expect(updatedState.opponentCiv).toBe("French");
@@ -307,7 +313,9 @@ describe("matchupStore", () => {
     it("returns opponentByCiv map", () => {
       const state = useMatchupStore.getState();
 
-      state.setOpponent("English" as Civilization, "French" as Civilization);
+      act(() => {
+        state.setOpponent("English" as Civilization, "French" as Civilization);
+      });
 
       const updatedState = useMatchupStore.getState();
       expect(updatedState.opponentByCiv["English"]).toBe("French");
@@ -315,10 +323,14 @@ describe("matchupStore", () => {
 
     it("updates when store changes", () => {
       const state = useMatchupStore.getState();
-      state.setOpen(false);
+      act(() => {
+        state.setOpen(false);
+      });
       expect(useMatchupStore.getState().isOpen).toBe(false);
 
-      state.toggle();
+      act(() => {
+        state.toggle();
+      });
       expect(useMatchupStore.getState().isOpen).toBe(true);
     });
   });

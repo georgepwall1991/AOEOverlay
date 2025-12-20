@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@/lib/tauri";
 import { Overlay } from "@/components/overlay";
 import { SettingsWindow } from "@/components/settings";
-import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize, useReminders } from "@/hooks";
+import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize, useReminders, useMetronome } from "@/hooks";
 import { useConfigStore } from "@/stores";
 
 function OverlayWithWindowFix() {
@@ -53,7 +53,8 @@ function App() {
   useBuildOrders();
   useConfig();
   useWindowSize();
-  useReminders();
+  useReminders(); // Run reminders even when overlay UI is hidden
+  useMetronome();
 
   useEffect(() => {
     const initWindow = async () => {

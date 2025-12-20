@@ -66,14 +66,14 @@ export function BuildOrderDisplay() {
                   "h-full transition-all duration-300",
                   isComplete
                     ? "bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]"
-                    : "bg-gradient-to-r from-amber-500 to-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                    : "progress-fill-themed shadow-[0_0_10px_rgba(251,191,36,0.5)]"
                 )}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
             <span data-testid="step-counter" className={cn(
               "text-sm font-mono tabular-nums font-bold flex items-center gap-1 transition-colors",
-              isComplete ? "text-emerald-400" : "text-amber-400"
+              isComplete ? "text-emerald-400" : "text-[hsl(var(--civ-color))]"
             )}>
               {isComplete && <CheckCircle2 className="w-3.5 h-3.5" />}
               {activeSteps.length === 0 ? 0 : currentStepIndex + 1}/{activeSteps.length}

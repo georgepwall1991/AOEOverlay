@@ -13,7 +13,9 @@ import type { HotkeyConfig } from "@/types";
 
 const AVAILABLE_HOTKEYS = [
   "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-  "A", "Z", "E", "R", "T", "Y", "U", "I", "O", "P", "Q", "S", "D", "F", "G", "H", "J", "K", "L",
+  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+  "SPACE", "TAB", "DELETE", "HOME", "END", "PAGEUP", "PAGEDOWN", "UP", "DOWN", "LEFT", "RIGHT",
 ];
 
 const PRESET_QWERTY: HotkeyConfig = {
@@ -25,6 +27,11 @@ const PRESET_QWERTY: HotkeyConfig = {
   toggle_compact: "F6",
   reset_build_order: "F7",
   toggle_pause: "F8",
+  activate_branch_main: "0",
+  activate_branch_1: "1",
+  activate_branch_2: "2",
+  activate_branch_3: "3",
+  activate_branch_4: "4",
 };
 
 const PRESET_AZERTY: HotkeyConfig = {
@@ -36,6 +43,11 @@ const PRESET_AZERTY: HotkeyConfig = {
   toggle_compact: "T",
   reset_build_order: "Y",
   toggle_pause: "U",
+  activate_branch_main: "0",
+  activate_branch_1: "1",
+  activate_branch_2: "2",
+  activate_branch_3: "3",
+  activate_branch_4: "4",
 };
 
 interface HotkeyRowProps {
@@ -148,6 +160,37 @@ export function HotkeySettings() {
           value={config.hotkeys.toggle_pause}
           onChange={(key) => handleHotkeyChange("toggle_pause", key)}
         />
+        
+        <div className="pt-2">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Branch Activation</h3>
+          <div className="space-y-3">
+            <HotkeyRow
+              label="Switch to Main Branch"
+              value={config.hotkeys.activate_branch_main}
+              onChange={(key) => handleHotkeyChange("activate_branch_main", key)}
+            />
+            <HotkeyRow
+              label="Switch to Branch 1"
+              value={config.hotkeys.activate_branch_1}
+              onChange={(key) => handleHotkeyChange("activate_branch_1", key)}
+            />
+            <HotkeyRow
+              label="Switch to Branch 2"
+              value={config.hotkeys.activate_branch_2}
+              onChange={(key) => handleHotkeyChange("activate_branch_2", key)}
+            />
+            <HotkeyRow
+              label="Switch to Branch 3"
+              value={config.hotkeys.activate_branch_3}
+              onChange={(key) => handleHotkeyChange("activate_branch_3", key)}
+            />
+            <HotkeyRow
+              label="Switch to Branch 4"
+              value={config.hotkeys.activate_branch_4}
+              onChange={(key) => handleHotkeyChange("activate_branch_4", key)}
+            />
+          </div>
+        </div>
       </div>
     </section>
   );

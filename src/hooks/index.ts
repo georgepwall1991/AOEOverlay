@@ -8,3 +8,4 @@ export * from "./useAutoResize";
 export * from "./useTTS";
 export * from "./useTimer";
 export * from "./useReminders";
+export * from "./useMetronome";

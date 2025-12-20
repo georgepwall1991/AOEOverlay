@@ -7,6 +7,11 @@ export interface HotkeyConfig {
   toggle_compact: string;
   reset_build_order: string;
   toggle_pause: string;
+  activate_branch_main: string;
+  activate_branch_1: string;
+  activate_branch_2: string;
+  activate_branch_3: string;
+  activate_branch_4: string;
 }
 
 export interface WindowPosition {
@@ -79,6 +84,26 @@ export interface TelemetryConfig {
   maxEvents: number;
 }
 
+export interface MetronomeConfig {
+  enabled: boolean;
+  intervalSeconds: number;
+  volume: number;
+}
+
+export interface CoachPackConfig {
+  enabled: boolean;
+  basePath: string; // Directory containing sound files
+  files: {
+    stepAdvance?: string;
+    reminderVillager?: string;
+    reminderScout?: string;
+    reminderHouse?: string;
+    behindPace?: string;
+    ageUp?: string;
+    metronomeTick?: string;
+  };
+}
+
 export type OverlayPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "custom";
 
 export interface AppConfig {
@@ -103,6 +128,8 @@ export interface AppConfig {
   upgradeBadges?: UpgradeBadgesConfig;
   timerDrift?: TimerDriftConfig;
   telemetry?: TelemetryConfig;
+  metronome?: MetronomeConfig;
+  coach_pack?: CoachPackConfig;
 }
 
 export type FontSize = "small" | "medium" | "large";
@@ -149,6 +176,18 @@ export const DEFAULT_TELEMETRY_CONFIG: TelemetryConfig = {
   maxEvents: 200,
 };
 
+export const DEFAULT_METRONOME_CONFIG: MetronomeConfig = {
+  enabled: false,
+  intervalSeconds: 20,
+  volume: 0.5,
+};
+
+export const DEFAULT_COACH_PACK_CONFIG: CoachPackConfig = {
+  enabled: false,
+  basePath: "",
+  files: {},
+};
+
 export const DEFAULT_CONFIG: AppConfig = {
   overlay_opacity: 0.95,
   ui_scale: 1,
@@ -164,6 +203,11 @@ export const DEFAULT_CONFIG: AppConfig = {
     toggle_compact: "F6",
     reset_build_order: "F7",
     toggle_pause: "F8",
+    activate_branch_main: "0",
+    activate_branch_1: "1",
+    activate_branch_2: "2",
+    activate_branch_3: "3",
+    activate_branch_4: "4",
   },
   click_through: true,
   compact_mode: false, // Default to expanded mode (more info visible)
@@ -179,4 +223,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   timerDrift: DEFAULT_TIMER_DRIFT_CONFIG,
   upgradeBadges: DEFAULT_UPGRADE_BADGES_CONFIG,
   telemetry: DEFAULT_TELEMETRY_CONFIG,
+  metronome: DEFAULT_METRONOME_CONFIG,
+  coach_pack: DEFAULT_COACH_PACK_CONFIG,
 };

@@ -52,7 +52,23 @@ pub struct HotkeyConfig {
     pub reset_build_order: String,
     #[serde(default = "default_toggle_pause")]
     pub toggle_pause: String,
+    #[serde(default = "default_branch_main")]
+    pub activate_branch_main: String,
+    #[serde(default = "default_branch_1")]
+    pub activate_branch_1: String,
+    #[serde(default = "default_branch_2")]
+    pub activate_branch_2: String,
+    #[serde(default = "default_branch_3")]
+    pub activate_branch_3: String,
+    #[serde(default = "default_branch_4")]
+    pub activate_branch_4: String,
 }
+
+fn default_branch_main() -> String { "0".to_string() }
+fn default_branch_1() -> String { "1".to_string() }
+fn default_branch_2() -> String { "2".to_string() }
+fn default_branch_3() -> String { "3".to_string() }
+fn default_branch_4() -> String { "4".to_string() }
 
 fn default_toggle_pause() -> String {
     "F8".to_string()
@@ -214,6 +230,11 @@ impl Default for AppConfig {
                 toggle_compact: "F6".to_string(),
                 reset_build_order: "F7".to_string(),
                 toggle_pause: "F8".to_string(),
+                activate_branch_main: "0".to_string(),
+                activate_branch_1: "1".to_string(),
+                activate_branch_2: "2".to_string(),
+                activate_branch_3: "3".to_string(),
+                activate_branch_4: "4".to_string(),
             },
             window_position: None,
             window_size: None,

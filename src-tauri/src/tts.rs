@@ -64,7 +64,18 @@ fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
         .spawn()
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+#[cfg(target_os = "linux")]
+fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
+    // spd-say rate is -100 to 100
+    let spd_rate = ((rate - 1.0) * 100.0).clamp(-100.0, 100.0) as i32;
+    Command::new("spd-say")
+        .args(["-r", &spd_rate.to_string(), text])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 fn spawn_tts_process(_text: &str, _rate: f32) -> std::io::Result<Child> {
     Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "TTS not supported on this platform"))
 }
@@ -239,10 +250,19 @@ mod tests {
         assert!(output.is_ok(), "Should be able to run PowerShell");
     }
 
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    #[cfg(target_os = "linux")]
     #[test]
-    fn test_linux_tts_unsupported() {
-        // On Linux/other platforms, TTS should return an error
+    fn test_linux_spd_say_available() {
+        let output = std::process::Command::new("which")
+            .arg("spd-say")
+            .output();
+        assert!(output.is_ok(), "Should be able to run 'which spd-say'");
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    #[test]
+    fn test_unsupported_platforms() {
+        // On other platforms, TTS should return an error
         let result = super::spawn_tts_process("test", 1.0);
         assert!(result.is_err());
         let err = result.unwrap_err();

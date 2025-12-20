@@ -1,6 +1,6 @@
 [package]
 name = "aoe4-overlay"
-version = "1.1.8"
+version = "1.1.9"
 description = "AoE4 Build Order Overlay"
 authors = ["you"]
 edition = "2021"

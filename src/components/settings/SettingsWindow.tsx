@@ -34,6 +34,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import {
   Gamepad2,
   List,
+  BarChart2,
   Keyboard,
   Palette,
   Upload,
@@ -46,13 +47,17 @@ import {
 } from "lucide-react";
 import { DEFAULT_CONFIG } from "@/types";
 import { BuildOrderManager } from "./BuildOrderManager";
+import { BuildOrderBrowser } from "./BuildOrderBrowser";
 import { PlayerStats } from "./PlayerStats";
 import { VoiceSettings } from "./VoiceSettings";
+import { CoachPackSettings } from "./CoachPackSettings";
 import { ReminderSettings } from "./ReminderSettings";
 import { UpgradeBadgesSettings } from "./UpgradeBadgesSettings";
 import { HotkeySettings } from "./HotkeySettings";
 import { AppearanceSettings } from "./AppearanceSettings";
+import { SessionHistory } from "./SessionHistory";
 import { GameplaySettings } from "./GameplaySettings";
+import { MetronomeSettings } from "./MetronomeSettings";
 import { TelemetryToggle } from "./TelemetryToggle";
 import { CIVILIZATIONS, DIFFICULTIES, type BuildOrder } from "@/types";
 
@@ -198,10 +203,14 @@ export function SettingsWindow() {
       <h1 className="text-2xl font-bold mb-6 shrink-0">Settings</h1>
 
       <Tabs defaultValue="build-orders" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="grid w-full grid-cols-6 mb-6 shrink-0">
+        <TabsList className="grid w-full grid-cols-7 mb-6 shrink-0">
           <TabsTrigger value="build-orders" data-value="build-orders" className="flex items-center gap-2">
             <List className="w-4 h-4" />
-            Build Orders
+            Builds
+          </TabsTrigger>
+          <TabsTrigger value="performance" data-value="performance" className="flex items-center gap-2">
+            <BarChart2 className="w-4 h-4" />
+            Stats
           </TabsTrigger>
           <TabsTrigger value="player" data-value="player" className="flex items-center gap-2">
             <User className="w-4 h-4" />
@@ -328,11 +337,20 @@ export function SettingsWindow() {
               </div>
             </div>
 
+            <BuildOrderBrowser />
+
             <BuildOrderManager
               filterCiv={filterCiv === "all" ? undefined : filterCiv}
               filterDiff={filterDiff === "all" ? undefined : filterDiff}
               onExport={handleExport}
             />
+          </div>
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+          <div className="max-w-2xl">
+            <SessionHistory />
           </div>
         </TabsContent>
 
@@ -345,6 +363,7 @@ export function SettingsWindow() {
         <TabsContent value="gameplay" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <div className="space-y-4 max-w-2xl">
             <GameplaySettings />
+            <MetronomeSettings />
             <UpgradeBadgesSettings />
             <TelemetryToggle />
           </div>
@@ -354,6 +373,7 @@ export function SettingsWindow() {
         <TabsContent value="voice" className="flex-1 overflow-y-auto custom-scrollbar pr-2">
           <div className="space-y-4 max-w-2xl">
             <VoiceSettings />
+            <CoachPackSettings />
             <ReminderSettings />
           </div>
         </TabsContent>

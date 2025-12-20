@@ -6,3 +6,5 @@ export * from "./timerStore";
 export * from "./badgeStore";
 export * from "./eventLogStore";
 export * from "./matchupStore";
+export * from "./metronomeStore";
+export * from "./sessionStore";

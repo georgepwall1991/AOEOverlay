@@ -16,8 +16,7 @@ const IS_MOCK = import.meta.env.VITE_MOCK_TAURI === 'true';
 // Mock window interface for browser testing
 interface MockWindow {
   label: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setSize: (size: any) => Promise<void>;
+  setSize: (size: Size) => Promise<void>;
   startDragging: () => Promise<void>;
 }
 
@@ -27,20 +26,19 @@ export function getCurrentWindow(): Window | MockWindow {
     // Check for test override via window property or URL parameter
     const testLabel = typeof window !== 'undefined'
       ? (window as unknown as { __TEST_WINDOW_LABEL__?: string }).__TEST_WINDOW_LABEL__
-        || new URLSearchParams(window.location.search).get('window')
+      || new URLSearchParams(window.location.search).get('window')
       : null;
 
     return {
       label: testLabel || "overlay",
-      setSize: async () => {},
-      startDragging: async () => {},
+      setSize: async () => { },
+      startDragging: async () => { },
     };
   }
   return tauriGetCurrentWindow();
 }
 
 // Mock implementations for Tauri event APIs
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type EventCallback<T> = (event: { payload: T; event: string; id: number }) => void;
 
 // Mock listen - returns a no-op unlisten function
@@ -53,7 +51,7 @@ export async function listen<T>(
     // We don't actually listen to anything since Tauri isn't available
     void event;
     void handler;
-    return () => {};
+    return () => { };
   }
   return tauriListen(event, handler);
 }

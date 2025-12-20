@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useConfigStore, useIsTimerRunning, useTimerStore } from "@/stores";
 import { useTTS } from "./useTTS";
 import { DEFAULT_REMINDER_CONFIG } from "@/types";
+import type { SoundEvent } from "./useSound";
 
 type ReminderKey =
   | "villagerQueue"
@@ -18,6 +19,15 @@ const REMINDER_MESSAGES: Record<ReminderKey, string> = {
   military: "Build more military",
   mapControl: "Control the map",
   macroCheck: "Check your production",
+};
+
+const REMINDER_SOUNDS: Record<ReminderKey, SoundEvent | undefined> = {
+  villagerQueue: "reminderVillager",
+  scout: "reminderScout",
+  houses: "reminderHouse",
+  military: undefined,
+  mapControl: undefined,
+  macroCheck: "metronomeTick",
 };
 
 interface ReminderState {
@@ -119,7 +129,7 @@ export function useReminders() {
 
       if (now - state.lastSpoken >= intervalMs) {
         // Speak the reminder
-        await speakReminder(REMINDER_MESSAGES[key]);
+        await speakReminder(REMINDER_MESSAGES[key], REMINDER_SOUNDS[key]);
         reminderStates.current[key].lastSpoken = now;
         busyCooldownUntil.current = Date.now() + 1500;
         // Only speak one reminder per interval check

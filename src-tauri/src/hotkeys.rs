@@ -109,7 +109,7 @@ pub fn register_hotkeys(app: &AppHandle) -> Result<(), String> {
     };
 
     // Register all hotkeys using helper
-    let hotkeys: [(&str, &'static str); 8] = [
+    let hotkeys: [(&str, &'static str); 13] = [
         (&hotkey_config.toggle_overlay, "hotkey-toggle-overlay"),
         (&hotkey_config.previous_step, "hotkey-previous-step"),
         (&hotkey_config.next_step, "hotkey-next-step"),
@@ -118,6 +118,11 @@ pub fn register_hotkeys(app: &AppHandle) -> Result<(), String> {
         (&hotkey_config.toggle_compact, "hotkey-toggle-compact"),
         (&hotkey_config.reset_build_order, "hotkey-reset-build-order"),
         (&hotkey_config.toggle_pause, "hotkey-toggle-pause"),
+        (&hotkey_config.activate_branch_main, "hotkey-activate-branch-main"),
+        (&hotkey_config.activate_branch_1, "hotkey-activate-branch-1"),
+        (&hotkey_config.activate_branch_2, "hotkey-activate-branch-2"),
+        (&hotkey_config.activate_branch_3, "hotkey-activate-branch-3"),
+        (&hotkey_config.activate_branch_4, "hotkey-activate-branch-4"),
     ];
 
     for (key_str, event_name) in hotkeys {

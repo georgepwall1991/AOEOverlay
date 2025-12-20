@@ -8,8 +8,102 @@ import { MATCHUPS } from "@/data/matchups";
 import { CIVILIZATIONS, type Civilization } from "@/types";
 import { logTelemetryEvent, cn } from "@/lib/utils";
 
+interface HeaderProps {
+  isCollapsed?: boolean;
+  playerCiv: string;
+  defaultOpponent?: string;
+  onExpand: () => void;
+  onCollapse: () => void;
+  onClose: () => void;
+}
+
+const Header = ({
+  isCollapsed,
+  playerCiv,
+  defaultOpponent,
+  onExpand,
+  onCollapse,
+  onClose,
+}: HeaderProps) => (
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2">
+      <div
+        className={cn(
+          "p-1.5 rounded-md flex items-center justify-center transition-all duration-300",
+          "bg-gradient-to-br from-amber-500/20 to-amber-900/20 border border-amber-500/30",
+          !isCollapsed && "shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+        )}
+      >
+        <Shield className="w-4 h-4 text-amber-300" />
+      </div>
+      <div>
+        <p
+          className={cn(
+            "text-xs font-bold leading-tight uppercase tracking-wider text-amber-500/90"
+          )}
+        >
+          Intel Report
+        </p>
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-bold text-white text-shadow-strong">
+            {playerCiv}
+          </span>
+          <span className="text-xs text-white/40">vs</span>
+          {isCollapsed ? (
+            <span className="text-sm font-bold text-amber-400 text-shadow-strong">
+              {defaultOpponent || "Select"}
+            </span>
+          ) : (
+            <span className="text-[10px] text-white/60 italic">
+              {defaultOpponent ? "Opponent Analysis" : "Select Opponent"}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div className="flex items-center gap-1">
+      {isCollapsed && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onExpand}
+          className="h-7 text-xs text-amber-200/70 hover:text-amber-100 hover:bg-amber-500/10"
+        >
+          Expand
+        </Button>
+      )}
+      {!isCollapsed && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
+          onClick={onCollapse}
+          title="Collapse"
+        >
+          <ChevronsDownUp className="w-3.5 h-3.5" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 text-white/40 hover:text-red-400 hover:bg-red-900/20"
+        onClick={onClose}
+      >
+        <X className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  </div>
+);
+
 export function MatchupPanel() {
-  const { isOpen, opponentCiv, setOpen, setOpponent, getOpponentFor } = useMatchupStore();
+  const {
+    isOpen,
+    opponentCiv,
+    setOpen,
+    setOpponent,
+    getOpponentFor,
+  } = useMatchupStore();
   const currentOrder = useCurrentBuildOrder();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -41,77 +135,17 @@ export function MatchupPanel() {
     });
   };
 
-  // Shared header component
-  const Header = ({ isCollapsed }: { isCollapsed?: boolean }) => (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className={cn(
-          "p-1.5 rounded-md flex items-center justify-center transition-all duration-300",
-          "bg-gradient-to-br from-amber-500/20 to-amber-900/20 border border-amber-500/30",
-          !isCollapsed && "shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-        )}>
-          <Shield className="w-4 h-4 text-amber-300" />
-        </div>
-        <div>
-          <p className={cn("text-xs font-bold leading-tight uppercase tracking-wider text-amber-500/90")}>
-            Intel Report
-          </p>
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold text-white text-shadow-strong">
-              {playerCiv}
-            </span>
-            <span className="text-xs text-white/40">vs</span>
-            {isCollapsed ? (
-              <span className="text-sm font-bold text-amber-400 text-shadow-strong">
-                {defaultOpponent || "Select"}
-              </span>
-            ) : (
-              <span className="text-[10px] text-white/60 italic">
-                {defaultOpponent ? "Opponent Analysis" : "Select Opponent"}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-1">
-        {isCollapsed && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(false)}
-            className="h-7 text-xs text-amber-200/70 hover:text-amber-100 hover:bg-amber-500/10"
-          >
-            Expand
-          </Button>
-        )}
-        {!isCollapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
-            onClick={() => setCollapsed(true)}
-            title="Collapse"
-          >
-            <ChevronsDownUp className="w-3.5 h-3.5" />
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-white/40 hover:text-red-400 hover:bg-red-900/20"
-          onClick={handleClose}
-        >
-          <X className="w-3.5 h-3.5" />
-        </Button>
-      </div>
-    </div>
-  );
-
   if (collapsed) {
     return (
       <div className="px-3 py-2 border-b border-white/5 bg-black/40 backdrop-blur-sm animate-fade-in">
-        <Header isCollapsed />
+        <Header
+          isCollapsed
+          playerCiv={playerCiv}
+          defaultOpponent={defaultOpponent}
+          onExpand={() => setCollapsed(false)}
+          onCollapse={() => setCollapsed(true)}
+          onClose={handleClose}
+        />
       </div>
     );
   }
@@ -122,7 +156,14 @@ export function MatchupPanel() {
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent opacity-50" />
 
       <div className="px-3 py-3 space-y-3">
-        <Header />
+        <Header
+          playerCiv={playerCiv}
+          defaultOpponent={defaultOpponent}
+          onExpand={() => setCollapsed(false)}
+          onCollapse={() => setCollapsed(true)}
+          onClose={handleClose}
+        />
+
 
         <div className="flex items-center gap-2 p-1 rounded-lg bg-black/40 border border-white/5">
           <div className="px-2 py-1">

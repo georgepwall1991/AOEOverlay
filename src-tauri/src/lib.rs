@@ -7,6 +7,7 @@ mod hotkeys;
 mod state;
 mod tray;
 mod tts;
+mod audio;
 
 use config::load_config;
 use state::AppState;
@@ -226,6 +227,7 @@ pub fn run() {
             export_build_order,
             tts::speak,
             tts::tts_stop,
+            audio::play_sound,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

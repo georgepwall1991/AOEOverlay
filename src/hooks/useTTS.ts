@@ -2,6 +2,7 @@ import { useCallback, useRef } from "react";
 import { useConfigStore } from "@/stores";
 import { speak as tauriSpeak, stopSpeaking as tauriStop } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
+import { useSound, type SoundEvent } from "./useSound";
 
 // Maximum queue size to prevent memory leaks if TTS fails repeatedly
 const MAX_QUEUE_SIZE = 10;
@@ -9,6 +10,7 @@ const MAX_QUEUE_SIZE = 10;
 export function useTTS() {
   const isSpeakingRef = useRef(false);
   const queueRef = useRef<string[]>([]);
+  const { playSound } = useSound();
 
   const getVoiceConfig = useCallback(() => {
     const config = useConfigStore.getState().config;
@@ -16,7 +18,13 @@ export function useTTS() {
   }, []);
 
   const speak = useCallback(
-    async (text: string) => {
+    async (text: string, soundEvent?: SoundEvent) => {
+      // 1. Try playing sound from Coach Pack if event provided
+      if (soundEvent) {
+        const played = await playSound(soundEvent);
+        if (played) return; // Sound played successfully, skip TTS
+      }
+
       const voiceConfig = getVoiceConfig();
 
       if (!voiceConfig.enabled) {
@@ -60,23 +68,23 @@ export function useTTS() {
         }
       }
     },
-    [getVoiceConfig]
+    [getVoiceConfig, playSound]
   );
 
   const speakStep = useCallback(
     async (description: string) => {
       const voiceConfig = getVoiceConfig();
       if (!voiceConfig.speakSteps) return;
-      await speak(description);
+      await speak(description, 'stepAdvance');
     },
     [speak, getVoiceConfig]
   );
 
   const speakReminder = useCallback(
-    async (message: string) => {
+    async (message: string, event?: SoundEvent) => {
       const voiceConfig = getVoiceConfig();
       if (!voiceConfig.speakReminders) return;
-      await speak(message);
+      await speak(message, event);
     },
     [speak, getVoiceConfig]
   );
@@ -88,7 +96,7 @@ export function useTTS() {
       if (deltaSeconds <= 30) return; // Only speak if >30s behind
 
       const message = `You're ${deltaSeconds} seconds behind pace`;
-      await speak(message);
+      await speak(message, 'behindPace');
     },
     [speak, getVoiceConfig]
   );

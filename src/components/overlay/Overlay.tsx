@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { GripVertical, Settings } from "lucide-react";
 import { useWindowDrag, useAutoResize, useTimer, useBuildOrderSync } from "@/hooks";
-import { useOpacity, useConfigStore, useCurrentStep } from "@/stores";
+import { useOpacity, useConfigStore, useCurrentStep, useMetronomeStore, useCurrentBuildOrder } from "@/stores";
 import { BuildOrderDisplay } from "./BuildOrderDisplay";
 import { CompactOverlay } from "./CompactOverlay";
 import { TimerBar } from "./TimerBar";
 import { UpgradeBadges } from "./UpgradeBadges";
+import { ScoutGuide } from "./ScoutGuide";
 import { QuickActionBar } from "./QuickActionBar";
 import { StatusIndicators } from "./StatusIndicators";
 import { KeyboardShortcutsOverlay } from "./KeyboardShortcutsOverlay";
@@ -26,6 +27,8 @@ export function Overlay() {
   const { startDrag } = useWindowDrag();
   const opacity = useOpacity();
   const { config, updateConfig } = useConfigStore();
+  const { isPulsing } = useMetronomeStore();
+  const currentBuild = useCurrentBuildOrder();
   const containerRef = useAutoResize();
   const currentStep = useCurrentStep();
   const { isRunning } = useTimer();
@@ -124,9 +127,13 @@ export function Overlay() {
   // Sync build orders when changed from settings window
   useBuildOrderSync();
 
+  const civThemeClass = currentBuild 
+    ? `civ-theme-${currentBuild.civilization.toLowerCase().replace(/\s+/g, '-')}`
+    : "civ-theme-default";
+
   // Show compact view if enabled
   if (config.compact_mode) {
-    return <CompactOverlay />;
+    return <div className={civThemeClass}><CompactOverlay /></div>;
   }
 
   // Coach-only: keep audio/timers, hide build UI
@@ -183,7 +190,7 @@ export function Overlay() {
     <div
       ref={containerRef}
       data-testid="overlay-container"
-      className="inline-block p-1"
+      className={cn("inline-block p-1 relative", civThemeClass)}
       style={{
         opacity,
         minWidth: 320,
@@ -192,6 +199,10 @@ export function Overlay() {
         transformOrigin: "top left",
       }}
     >
+      {/* Metronome Pulse Effect */}
+      {isPulsing && (
+        <div className="absolute inset-1 pointer-events-none z-50 rounded-lg ring-2 ring-white/50 animate-pulse bg-white/5" />
+      )}
       <div className={cn(
         "flex flex-col overflow-hidden",
         overlayPreset === "minimal"
@@ -251,6 +262,8 @@ export function Overlay() {
 
         {/* Content */}
         <BuildOrderDisplay />
+
+        <ScoutGuide />
 
         {/* Quick action bar */}
         <QuickActionBar />

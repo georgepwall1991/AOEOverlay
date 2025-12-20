@@ -6,14 +6,16 @@ import {
   useConfigStore,
   useTimerStore,
   useBadgeStore,
+  useSessionStore,
   resolveActiveSteps,
 } from "@/stores";
+import { parseTimingToSeconds } from "@/stores/timerStore";
 import { toggleClickThrough, toggleCompactMode, speak } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
 import { logTelemetryEvent } from "@/lib/utils";
 
 export function useGlobalHotkeys() {
-  const { nextStep, previousStep, cycleBuildOrder, resetSteps } =
+  const { nextStep, previousStep, cycleBuildOrder, resetSteps, setActiveBranch } =
     useBuildOrderStore();
   const { toggleVisibility, setVisible } = useOverlayStore();
   const { updateConfig } = useConfigStore();
@@ -51,6 +53,7 @@ export function useGlobalHotkeys() {
   const handleNextStep = useCallback(async () => {
     const buildOrderStore = useBuildOrderStore.getState();
     const timerStore = useTimerStore.getState();
+    const sessionStore = useSessionStore.getState();
 
     const currentStepIndex = buildOrderStore.currentStepIndex;
     const currentOrder =
@@ -61,13 +64,38 @@ export function useGlobalHotkeys() {
       return;
     }
 
-    // Get next step info before advancing
-    const nextStepIndex = currentStepIndex + 1;
     const activeSteps = resolveActiveSteps(
       currentOrder,
       buildOrderStore.activeBranchId
     );
+    const currentStepData = activeSteps[currentStepIndex];
+
+    // Record current step performance before moving to next
+    if (currentStepData) {
+      if (currentStepIndex === 0 && !sessionStore.currentSession) {
+        sessionStore.startSession(currentOrder.id, currentOrder.name);
+      }
+
+      const expectedSeconds = parseTimingToSeconds(currentStepData.timing);
+      if (expectedSeconds !== null) {
+        sessionStore.recordStep({
+          stepId: currentStepData.id,
+          description: currentStepData.description,
+          expectedTiming: currentStepData.timing || "0:00",
+          actualTiming: timerStore.elapsedSeconds,
+          delta: timerStore.elapsedSeconds - expectedSeconds,
+        });
+      }
+    }
+
+    // Get next step info before advancing
+    const nextStepIndex = currentStepIndex + 1;
     const nextStepData = activeSteps[nextStepIndex];
+
+    // If we've reached the end, end the session
+    if (nextStepIndex >= activeSteps.length) {
+      sessionStore.endSession();
+    }
 
     // Advance to next step
     nextStep();
@@ -93,6 +121,7 @@ export function useGlobalHotkeys() {
     resetSteps();
     resetTimer();
     resetBadges();
+    useSessionStore.getState().endSession();
     logTelemetryEvent("hotkey:build:reset", { source: "hotkey" });
   }, [resetSteps, resetTimer, resetBadges]);
 
@@ -156,6 +185,35 @@ export function useGlobalHotkeys() {
           togglePause();
           logTelemetryEvent("hotkey:timer:toggle-pause", { source: "hotkey" });
         }),
+        listen("hotkey-activate-branch-main", () => {
+          setActiveBranch(null);
+          logTelemetryEvent("hotkey:branch:main", { source: "hotkey" });
+        }),
+        listen("hotkey-activate-branch-1", () => {
+          const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
+          const order = buildOrders[currentOrderIndex];
+          if (order?.branches?.[0]) setActiveBranch(order.branches[0].id);
+          logTelemetryEvent("hotkey:branch:1", { source: "hotkey" });
+        }),
+        listen("hotkey-activate-branch-2", () => {
+          const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
+          const order = buildOrders[currentOrderIndex];
+          if (order?.branches?.[1]) setActiveBranch(order.branches[1].id);
+          logTelemetryEvent("hotkey:branch:2", { source: "hotkey" });
+        }),
+        listen("hotkey-activate-branch-3", () => {
+          const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
+          const order = buildOrders[currentOrderIndex];
+          if (order?.branches?.[2]) setActiveBranch(order.branches[2].id);
+          logTelemetryEvent("hotkey:branch:3", { source: "hotkey" });
+        }),
+        listen("hotkey-activate-branch-4", () => {
+          const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
+          const order = buildOrders[currentOrderIndex];
+          if (order?.branches?.[3]) setActiveBranch(order.branches[3].id);
+          logTelemetryEvent("hotkey:branch:4", { source: "hotkey" });
+        }),
+        // Tray icon events (frontend controls visibility, not native window)
         listen("tray-toggle-overlay", () => {
           toggleVisibility();
           logTelemetryEvent("tray:overlay:toggle", { source: "tray" });
@@ -209,5 +267,6 @@ export function useGlobalHotkeys() {
     resetTimer,
     resetBadges,
     togglePause,
+    setActiveBranch,
   ]);
 }

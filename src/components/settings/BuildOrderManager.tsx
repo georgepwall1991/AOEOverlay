@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Download, Upload, Link, Loader2, Library, Globe, Eye, ThumbsUp, Search, ChevronDown, Sparkles, TrendingUp, Clock, X, ArrowUpDown, User, Flame, Target, Zap, Shield, Star, StarOff, Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -279,7 +279,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
   };
 
   // Browse builds handler
-  const handleBrowseBuilds = async () => {
+  const handleBrowseBuilds = useCallback(async () => {
     setIsBrowsing(true);
     setBrowseError(null);
     try {
@@ -292,7 +292,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     } finally {
       setIsBrowsing(false);
     }
-  };
+  }, [browseCivFilter]);
 
   // Import from browse results handler
   const handleImportFromBrowse = async (buildId: string) => {
@@ -319,8 +319,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     if (showBrowseDialog && browseResults.length === 0) {
       handleBrowseBuilds();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only trigger on dialog open, not on results change
-  }, [showBrowseDialog]);
+  }, [showBrowseDialog, browseResults.length, handleBrowseBuilds]);
 
   // Show editor if editing or creating
   if (editingOrder) {
@@ -411,9 +410,8 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`font-medium truncate ${
-                        !order.enabled && "text-muted-foreground"
-                      }`}
+                      className={`font-medium truncate ${!order.enabled && "text-muted-foreground"
+                        }`}
                     >
                       {order.name || "Untitled"}
                     </span>
