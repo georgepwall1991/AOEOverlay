@@ -365,71 +365,111 @@ describe("aoe4guides API", () => {
   });
 
   describe("browseAoe4GuidesBuilds", () => {
-    it("fetches builds without filter", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [
-          { id: "1", title: "Build 1", civ: "ENG", isDraft: false },
-          { id: "2", title: "Build 2", civ: "FRE", isDraft: false },
-        ],
-      });
+    // Helper to mock 3 parallel API calls (views, upvotes, timeCreated sorts)
+    const mockThreeCalls = (builds1: unknown[], builds2: unknown[], builds3: unknown[]) => {
+      mockFetch
+        .mockResolvedValueOnce({ ok: true, json: async () => builds1 })
+        .mockResolvedValueOnce({ ok: true, json: async () => builds2 })
+        .mockResolvedValueOnce({ ok: true, json: async () => builds3 });
+    };
+
+    it("fetches builds with 3 parallel queries for different sort orders", async () => {
+      mockThreeCalls(
+        [{ id: "1", title: "Build 1", civ: "ENG", views: 100, isDraft: false }],
+        [{ id: "2", title: "Build 2", civ: "FRE", views: 50, isDraft: false }],
+        [{ id: "3", title: "Build 3", civ: "HRE", views: 25, isDraft: false }]
+      );
 
       const result = await browseAoe4GuidesBuilds();
 
+      // Should have made 3 calls with different orderBy params
+      expect(mockFetch).toHaveBeenCalledTimes(3);
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds",
+        "https://aoe4guides.com/api/builds?orderBy=views&order=desc",
         expect.anything()
       );
-      expect(result).toHaveLength(2);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://aoe4guides.com/api/builds?orderBy=upvotes&order=desc",
+        expect.anything()
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://aoe4guides.com/api/builds?orderBy=timeCreated&order=desc",
+        expect.anything()
+      );
+      expect(result).toHaveLength(3);
     });
 
-    it("filters by civilization code", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      });
+    it("deduplicates builds returned from multiple queries", async () => {
+      // Same build appears in all 3 query results
+      const sameBuild = { id: "1", title: "Popular Build", civ: "ENG", views: 100, isDraft: false };
+      mockThreeCalls([sameBuild], [sameBuild], [sameBuild]);
+
+      const result = await browseAoe4GuidesBuilds();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("1");
+    });
+
+    it("sorts merged results by views (most popular first)", async () => {
+      mockThreeCalls(
+        [{ id: "1", title: "Low views", civ: "ENG", views: 10, isDraft: false }],
+        [{ id: "2", title: "High views", civ: "FRE", views: 1000, isDraft: false }],
+        [{ id: "3", title: "Medium views", civ: "HRE", views: 100, isDraft: false }]
+      );
+
+      const result = await browseAoe4GuidesBuilds();
+
+      expect(result[0].views).toBe(1000);
+      expect(result[1].views).toBe(100);
+      expect(result[2].views).toBe(10);
+    });
+
+    it("filters by civilization code in all 3 queries", async () => {
+      mockThreeCalls([], [], []);
 
       await browseAoe4GuidesBuilds({ civ: "ENG" });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds?civ=ENG",
+        "https://aoe4guides.com/api/builds?civ=ENG&orderBy=views&order=desc",
+        expect.anything()
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://aoe4guides.com/api/builds?civ=ENG&orderBy=upvotes&order=desc",
+        expect.anything()
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://aoe4guides.com/api/builds?civ=ENG&orderBy=timeCreated&order=desc",
         expect.anything()
       );
     });
 
     it("converts full civilization name to code", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      });
+      mockThreeCalls([], [], []);
 
       await browseAoe4GuidesBuilds({ civ: "English" });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds?civ=ENG",
+        expect.stringContaining("civ=ENG"),
         expect.anything()
       );
     });
 
-    it("excludes draft builds", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [
-          { id: "1", title: "Published", isDraft: false },
-          { id: "2", title: "Draft", isDraft: true },
-        ],
-      });
+    it("excludes draft builds from all query results", async () => {
+      mockThreeCalls(
+        [{ id: "1", title: "Published", isDraft: false, views: 100 }],
+        [{ id: "2", title: "Draft", isDraft: true, views: 50 }],
+        [{ id: "3", title: "Another Published", isDraft: false, views: 25 }]
+      );
 
       const result = await browseAoe4GuidesBuilds();
 
-      expect(result).toHaveLength(1);
-      expect(result[0].title).toBe("Published");
+      expect(result).toHaveLength(2);
+      expect(result.every((b) => b.title !== "Draft")).toBe(true);
     });
 
     it("returns summary data only", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [
+      mockThreeCalls(
+        [
           {
             id: "1",
             title: "Test Build",
@@ -449,7 +489,9 @@ describe("aoe4guides API", () => {
             authorUid: "uid",
           },
         ],
-      });
+        [],
+        []
+      );
 
       const result = await browseAoe4GuidesBuilds();
 
@@ -469,20 +511,36 @@ describe("aoe4guides API", () => {
       });
     });
 
-    it("throws error on API failure", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        statusText: "Internal Server Error",
-      });
+    it("throws error only when ALL API calls fail", async () => {
+      // All 3 calls fail
+      mockFetch
+        .mockResolvedValueOnce({ ok: false, status: 500, statusText: "Internal Server Error" })
+        .mockResolvedValueOnce({ ok: false, status: 500, statusText: "Internal Server Error" })
+        .mockResolvedValueOnce({ ok: false, status: 500, statusText: "Internal Server Error" });
 
       await expect(browseAoe4GuidesBuilds()).rejects.toThrow("500");
     });
 
+    it("returns partial results when some API calls fail", async () => {
+      // First call succeeds, other 2 fail
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => [{ id: "1", title: "Build 1", civ: "ENG", views: 100, isDraft: false }],
+        })
+        .mockResolvedValueOnce({ ok: false, status: 500, statusText: "Internal Server Error" })
+        .mockResolvedValueOnce({ ok: false, status: 500, statusText: "Internal Server Error" });
+
+      const result = await browseAoe4GuidesBuilds();
+
+      // Should still return the successful result
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("1");
+    });
+
     it("handles null values from API gracefully", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [
+      mockThreeCalls(
+        [
           {
             id: "1",
             title: null,
@@ -499,7 +557,9 @@ describe("aoe4guides API", () => {
             isDraft: null,
           },
         ],
-      });
+        [],
+        []
+      );
 
       const result = await browseAoe4GuidesBuilds();
 
@@ -1048,188 +1108,6 @@ describe("aoe4guides API", () => {
       expect(result.description).toContain("Rush");
       expect(result.description).toContain("aoe4guides.com");
       expect(result.description).toContain("aoe4guides.com");
-    });
-  });
-
-  describe("importAoe4GuidesBuild", () => {
-    it("extracts ID and fetches build", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: "ABC123",
-          title: "Test Build",
-          civ: "ENG",
-          steps: [
-            {
-              type: "age",
-              age: 1,
-              gameplan: "",
-              steps: [{ description: "Test" }],
-            },
-          ],
-        }),
-      });
-
-      const result = await importAoe4GuidesBuild("https://aoe4guides.com/build/ABC123");
-
-      expect(result.id).toBe("aoe4guides-ABC123");
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds/ABC123",
-        expect.anything()
-      );
-    });
-
-    it("throws error for invalid URL", async () => {
-      await expect(importAoe4GuidesBuild("invalid")).rejects.toThrow(
-        "Invalid AOE4Guides link"
-      );
-    });
-  });
-
-  describe("browseAoe4GuidesBuilds", () => {
-    it("fetches builds without filter", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [
-          { id: "1", title: "Build 1", civ: "ENG", isDraft: false },
-          { id: "2", title: "Build 2", civ: "FRE", isDraft: false },
-        ],
-      });
-
-      const result = await browseAoe4GuidesBuilds();
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds",
-        expect.anything()
-      );
-      expect(result).toHaveLength(2);
-    });
-
-    it("filters by civilization code", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      });
-
-      await browseAoe4GuidesBuilds({ civ: "ENG" });
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds?civ=ENG",
-        expect.anything()
-      );
-    });
-
-    it("converts full civilization name to code", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [],
-      });
-
-      await browseAoe4GuidesBuilds({ civ: "English" });
-
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds?civ=ENG",
-        expect.anything()
-      );
-    });
-
-    it("excludes draft builds", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [
-          { id: "1", title: "Published", isDraft: false },
-          { id: "2", title: "Draft", isDraft: true },
-        ],
-      });
-
-      const result = await browseAoe4GuidesBuilds();
-
-      expect(result).toHaveLength(1);
-      expect(result[0].title).toBe("Published");
-    });
-
-    it("returns summary data only", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [
-          {
-            id: "1",
-            title: "Test Build",
-            description: "Description",
-            author: "User",
-            civ: "ENG",
-            strategy: "Rush",
-            season: "S7",
-            views: 100,
-            likes: 10,
-            upvotes: 5,
-            downvotes: 1,
-            score: 4,
-            isDraft: false,
-            // These should not be in summary
-            steps: [{ type: "age", age: 1, steps: [] }],
-            authorUid: "uid",
-          },
-        ],
-      });
-
-      const result = await browseAoe4GuidesBuilds();
-
-      expect(result[0]).toEqual({
-        id: "1",
-        title: "Test Build",
-        description: "Description",
-        author: "User",
-        civ: "ENG",
-        strategy: "Rush",
-        season: "S7",
-        views: 100,
-        likes: 10,
-        upvotes: 5,
-        downvotes: 1,
-        score: 4,
-      });
-    });
-
-    it("throws error on API failure", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        statusText: "Internal Server Error",
-      });
-
-      await expect(browseAoe4GuidesBuilds()).rejects.toThrow("500");
-    });
-
-    it("handles null values from API gracefully", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => [
-          {
-            id: "1",
-            title: null,
-            description: null,
-            author: null,
-            civ: null,
-            strategy: null,
-            season: null,
-            views: null,
-            likes: null,
-            upvotes: null,
-            downvotes: null,
-            score: null,
-            isDraft: null,
-          },
-        ],
-      });
-
-      const result = await browseAoe4GuidesBuilds();
-
-      expect(result).toHaveLength(1);
-      expect(result[0].title).toBe("");
-      expect(result[0].description).toBe("");
-      expect(result[0].author).toBe("");
-      expect(result[0].views).toBe(0);
     });
   });
 

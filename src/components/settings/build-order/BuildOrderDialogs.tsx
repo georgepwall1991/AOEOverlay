@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import {
     Upload, Loader2, Link, Search, X, Library, Globe, Zap, ArrowUpDown,
-    TrendingUp, Clock, ThumbsUp, Sparkles, Flame, User, Eye, Download
+    TrendingUp, Clock, ThumbsUp, Sparkles, Flame, User, Eye, Download, Check, Swords
 } from "lucide-react";
 import { CIVILIZATIONS } from "@/types";
 import { getCivNameFromCode, type Aoe4GuidesBuildSummary } from "@/lib/aoe4guides";
@@ -78,12 +78,16 @@ interface BuildOrderDialogsProps {
     onBrowseSearchQueryChange: (query: string) => void;
     browseStrategyFilter: string;
     onBrowseStrategyFilterChange: (strategy: string) => void;
+    browseMatchupFilter: string;
+    onBrowseMatchupFilterChange: (civ: string) => void;
     browseSortBy: "popular" | "recent" | "upvotes";
     onBrowseSortByChange: (sort: "popular" | "recent" | "upvotes") => void;
     isBrowsing: boolean;
     browseError: string | null;
     onRefreshBrowse: () => void;
     onImportFromBrowse: (id: string) => void;
+    // Track already-imported builds
+    importedAoe4GuidesIds: Set<string>;
 }
 
 export function BuildOrderDialogs({
@@ -118,12 +122,15 @@ export function BuildOrderDialogs({
     onBrowseSearchQueryChange,
     browseStrategyFilter,
     onBrowseStrategyFilterChange,
+    browseMatchupFilter,
+    onBrowseMatchupFilterChange,
     browseSortBy,
     onBrowseSortByChange,
     isBrowsing,
     browseError,
     onRefreshBrowse,
     onImportFromBrowse,
+    importedAoe4GuidesIds,
 }: BuildOrderDialogsProps) {
     return (
         <>
@@ -425,6 +432,24 @@ export function BuildOrderDialogs({
                                 </Select>
 
                                 <Select
+                                    value={browseMatchupFilter || "all"}
+                                    onValueChange={(value) => onBrowseMatchupFilterChange(value === "all" ? "" : value)}
+                                >
+                                    <SelectTrigger className="w-[140px] bg-muted/50">
+                                        <Swords className="w-4 h-4 mr-2 text-muted-foreground" />
+                                        <SelectValue placeholder="vs Any" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">vs Any Civ</SelectItem>
+                                        {CIVILIZATIONS.map((civ) => (
+                                            <SelectItem key={civ} value={civ}>
+                                                vs {civ}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Select
                                     value={browseSortBy}
                                     onValueChange={(value) => onBrowseSortByChange(value as "popular" | "recent" | "upvotes")}
                                 >
@@ -504,6 +529,15 @@ export function BuildOrderDialogs({
                                                             {build.strategy}
                                                         </Badge>
                                                     )}
+                                                    {importedAoe4GuidesIds.has(build.id) && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="text-[10px] bg-green-500/10 text-green-700 border-green-500/20"
+                                                        >
+                                                            <Check className="w-3 h-3 mr-1" />
+                                                            Imported
+                                                        </Badge>
+                                                    )}
                                                 </div>
 
                                                 {build.description && (
@@ -530,12 +564,21 @@ export function BuildOrderDialogs({
 
                                             <Button
                                                 size="sm"
-                                                className="flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-600 text-white"
+                                                className={`flex-shrink-0 ${
+                                                    importedAoe4GuidesIds.has(build.id)
+                                                        ? "bg-muted text-muted-foreground hover:bg-muted/80"
+                                                        : "bg-gradient-to-r from-amber-500 to-orange-600 text-white"
+                                                }`}
                                                 onClick={() => onImportFromBrowse(build.id)}
                                                 disabled={isImporting}
                                             >
                                                 {isImporting ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : importedAoe4GuidesIds.has(build.id) ? (
+                                                    <>
+                                                        <Download className="w-4 h-4 mr-1.5" />
+                                                        Re-import
+                                                    </>
                                                 ) : (
                                                     <>
                                                         <Download className="w-4 h-4 mr-1.5" />

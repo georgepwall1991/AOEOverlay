@@ -942,33 +942,33 @@ export async function importAoe4GuidesBuild(urlOrId: string): Promise<BuildOrder
 }
 
 /**
- * Browse builds from AOE4 Guides
- * Returns list of build summaries for the browser UI
+ * Internal helper to fetch builds with specific sort parameters
  */
-export async function browseAoe4GuidesBuilds(options?: {
-  civ?: string; // Civilization code (ENG, FRE, etc.) or full name
+async function fetchBuildsWithSort(options: {
+  civ?: string;
+  orderBy: "views" | "upvotes" | "timeCreated";
+  order: "desc" | "asc";
 }): Promise<Aoe4GuidesBuildSummary[]> {
   const params = new URLSearchParams();
 
-  if (options?.civ) {
-    // Convert full name to code if needed
+  if (options.civ) {
     const code = CIVILIZATION_TO_CODE[options.civ] || options.civ.toUpperCase();
     params.set("civ", code);
   }
 
-  const queryString = params.toString();
-  const url = `${API_BASE}/builds${queryString ? `?${queryString}` : ""}`;
+  params.set("orderBy", options.orderBy);
+  params.set("order", options.order);
 
-  const response = await fetchWithTimeout(url, 5000);
+  const url = `${API_BASE}/builds?${params.toString()}`;
+  const response = await fetchWithTimeout(url, 10000); // 10s timeout for browse queries
 
   if (!response.ok) {
-    throw new Error(`Failed to browse builds: ${response.status} ${response.statusText}`);
+    throw new Error(`Failed to fetch builds: ${response.status} ${response.statusText}`);
   }
 
   const json = await response.json();
   const data = z.array(Aoe4GuidesBuildSummarySchema).parse(json);
 
-  // Filter out drafts and map to summary
   return data
     .filter((build) => !build.isDraft)
     .map((build) => ({
@@ -985,6 +985,60 @@ export async function browseAoe4GuidesBuilds(options?: {
       downvotes: build.downvotes,
       score: build.score,
     }));
+}
+
+/**
+ * Browse builds from AOE4 Guides
+ * Returns list of build summaries for the browser UI
+ *
+ * Uses multi-sort query strategy to get more results:
+ * The API limits to ~10 builds per query, but different sort orders
+ * return different builds. We query 3 times (by views, upvotes, recent)
+ * and merge results to get ~20-25 unique builds per civ.
+ */
+export async function browseAoe4GuidesBuilds(options?: {
+  civ?: string; // Civilization code (ENG, FRE, etc.) or full name
+}): Promise<Aoe4GuidesBuildSummary[]> {
+  // Query with 3 different sort orders in parallel to maximize results
+  // Use Promise.allSettled so partial failures don't break everything
+  const results = await Promise.allSettled([
+    fetchBuildsWithSort({ civ: options?.civ, orderBy: "views", order: "desc" }),
+    fetchBuildsWithSort({ civ: options?.civ, orderBy: "upvotes", order: "desc" }),
+    fetchBuildsWithSort({ civ: options?.civ, orderBy: "timeCreated", order: "desc" }),
+  ]);
+
+  // Collect successful results
+  const allBuilds: Aoe4GuidesBuildSummary[] = [];
+  let hasAnySuccess = false;
+
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      hasAnySuccess = true;
+      allBuilds.push(...result.value);
+    }
+  }
+
+  // If all 3 queries failed, throw the first error
+  if (!hasAnySuccess) {
+    const firstError = results.find((r) => r.status === "rejected") as PromiseRejectedResult;
+    throw firstError.reason;
+  }
+
+  // Merge and deduplicate by ID
+  const seen = new Set<string>();
+  const uniqueBuilds: Aoe4GuidesBuildSummary[] = [];
+
+  for (const build of allBuilds) {
+    if (!seen.has(build.id)) {
+      seen.add(build.id);
+      uniqueBuilds.push(build);
+    }
+  }
+
+  // Sort merged results by views (most popular first)
+  uniqueBuilds.sort((a, b) => b.views - a.views);
+
+  return uniqueBuilds;
 }
 
 /**

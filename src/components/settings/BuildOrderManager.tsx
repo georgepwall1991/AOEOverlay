@@ -48,6 +48,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
   const [browseCivFilter, setBrowseCivFilter] = useState<string>("");
   const [browseSearchQuery, setBrowseSearchQuery] = useState<string>("");
   const [browseStrategyFilter, setBrowseStrategyFilter] = useState<string>("");
+  const [browseMatchupFilter, setBrowseMatchupFilter] = useState<string>("");
   const [browseSortBy, setBrowseSortBy] = useState<"popular" | "recent" | "upvotes">("popular");
   const [isBrowsing, setIsBrowsing] = useState(false);
   const [browseError, setBrowseError] = useState<string | null>(null);
@@ -68,6 +69,23 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     });
   }, [buildOrders, filterCiv, filterDiff, searchQuery]);
 
+  // Track which aoe4guides builds have already been imported
+  // Build IDs are in format "aoe4guides-{originalId}" or "aoe4guides-{originalId}-{timestamp}"
+  const importedAoe4GuidesIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const order of buildOrders) {
+      if (order.id.startsWith("aoe4guides-")) {
+        // Extract original ID: "aoe4guides-ABC123" -> "ABC123"
+        // Also handles "aoe4guides-ABC123-1234567890" -> "ABC123"
+        const match = order.id.match(/^aoe4guides-([a-zA-Z0-9]+)/);
+        if (match) {
+          ids.add(match[1]);
+        }
+      }
+    }
+    return ids;
+  }, [buildOrders]);
+
   // Filter and sort browse results
   const filteredBrowseResults = useMemo(() => {
     let results = [...browseResults];
@@ -85,6 +103,25 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
         build.strategy?.toLowerCase().includes(browseStrategyFilter.toLowerCase())
       );
     }
+    // Filter by matchup (vs civilization) - search in title and description
+    if (browseMatchupFilter) {
+      const matchup = browseMatchupFilter.toLowerCase();
+      // Also check for common abbreviations (e.g., "HRE" for "Holy Roman Empire")
+      results = results.filter((build) => {
+        const titleLower = build.title.toLowerCase();
+        const descLower = build.description?.toLowerCase() || "";
+        return (
+          titleLower.includes(matchup) ||
+          descLower.includes(matchup) ||
+          titleLower.includes("vs " + matchup) ||
+          titleLower.includes("vs. " + matchup) ||
+          titleLower.includes("against " + matchup) ||
+          descLower.includes("vs " + matchup) ||
+          descLower.includes("vs. " + matchup) ||
+          descLower.includes("against " + matchup)
+        );
+      });
+    }
     switch (browseSortBy) {
       case "popular":
         results.sort((a, b) => b.views - a.views);
@@ -97,7 +134,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
         break;
     }
     return results;
-  }, [browseResults, browseSearchQuery, browseStrategyFilter, browseSortBy]);
+  }, [browseResults, browseSearchQuery, browseStrategyFilter, browseMatchupFilter, browseSortBy]);
 
   // Handlers
   const handleToggleEnabled = async (order: BuildOrder) => {
@@ -352,12 +389,15 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
         onBrowseSearchQueryChange={setBrowseSearchQuery}
         browseStrategyFilter={browseStrategyFilter}
         onBrowseStrategyFilterChange={setBrowseStrategyFilter}
+        browseMatchupFilter={browseMatchupFilter}
+        onBrowseMatchupFilterChange={setBrowseMatchupFilter}
         browseSortBy={browseSortBy}
         onBrowseSortByChange={setBrowseSortBy}
         isBrowsing={isBrowsing}
         browseError={browseError}
         onRefreshBrowse={handleBrowseBuilds}
         onImportFromBrowse={handleImportFromBrowse}
+        importedAoe4GuidesIds={importedAoe4GuidesIds}
       />
     </div>
   );
