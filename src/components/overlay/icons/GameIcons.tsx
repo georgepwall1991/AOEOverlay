@@ -379,7 +379,7 @@ export function renderIconText(text: string, size = 18): React.ReactNode {
     const iconType = match[1] as GameIconType;
     if (iconType in GAME_ICONS) {
       parts.push(
-        <GameIcon key={match.index} type={iconType} size={size} className="mx-0.5 align-middle" showLabel={true} />
+        <GameIcon key={match.index} type={iconType} size={size} className="mx-0.5 align-middle" showLabel={false} />
       );
     } else {
       parts.push(match[0]); // Keep original if icon not found

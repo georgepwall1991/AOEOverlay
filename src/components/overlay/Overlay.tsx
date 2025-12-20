@@ -101,16 +101,18 @@ export function Overlay() {
       className={cn("inline-block p-1 relative", civThemeClass)}
       style={{
         opacity,
-        minWidth: 320,
-        maxWidth: 600,
+        minWidth: 400,
+        maxWidth: 800,
         transform: `scale(${scale})`,
         transformOrigin: "top left",
       }}
     >
       {/* Metronome Pulse Effect */}
-      {isPulsing && (
-        <div className="absolute inset-1 pointer-events-none z-50 rounded-lg ring-2 ring-white/50 animate-pulse bg-white/5" />
-      )}
+      {
+        isPulsing && (
+          <div className="absolute inset-1 pointer-events-none z-50 rounded-lg ring-2 ring-white/50 animate-pulse bg-white/5" />
+        )
+      }
       <div className={cn(
         "flex flex-col overflow-hidden",
         overlayPreset === "minimal"
@@ -186,6 +188,6 @@ export function Overlay() {
 
       {/* First launch onboarding */}
       <FirstLaunchOnboarding />
-    </div>
+    </div >
   );
 }

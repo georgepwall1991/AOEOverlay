@@ -141,10 +141,23 @@ const MOCK_BUILD_ORDERS: BuildOrder[] = [
     difficulty: "Beginner",
     enabled: true,
     steps: [
-      { id: "s1", description: "Build House", timing: "0:00", resources: { wood: 50 } },
+      { id: "s1", description: "Build House", timing: "0:00", resources: { food: 50 } },
       { id: "s2", description: "Build Council Hall", timing: "2:30", resources: { food: 400, gold: 200 } },
-      { id: "s3", description: "Train Longbows", timing: "4:00" },
-      { id: "s4", description: "Attack", timing: "5:00" }
+      { id: "s3", description: "Train [icon:longbowman] Longbows to harass the enemy wood line", timing: "4:00" },
+      { id: "s4", description: "Move your [icon:scout] to find the enemy base and place a rally point", timing: "5:00" }
+    ]
+  },
+  {
+    id: "test-order-2",
+    name: "French 2TC Boom (Experimental Layout Test)",
+    civilization: "French",
+    description: "Advanced boom with many resources and long complex instructions",
+    difficulty: "Advanced",
+    enabled: true,
+    steps: [
+      { id: "f1", description: "Start by sending 6 vills to food and queueing 3 more vills to gold immediately", timing: "0:00", resources: { food: 50, wood: 50, gold: 50, stone: 50 } },
+      { id: "f2", description: "Build [icon:town_center] SECOND TOWN CENTER near the berries or deer but make sure you are safe from raids", timing: "5:30", resources: { wood: 400, stone: 300, food: 100, gold: 100 } },
+      { id: "f3", description: "This is an extremely long instruction designed to see if the text wraps properly in the new expanded UI without being cut off", timing: "7:00", resources: { food: 9999, wood: 9999 } }
     ]
   }
 ];

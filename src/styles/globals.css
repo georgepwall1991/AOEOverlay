@@ -54,6 +54,7 @@
   * {
     border-color: hsl(var(--border));
   }
+
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
@@ -62,7 +63,9 @@
 }
 
 /* Overlay specific styles */
-html, body, #root {
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -90,19 +93,18 @@ html, body, #root {
 .glass-panel,
 .glass-panel-accent {
   border-radius: 0.75rem;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  background-color: rgba(0, 0, 0, 0.85);
+  /* Deepened for better contrast */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .glass-panel {
-  background: linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.75) 0%,
-    rgba(20, 20, 30, 0.7) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(0, 0, 0, 0.75) 0%,
+      rgba(20, 20, 30, 0.7) 100%);
 }
 
 /* Floating panel - minimal, almost transparent */
@@ -115,12 +117,10 @@ html, body, #root {
 
 /* AoE4 themed accent border */
 .glass-panel-accent {
-  border-image: linear-gradient(
-    135deg,
-    rgba(212, 175, 55, 0.4) 0%,
-    rgba(212, 175, 55, 0.1) 50%,
-    rgba(212, 175, 55, 0.4) 100%
-  ) 1;
+  border-image: linear-gradient(135deg,
+      rgba(212, 175, 55, 0.4) 0%,
+      rgba(212, 175, 55, 0.1) 50%,
+      rgba(212, 175, 55, 0.4) 100%) 1;
 }
 
 /* Step card styling */
@@ -181,62 +181,74 @@ html, body, #root {
 
 /* Civilization colors and themes */
 .civ-theme-english {
-  --civ-color: 0 70% 50%; /* Red */
+  --civ-color: 0 70% 50%;
+  /* Red */
   --civ-glow: rgba(239, 68, 68, 0.5);
 }
 
 .civ-theme-french {
-  --civ-color: 220 80% 50%; /* Blue */
+  --civ-color: 220 80% 50%;
+  /* Blue */
   --civ-glow: rgba(59, 130, 246, 0.5);
 }
 
 .civ-theme-hre {
-  --civ-color: 45 100% 50%; /* Gold */
+  --civ-color: 45 100% 50%;
+  /* Gold */
   --civ-glow: rgba(245, 158, 11, 0.5);
 }
 
 .civ-theme-mongols {
-  --civ-color: 35 90% 45%; /* Brown/Orange */
+  --civ-color: 35 90% 45%;
+  /* Brown/Orange */
   --civ-glow: rgba(249, 115, 22, 0.5);
 }
 
 .civ-theme-rus {
-  --civ-color: 120 60% 35%; /* Green */
+  --civ-color: 120 60% 35%;
+  /* Green */
   --civ-glow: rgba(34, 197, 94, 0.5);
 }
 
 .civ-theme-chinese {
-  --civ-color: 0 100% 40%; /* Deep Red */
+  --civ-color: 0 100% 40%;
+  /* Deep Red */
   --civ-glow: rgba(220, 38, 38, 0.5);
 }
 
 .civ-theme-delhi {
-  --civ-color: 140 70% 35%; /* Teal/Green */
+  --civ-color: 140 70% 35%;
+  /* Teal/Green */
   --civ-glow: rgba(20, 184, 166, 0.5);
 }
 
 .civ-theme-abbasid {
-  --civ-color: 200 70% 40%; /* Black/Blue */
+  --civ-color: 200 70% 40%;
+  /* Black/Blue */
   --civ-glow: rgba(15, 118, 110, 0.5);
 }
 
 .civ-theme-malians {
-  --civ-color: 40 80% 40%; /* Orange/Gold */
+  --civ-color: 40 80% 40%;
+  /* Orange/Gold */
   --civ-glow: rgba(234, 179, 8, 0.5);
 }
 
 .civ-theme-ottomans {
-  --civ-color: 0 80% 45%; /* Crimson */
+  --civ-color: 0 80% 45%;
+  /* Crimson */
   --civ-glow: rgba(185, 28, 28, 0.5);
 }
 
 .civ-theme-byzantines {
-  --civ-color: 280 60% 45%; /* Purple */
+  --civ-color: 280 60% 45%;
+  /* Purple */
   --civ-glow: rgba(147, 51, 234, 0.5);
 }
 
 .civ-theme-japanese {
-  --civ-color: 0 0% 20%; /* Black/White/Red */
+  --civ-color: 0 0% 20%;
+  /* Black/White/Red */
   --civ-glow: rgba(239, 68, 68, 0.5);
 }
 
@@ -259,9 +271,12 @@ html, body, #root {
 
 /* Animation keyframes */
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
   }
+
   50% {
     box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
   }
@@ -272,6 +287,7 @@ html, body, #root {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -282,6 +298,7 @@ html, body, #root {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -318,10 +335,56 @@ html, body, #root {
 }
 
 /* Lock mode indicator animation */
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 0.95;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 4s ease-in-out infinite;
+}
+
+/* Next Up Step - The "Anticipation" state */
+.step-next-up {
+  position: relative;
+  opacity: 0.9;
+  border: 1px dashed rgba(255, 255, 255, 0.25) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  transform: scale(0.99);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.step-next-up::after {
+  content: 'NEXT UP';
+  position: absolute;
+  top: -6px;
+  right: 12px;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(30, 30, 30, 0.9);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+}
+
 @keyframes lock-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.7;
   }
+
   50% {
     opacity: 1;
   }
@@ -338,6 +401,7 @@ html, body, #root {
     transform: scale(0.96) translateY(-8px);
     filter: blur(4px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -351,6 +415,7 @@ html, body, #root {
     transform: scale(1) translateY(0);
     filter: blur(0);
   }
+
   to {
     opacity: 0;
     transform: scale(0.96) translateY(-8px);
@@ -372,10 +437,12 @@ html, body, #root {
     transform: scale(1);
     box-shadow: 0 0 0 rgba(212, 175, 55, 0);
   }
+
   50% {
     transform: scale(1.02);
     box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
   }
+
   100% {
     transform: scale(1);
     box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
@@ -387,6 +454,7 @@ html, body, #root {
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -397,9 +465,11 @@ html, body, #root {
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.2);
   }
+
   100% {
     transform: scale(1);
   }
@@ -419,9 +489,12 @@ html, body, #root {
 
 /* Progress bar animation */
 @keyframes progress-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
   }
+
   50% {
     box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
   }
@@ -437,6 +510,7 @@ html, body, #root {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -453,8 +527,13 @@ html, body, #root {
 
 /* Animated gradient border */
 @keyframes gradient-rotate {
-  0% { --angle: 0deg; }
-  100% { --angle: 360deg; }
+  0% {
+    --angle: 0deg;
+  }
+
+  100% {
+    --angle: 360deg;
+  }
 }
 
 @property --angle {
@@ -465,63 +544,86 @@ html, body, #root {
 
 /* Neon glow effect for active elements */
 @keyframes neon-pulse {
-  0%, 100% {
-    filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.8))
-            drop-shadow(0 0 4px rgba(251, 191, 36, 0.6))
-            drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.8)) drop-shadow(0 0 4px rgba(251, 191, 36, 0.6)) drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
   }
+
   50% {
-    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 1))
-            drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))
-            drop-shadow(0 0 16px rgba(251, 191, 36, 0.6));
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 1)) drop-shadow(0 0 8px rgba(251, 191, 36, 0.8)) drop-shadow(0 0 16px rgba(251, 191, 36, 0.6));
   }
 }
 
 /* Breathing glow for resources */
 @keyframes resource-breathe {
-  0%, 100% { opacity: 0.9; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
+
+  0%,
+  100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 
 /* Subtle floating animation */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-2px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
 }
 
 /* Shimmer effect for text */
 @keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
 }
 
 /* Active step with animated border */
 .step-active-glow {
   position: relative;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
   border-radius: 8px;
   animation: neon-pulse 2s ease-in-out infinite;
+  transform: scale(1.02);
+  z-index: 10;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(var(--civ-color), 0.2);
 }
 
 .step-active-glow::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  border-radius: 9px;
-  background: linear-gradient(
-    var(--angle, 0deg),
-    rgba(251, 191, 36, 0.8),
-    rgba(245, 158, 11, 0.4),
-    rgba(217, 119, 6, 0.2),
-    rgba(245, 158, 11, 0.4),
-    rgba(251, 191, 36, 0.8)
-  );
-  animation: gradient-rotate 3s linear infinite;
+  inset: -1.5px;
+  border-radius: 9.5px;
+  background: linear-gradient(var(--angle, 0deg),
+      rgba(251, 191, 36, 1),
+      rgba(245, 158, 11, 0.6),
+      rgba(217, 119, 6, 0.3),
+      rgba(245, 158, 11, 0.6),
+      rgba(251, 191, 36, 1));
+  animation: gradient-rotate 2.5s linear infinite;
   z-index: -1;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: xor;
   -webkit-mask-composite: xor;
-  padding: 1px;
+  padding: 1.5px;
 }
 
 /* Glowing step number badge */
@@ -629,20 +731,42 @@ html, body, #root {
 
 /* Hover effect for steps */
 .step-hover-effect {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .step-hover-effect:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(6px);
+  box-shadow: -4px 0 0 hsl(var(--civ-color, var(--aoe-gold)));
+}
+
+/* Glass Pill for Compact HUD */
+.glass-pill {
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 12px 40px -8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 8px 16px;
+  width: 100%;
 }
 
 /* Text with strong shadow for readability */
 .text-shadow-strong {
   text-shadow:
-    0 2px 4px rgba(0, 0, 0, 1),
-    0 0 10px rgba(0, 0, 0, 0.8),
-    0 0 20px rgba(0, 0, 0, 0.6);
+    0 1px 2px rgba(0, 0, 0, 1),
+    0 0 8px rgba(0, 0, 0, 0.9),
+    0 0 16px rgba(0, 0, 0, 0.7);
+}
+
+.tracking-pro {
+  letter-spacing: -0.02em;
+}
+
+.tracking-pro-tight {
+  letter-spacing: -0.05em;
 }
 
 /* Resource number glow by type */
@@ -677,10 +801,12 @@ html, body, #root {
     transform: translateX(-8px) scale(0.95);
     filter: blur(2px);
   }
+
   50% {
     opacity: 0.8;
     filter: blur(0);
   }
+
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -698,9 +824,11 @@ html, body, #root {
     transform: scale(0.8);
     opacity: 0.5;
   }
+
   50% {
     transform: scale(1.15);
   }
+
   100% {
     transform: scale(1);
     opacity: 1;

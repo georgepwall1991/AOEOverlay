@@ -6,10 +6,12 @@ const RESOURCE_ICONS = {
   wood: "/icons/resource_wood.webp",
   gold: "/icons/resource_gold.webp",
   stone: "/icons/resource_stone.webp",
+  villager: "/icons/villager.webp",
+  pop: "/icons/house.webp",
 } as const;
 
 interface ResourceIconProps {
-  type: "food" | "wood" | "gold" | "stone";
+  type: "food" | "wood" | "gold" | "stone" | "villager" | "pop";
   size?: number;
   className?: string;
   glow?: boolean;
@@ -50,4 +52,12 @@ export function GoldIcon({ size = 20, className }: Omit<ResourceIconProps, "type
 
 export function StoneIcon({ size = 20, className }: Omit<ResourceIconProps, "type">) {
   return <ResourceIcon type="stone" size={size} className={className} />;
+}
+
+export function VillagerIcon({ size = 20, className }: Omit<ResourceIconProps, "type">) {
+  return <ResourceIcon type="villager" size={size} className={className} />;
+}
+
+export function PopIcon({ size = 20, className }: Omit<ResourceIconProps, "type">) {
+  return <ResourceIcon type="pop" size={size} className={className} />;
 }

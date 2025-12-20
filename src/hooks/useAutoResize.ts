@@ -10,8 +10,8 @@ export function useAutoResize() {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastSizeRef = useRef({ width: 0, height: 0 });
   const resizeTimeoutRef = useRef<number | null>(null);
-  const MIN_WIDTH = 320;
-  const MIN_HEIGHT = 200;
+  const MIN_WIDTH = 400;
+  const MIN_HEIGHT = 180;
 
   const resize = useCallback(async () => {
     if (!containerRef.current) return;
@@ -19,9 +19,9 @@ export function useAutoResize() {
     const rect = containerRef.current.getBoundingClientRect();
     // Avoid shrinking to a tiny window before layout is ready (notably on Windows/WebView2).
     if (!rect.width || !rect.height) return;
-    // Add small padding for window chrome
-    const newWidth = Math.max(MIN_WIDTH, Math.ceil(rect.width) + 4);
-    const newHeight = Math.max(MIN_HEIGHT, Math.ceil(rect.height) + 4);
+    // Add generous padding for window chrome and shadows
+    const newWidth = Math.max(MIN_WIDTH, Math.ceil(rect.width) + 12);
+    const newHeight = Math.max(MIN_HEIGHT, Math.ceil(rect.height) + 12);
 
     // Only resize if dimensions changed significantly (more than 2px)
     if (

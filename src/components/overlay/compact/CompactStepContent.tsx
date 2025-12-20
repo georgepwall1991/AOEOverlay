@@ -46,95 +46,82 @@ export function CompactStepContent({
   };
 
   return (
-    <div className={cn("p-2 pb-3", animateStep && "compact-step-animate")}>
-      {/* Navigation, step counter, and timer */}
-      <div
-        className="flex items-center justify-between mb-2"
-        data-testid="compact-nav-bar"
-      >
+    <div className={cn("p-1.5", animateStep && "compact-step-animate")}>
+      <div className="glass-pill flex items-center justify-between gap-4 py-2 px-4 min-h-[56px]">
+        {/* Navigation - Left */}
         <button
           onClick={onPrevious}
           disabled={currentStepIndex === 0}
-          className="p-1.5 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-1 rounded-full hover:bg-white/20 disabled:opacity-20 transition-all active:scale-95 group/nav"
           data-testid="compact-prev-button"
         >
-          <ChevronLeft className="w-6 h-6 text-white/80" />
+          <ChevronLeft className="w-6 h-6 text-white group-hover/nav:-translate-x-0.5 transition-transform" />
         </button>
 
-        <div className="flex items-center gap-3">
-          <span
-            className="text-lg font-mono font-bold text-amber-400 flex items-center gap-1.5"
-            data-testid="compact-step-counter"
-          >
-            {currentStepIndex + 1}
-            <span className="text-white/50">/{totalSteps}</span>
-            <span
-              className={cn("inline-block w-2.5 h-2.5 rounded-full", paceDotClass)}
-              title={deltaCompact ? `Pace: ${deltaCompact}` : "Pace status"}
-              data-testid="compact-pace-dot"
-            />
-          </span>
-          {/* Compact timer display */}
-          {(isRunning || currentStep?.timing) && (
-            <TimerBar compact targetTiming={currentStep?.timing} />
-          )}
+        {/* Central Content - HUD Style */}
+        <div className="flex-1 flex items-center justify-center gap-4">
+          {/* Step Counter & Pace */}
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none mb-1">Step</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl font-black text-amber-100 leading-none">
+                {currentStepIndex + 1}
+              </span>
+              <span className="text-xs font-bold text-white/30 leading-none pt-1">/{totalSteps}</span>
+              <div
+                className={cn("w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.3)]", paceDotClass)}
+                data-testid="compact-pace-dot"
+              />
+            </div>
+          </div>
+
+          <div className="w-px h-8 bg-white/10" />
+
+          {/* Timing & Description */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              {currentStep.timing && (
+                <span className="text-xs font-black text-amber-400 font-mono tracking-tighter">
+                  [{currentStep.timing}]
+                </span>
+              )}
+              <p className={cn("text-white font-black leading-tight flex-1 flex flex-wrap gap-x-1 items-center tracking-pro text-shadow-strong", fontSize)}>
+                {renderIconText(currentStep.description, iconSize + 4)}
+              </p>
+            </div>
+
+            {/* Active Step Resources Integrated */}
+            {currentStep.resources && (
+              <div className="flex items-center gap-2.5 opacity-90 scale-90 origin-left -mt-0.5">
+                <ResourceIndicator resources={currentStep.resources} compact glow />
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Navigation - Right */}
         <button
           onClick={handleNextStep}
           disabled={currentStepIndex >= totalSteps - 1}
-          className="p-1.5 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="p-1 rounded-full hover:bg-white/20 disabled:opacity-20 transition-all active:scale-95 group/nav"
           data-testid="compact-next-button"
         >
-          <ChevronRight className="w-6 h-6 text-white/80" />
+          <ChevronRight className="w-6 h-6 text-white group-hover/nav:translate-x-0.5 transition-transform" />
         </button>
       </div>
 
-      {/* Step content */}
-      <div className="flex items-start gap-3" data-testid="compact-step-content">
-        {/* Timing badge */}
-        {currentStep.timing && (
-          <span
-            className="text-base px-2.5 py-1 rounded bg-amber-500/25 text-amber-300 font-mono font-bold flex-shrink-0 shadow-sm"
-            data-testid="compact-timing-badge"
-          >
-            {currentStep.timing}
-          </span>
-        )}
-
-        {/* Description */}
-        <p
-          className={cn(fontSize, "text-white leading-normal flex-1")}
-          data-testid="compact-step-description"
-        >
-          {renderIconText(currentStep.description, iconSize)}
-        </p>
+      {/* Progress Bar - Minimalist Bridge */}
+      <div className="px-6 mt-1.5 opacity-50">
+        <TimerBar compact targetTiming={currentStep?.timing} />
       </div>
 
-      {/* Resources */}
-      {currentStep.resources && (
-        <div className="flex gap-2 mt-1.5" data-testid="compact-resources">
-          <ResourceIndicator resources={currentStep.resources} compact glow />
-        </div>
-      )}
-
-      {/* Next step preview */}
+      {/* Next Step Preview Hook */}
       {nextStepPreview && (
-        <div
-          className="mt-3 pt-2 border-t border-white/10"
-          data-testid="compact-next-preview"
-        >
-          <div className="flex items-start gap-2">
-            <span className="text-xs text-white/50 font-mono flex-shrink-0 pt-0.5">
-              Next:
-            </span>
-            <span
-              className="text-sm text-white/60 leading-normal break-words"
-              data-testid="compact-next-description"
-            >
-              {renderIconText(nextStepPreview.description, 18)}
-            </span>
-          </div>
+        <div className="mt-1.5 px-6 flex items-center gap-2 animate-fade-in">
+          <span className="text-[9px] font-black text-white/30 uppercase tracking-tighter">Next Up:</span>
+          <span className="text-[11px] font-bold text-white/50 truncate">
+            {renderIconText(nextStepPreview.description, 16)}
+          </span>
         </div>
       )}
     </div>

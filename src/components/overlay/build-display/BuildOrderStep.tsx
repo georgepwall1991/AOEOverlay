@@ -13,6 +13,7 @@ interface BuildOrderStepProps {
   step: StepType;
   stepNumber: number;
   isActive: boolean;
+  isNext: boolean;
   isPast: boolean;
   onClick: () => void;
   compact?: boolean;
@@ -22,6 +23,7 @@ export function BuildOrderStep({
   step,
   stepNumber,
   isActive,
+  isNext,
   isPast,
   onClick,
   compact = false,
@@ -37,10 +39,11 @@ export function BuildOrderStep({
         data-testid={`step-${stepNumber - 1}`}
         onClick={onClick}
         className={cn(
-          "w-full text-left px-2 py-1.5 rounded-lg transition-all duration-200 step-hover-effect",
-          isActive && "step-active-glow scale-[1.02] origin-left py-2.5 active-step active-step-themed",
-          isPast && "opacity-50",
-          !isActive && !isPast && "opacity-80 hover:opacity-95",
+          "w-full text-left px-2 py-1.5 rounded-lg transition-all duration-300 step-hover-effect",
+          isActive && "step-active-glow py-3 active-step active-step-themed",
+          isNext && "step-next-up",
+          isPast && "opacity-50 grayscale-[0.3]",
+          !isActive && !isPast && !isNext && "opacity-75 hover:opacity-95",
           showHighlight && "step-enter"
         )}
       >
@@ -74,12 +77,12 @@ export function BuildOrderStep({
 
             <div
               className={cn(
-                "leading-snug transition-all duration-200 flex flex-wrap items-center gap-x-1",
-                isActive ? "text-base text-white font-bold" : "text-sm text-white/85",
+                "leading-snug transition-all duration-200 flex flex-wrap items-center gap-x-1 tracking-pro",
+                isActive ? "text-base text-white font-black" : "text-xs text-white/85 font-semibold",
                 floatingStyle && "text-shadow-strong"
               )}
             >
-              {renderIconText(step.description, 29)}
+              {renderIconText(step.description, 24)}
             </div>
           </div>
         </div>
@@ -93,13 +96,14 @@ export function BuildOrderStep({
       onClick={onClick}
       className={cn(
         "w-full text-left transition-all duration-300 ease-out p-2 rounded-lg",
-        isActive ? "step-active-glow py-3 active-step active-step-themed" : "step-card step-hover-effect",
-        isPast && "opacity-55",
-        !isActive && !isPast && "opacity-85 hover:opacity-100",
+        isActive ? "step-active-glow py-4 active-step active-step-themed" : "step-card step-hover-effect",
+        isNext && "step-next-up",
+        isPast && "opacity-55 grayscale-[0.2]",
+        !isActive && !isPast && !isNext && "opacity-85 hover:opacity-100",
         showHighlight && "step-enter"
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 relative z-10">
         <StepNumber
           stepNumber={stepNumber}
           isActive={isActive}
@@ -109,15 +113,15 @@ export function BuildOrderStep({
         <div className="flex-1 min-w-0">
           <p
             className={cn(
-              "leading-snug transition-all duration-200 flex items-center flex-wrap gap-1",
-              isActive ? "text-lg text-white font-bold" : "text-sm text-white/85",
+              "leading-snug transition-all duration-300 flex items-center flex-wrap gap-1.5 tracking-pro",
+              isActive ? "text-lg text-white font-black tracking-pro-tight" : "text-[12px] text-white/90 font-semibold",
               floatingStyle && "text-shadow-strong"
             )}
           >
-            {renderIconText(step.description, isActive ? 34 : 24)}
+            {renderIconText(step.description, isActive ? 32 : 20)}
           </p>
 
-          <div className={cn("flex items-center gap-3 mt-1.5 flex-wrap", isActive && "mt-2")}>
+          <div className={cn("flex items-center gap-3 mt-1.5 flex-wrap", isActive && "mt-2.5")}>
             <StepTiming
               timing={step.timing}
               displayTiming={displayTiming}
@@ -129,7 +133,7 @@ export function BuildOrderStep({
           </div>
 
           {isActive && step.resources && (
-            <VillagerDistributionBar resources={step.resources} className="mt-2" />
+            <VillagerDistributionBar resources={step.resources} className="mt-3" />
           )}
         </div>
       </div>

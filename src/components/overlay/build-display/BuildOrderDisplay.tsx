@@ -4,6 +4,7 @@ import { BuildSelectorDropdown } from "./BuildSelectorDropdown";
 import { logTelemetryEvent, cn } from "@/lib/utils";
 import { useTimer } from "@/hooks";
 import { CheckCircle2 } from "lucide-react";
+import { ActiveStepResources } from "../indicators/ActiveStepResources";
 
 export function BuildOrderDisplay() {
   const currentOrder = useCurrentBuildOrder();
@@ -58,18 +59,21 @@ export function BuildOrderDisplay() {
           {/* Progress indicator */}
           <div data-testid="progress-indicator" className="flex items-center gap-2 flex-shrink-0">
             <div className={cn(
-              "w-20 h-2 rounded-full overflow-hidden transition-all duration-300",
-              isComplete ? "bg-emerald-900/30" : "bg-white/10"
+              "w-28 h-2 rounded-full overflow-hidden transition-all duration-300 bg-white/5 border border-white/5 backdrop-blur-sm relative",
+              isComplete ? "bg-emerald-900/30" : "bg-white/5"
             )}>
               <div
                 className={cn(
-                  "h-full transition-all duration-300",
+                  "h-full transition-all duration-[800ms] cubic-bezier(0.16, 1, 0.3, 1) relative",
                   isComplete
-                    ? "bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]"
-                    : "progress-fill-themed shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                    ? "bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]"
+                    : "progress-fill-themed shadow-[0_0_15px_var(--civ-glow)]"
                 )}
                 style={{ width: `${progressPercent}%` }}
-              />
+              >
+                {/* Glow tip */}
+                <div className="absolute right-0 top-0 bottom-0 w-2 bg-white/40 blur-sm shadow-[0_0_10px_white]" />
+              </div>
             </div>
             <span data-testid="step-counter" className={cn(
               "text-sm font-mono tabular-nums font-bold flex items-center gap-1 transition-colors",
@@ -94,11 +98,10 @@ export function BuildOrderDisplay() {
               <div className="flex items-center gap-1 flex-nowrap">
                 <button
                   onClick={() => handleBranchSelect(null)}
-                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors whitespace-nowrap ${
-                    !activeBranchId
-                      ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
-                      : "border-white/10 text-white/60 hover:border-white/30 hover:text-white/90"
-                  }`}
+                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors whitespace-nowrap ${!activeBranchId
+                    ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
+                    : "border-white/10 text-white/60 hover:border-white/30 hover:text-white/90"
+                    }`}
                 >
                   Main
                 </button>
@@ -106,11 +109,10 @@ export function BuildOrderDisplay() {
                   <button
                     key={branch.id}
                     onClick={() => handleBranchSelect(branch.id)}
-                    className={`px-2 py-0.5 rounded text-[10px] border transition-colors whitespace-nowrap ${
-                      activeBranchId === branch.id
-                        ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
-                        : "border-white/10 text-white/60 hover:border-white/30 hover:text-white/90"
-                    }`}
+                    className={`px-2 py-0.5 rounded text-[10px] border transition-colors whitespace-nowrap ${activeBranchId === branch.id
+                      ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
+                      : "border-white/10 text-white/60 hover:border-white/30 hover:text-white/90"
+                      }`}
                     title={branch.trigger ? `Trigger: ${branch.trigger}` : undefined}
                   >
                     {branch.name}
@@ -122,8 +124,10 @@ export function BuildOrderDisplay() {
         )}
       </div>
 
+      <ActiveStepResources />
+
       {/* Step list */}
-      <div data-testid="steps-container" className="px-2 pb-2 space-y-1">
+      <div data-testid="steps-container" className="px-2 pb-2 mt-2 space-y-1">
         {visibleSteps.map((step, idx) => {
           const actualIndex = startIndex + idx;
           return (
@@ -132,6 +136,7 @@ export function BuildOrderDisplay() {
               step={step}
               stepNumber={actualIndex + 1}
               isActive={actualIndex === currentStepIndex}
+              isNext={actualIndex === currentStepIndex + 1}
               isPast={actualIndex < currentStepIndex}
               onClick={() => {
                 goToStep(actualIndex);

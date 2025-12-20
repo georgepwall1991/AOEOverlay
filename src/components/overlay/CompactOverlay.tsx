@@ -28,15 +28,15 @@ export function CompactOverlay() {
   const { isRunning, isPaused, start, deltaStatus, deltaCompact } = useTimer();
   const scale = config.ui_scale ?? 1;
 
-  // Font and icon sizing for compact mode
+  // Font and icon sizing for compact mode - shrunk for pro HUD look
   const fontSize =
     config.font_size === "large"
-      ? "text-lg"
+      ? "text-base"
       : config.font_size === "small"
-        ? "text-sm"
-        : "text-base";
+        ? "text-[11px]"
+        : "text-sm";
   const iconSize =
-    config.font_size === "large" ? 24 : config.font_size === "small" ? 18 : 22;
+    config.font_size === "large" ? 22 : config.font_size === "small" ? 16 : 18;
 
   const currentStep = activeSteps[currentStepIndex];
   const nextStepPreview = activeSteps[currentStepIndex + 1];
@@ -68,8 +68,8 @@ export function CompactOverlay() {
       className="inline-block p-1 pb-2"
       style={{
         opacity,
-        minWidth: 320,
-        maxWidth: 600,
+        minWidth: 400,
+        maxWidth: 800,
         transform: `scale(${scale})`,
         transformOrigin: "top left",
       }}
