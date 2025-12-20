@@ -3,6 +3,7 @@ export * from "./useConfig";
 export * from "./useBuildOrders";
 export * from "./useInterval";
 export * from "./useBoundedQueue";
+export * from "./useClickThroughUndo";
 export * from "./useBuildOrderSync";
 export * from "./useBuildOrderFiltering";
 export * from "./useStepHighlight";
