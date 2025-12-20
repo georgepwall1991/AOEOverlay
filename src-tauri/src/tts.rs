@@ -6,6 +6,9 @@ use crate::state::AppState;
 use std::os::windows::process::CommandExt;
 
 #[cfg(target_os = "windows")]
+use crate::platform::escape_powershell;
+
+#[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 fn kill_active_tts(state: &State<AppState>) -> Result<(), String> {
@@ -27,21 +30,6 @@ fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
-}
-
-#[cfg(target_os = "windows")]
-fn escape_powershell(text: &str) -> String {
-    text.chars()
-        .map(|c| match c {
-            '\'' => "''".to_string(),
-            '`' | '$' | '"' | '\\' => format!("`{}", c),
-            '\n' => "`n".to_string(),
-            '\r' => "`r".to_string(),
-            '\t' => "`t".to_string(),
-            '\0' => "".to_string(), // Remove null bytes
-            _ => c.to_string(),
-        })
-        .collect()
 }
 
 #[cfg(target_os = "windows")]
@@ -104,51 +92,7 @@ pub fn tts_stop(state: State<AppState>) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(target_os = "windows")]
-    use super::escape_powershell;
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell() {
-        assert_eq!(escape_powershell("hello"), "hello");
-        assert_eq!(escape_powershell("it's"), "it''s");
-        assert_eq!(escape_powershell("$var"), "`$var");
-        assert_eq!(escape_powershell("`backtick"), "``backtick");
-        assert_eq!(escape_powershell("line\nbreak"), "line`nbreak");
-        assert_eq!(escape_powershell("test\"quote"), "test`\"quote");
-        assert_eq!(escape_powershell("back\\slash"), "back`\\slash");
-        assert_eq!(escape_powershell("tab\there"), "tab`there");
-        assert_eq!(escape_powershell("null\0byte"), "nullbyte");
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell_empty_string() {
-        assert_eq!(escape_powershell(""), "");
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell_unicode() {
-        assert_eq!(escape_powershell("hello world"), "hello world");
-        assert_eq!(escape_powershell("émojis"), "émojis");
-        assert_eq!(escape_powershell("日本語"), "日本語");
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell_multiple_special_chars() {
-        assert_eq!(escape_powershell("$a$b$c"), "`$a`$b`$c");
-        assert_eq!(escape_powershell("'''"), "''''''");
-        assert_eq!(escape_powershell("\n\r\t"), "`n`r`t");
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell_carriage_return() {
-        assert_eq!(escape_powershell("\r"), "`r");
-        assert_eq!(escape_powershell("line\r\nend"), "line`r`nend");
-    }
+    // Note: escape_powershell tests are in platform.rs
 
     #[test]
     fn test_rate_clamping() {
@@ -313,44 +257,6 @@ mod tests {
 
         let wpm_0_25 = (0.25_f32 * 200.0) as i32;
         assert_eq!(wpm_0_25, 50);
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell_all_special_chars_combined() {
-        // Combine all special chars that need escaping
-        // Input: $`"'\\\n\r\t\0
-        // Expected: `$ (escaped $) + `` (escaped `) + `" (escaped ") + '' (escaped ')
-        //           + `\ (escaped \) + `n (escaped newline) + `r (escaped CR) + `t (escaped tab)
-        //           + nothing for null
-        let result = escape_powershell("$`\"'\\\n\r\t\0");
-        assert_eq!(result, "`$```\"''`\\`n`r`t");
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell_long_string() {
-        // Test with a long string
-        let long_text = "a".repeat(1000);
-        let result = escape_powershell(&long_text);
-        assert_eq!(result.len(), 1000);
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell_single_quotes_sequence() {
-        // Multiple single quotes in sequence
-        assert_eq!(escape_powershell("''''"), "''''''''");
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_escape_powershell_mixed_escapes() {
-        // Real-world text with mixed special chars
-        let text = "Build 5 villagers! Then say: \"Go!\"";
-        let result = escape_powershell(text);
-        assert!(result.contains("`\""));
-        assert!(!result.contains("\n")); // No literal newlines
     }
 
     #[test]

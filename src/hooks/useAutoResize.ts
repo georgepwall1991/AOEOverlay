@@ -1,6 +1,11 @@
 import { useEffect, useRef, useCallback } from "react";
 import { getCurrentWindow, LogicalSize } from "@/lib/tauri";
 
+// Window interface with setSize accepting LogicalSize
+interface ResizableWindow {
+  setSize: (size: LogicalSize) => Promise<void>;
+}
+
 export function useAutoResize() {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastSizeRef = useRef({ width: 0, height: 0 });
@@ -26,8 +31,8 @@ export function useAutoResize() {
       lastSizeRef.current = { width: newWidth, height: newHeight };
 
       try {
-        const window = getCurrentWindow();
-        await window.setSize(new LogicalSize(newWidth, newHeight) as any);
+        const win = getCurrentWindow() as ResizableWindow;
+        await win.setSize(new LogicalSize(newWidth, newHeight));
       } catch (e) {
         console.error("Failed to resize window:", e);
       }

@@ -1,28 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getCurrentWindow } from "@/lib/tauri";
 import { Overlay } from "@/components/overlay";
 import { SettingsWindow } from "@/components/settings";
 import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize, useReminders, useMetronome } from "@/hooks";
 import { useConfigStore } from "@/stores";
 
+// Extended window interface for Tauri window methods
+// Using unknown for methods that may not exist on mock windows
+interface TauriWindowExtended {
+  label?: string;
+  show?: () => Promise<void>;
+  outerSize?: () => Promise<{ width: number; height: number }>;
+  setSize?: (size: unknown) => Promise<void>;
+  setFocus?: () => Promise<void>;
+}
+
 function OverlayWithWindowFix() {
+  const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
   useEffect(() => {
     // Force window to show and resize (resize triggers WebView2 repaint)
     const forceShowAndRepaint = async () => {
-      const win = getCurrentWindow();
+      const win = getCurrentWindow() as TauriWindowExtended;
       try {
-        await (win as any).show?.();
+        await win.show?.();
 
         // Get current size, resize slightly, then resize back
         // This forces WebView2 to repaint
-        const size = await (win as any).outerSize?.();
+        const size = await win.outerSize?.();
         if (size) {
-          await (win as any).setSize?.({ type: 'Physical', width: size.width + 1, height: size.height + 1 });
+          await win.setSize?.({ type: 'Physical', width: size.width + 1, height: size.height + 1 });
           await new Promise(r => setTimeout(r, 50));
-          await (win as any).setSize?.({ type: 'Physical', width: size.width, height: size.height });
+          await win.setSize?.({ type: 'Physical', width: size.width, height: size.height });
         }
 
-        await (win as any).setFocus?.();
+        await win.setFocus?.();
       } catch (e) {
         console.error("[OverlayWithWindowFix] Error forcing repaint:", e);
       }
@@ -30,11 +42,17 @@ function OverlayWithWindowFix() {
 
     // Multiple attempts at different delays
     const delays = [100, 500, 1000, 2000, 3000, 5000];
-    delays.forEach((delay) => {
+    timeoutIdsRef.current = delays.map((delay) =>
       setTimeout(() => {
         forceShowAndRepaint();
-      }, delay);
-    });
+      }, delay)
+    );
+
+    return () => {
+      // Cleanup all scheduled timeouts on unmount
+      timeoutIdsRef.current.forEach(clearTimeout);
+      timeoutIdsRef.current = [];
+    };
   }, []);
 
   return (

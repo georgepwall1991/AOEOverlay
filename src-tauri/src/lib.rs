@@ -1,13 +1,14 @@
 use std::sync::Mutex;
 
+mod audio;
 mod commands;
 mod config;
 mod error;
 mod hotkeys;
+mod platform;
 mod state;
 mod tray;
 mod tts;
-mod audio;
 
 use config::load_config;
 use state::AppState;

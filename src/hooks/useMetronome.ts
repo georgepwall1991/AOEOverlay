@@ -8,16 +8,21 @@ import { DEFAULT_METRONOME_CONFIG } from '@/types';
 export function useMetronome() {
   const { config } = useConfigStore();
   const metronomeConfig = config.metronome ?? DEFAULT_METRONOME_CONFIG;
-  const { enabled, intervalSeconds: interval, volume } = metronomeConfig;
+  const { enabled, intervalSeconds: interval } = metronomeConfig;
   const { recordTick, setPulsing } = useMetronomeStore();
   const { playSound } = useSound();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pulseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!enabled) {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
+      }
+      if (pulseTimeoutRef.current) {
+        clearTimeout(pulseTimeoutRef.current);
+        pulseTimeoutRef.current = null;
       }
       return;
     }
@@ -36,7 +41,12 @@ export function useMetronome() {
       // Trigger Visual
       recordTick(Date.now());
       setPulsing(true);
-      setTimeout(() => setPulsing(false), 1000); // Pulse for 1 second
+
+      // Clear any pending pulse timeout before setting a new one
+      if (pulseTimeoutRef.current) {
+        clearTimeout(pulseTimeoutRef.current);
+      }
+      pulseTimeoutRef.current = setTimeout(() => setPulsing(false), 1000); // Pulse for 1 second
     };
 
     // Initial clear to avoid double intervals
@@ -48,6 +58,9 @@ export function useMetronome() {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      if (pulseTimeoutRef.current) {
+        clearTimeout(pulseTimeoutRef.current);
+      }
     };
-  }, [enabled, interval, volume, recordTick, setPulsing, playSound]);
+  }, [enabled, interval, recordTick, setPulsing, playSound]);
 }

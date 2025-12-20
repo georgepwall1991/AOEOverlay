@@ -80,11 +80,14 @@ fn register_single_hotkey(
     if let Some(code) = string_to_code(key_str) {
         let app_handle = app.clone();
         let shortcut = Shortcut::new(None, code);
-        let key_owned = key_str.to_string(); // Own the string for the closure
+        #[cfg(debug_assertions)]
+        let key_owned = key_str.to_string(); // Own the string for the closure (debug only)
+        #[cfg(debug_assertions)]
         println!("[Hotkeys] Registering {} -> {}", key_str, event_name);
         app.global_shortcut()
             .on_shortcut(shortcut, move |_app, _shortcut, event| {
                 if event.state == ShortcutState::Pressed {
+                    #[cfg(debug_assertions)]
                     println!("[Hotkeys] {} pressed, emitting {}", key_owned, event_name);
                     let _ = app_handle.emit(event_name, ());
                 }

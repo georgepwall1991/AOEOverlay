@@ -8,28 +8,43 @@ import { open as tauriOpen, save as tauriSave } from "@tauri-apps/plugin-dialog"
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";
 
+// Type for window with Tauri internals
+interface WindowWithTauri {
+  __TAURI_INTERNALS__?: unknown;
+  __TAURI__?: unknown;
+}
+
 const IS_MOCK =
   import.meta.env.VITE_MOCK_TAURI === "true" ||
-  (typeof window !== "undefined" && !(window as any).__TAURI_INTERNALS__ && !(window as any).__TAURI__);
+  (typeof window !== "undefined" && !(window as WindowWithTauri).__TAURI_INTERNALS__ && !(window as WindowWithTauri).__TAURI__);
 
 export { IS_MOCK };
 
 // Mock event sync for browser testing using BroadcastChannel
 const mockChannel = typeof window !== "undefined" ? new BroadcastChannel("tauri-mock-events") : null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required for storing heterogeneous callbacks
 const mockListeners = new Set<EventCallback<any>>();
+
+// Dialog options type for mock implementation
+interface DialogOptions {
+  title?: string;
+  filters?: Array<{ name: string; extensions: string[] }>;
+  defaultPath?: string;
+  multiple?: boolean;
+}
 
 // Mock version of tauri-apps/plugin-dialog for browser testing
 export const dialog = {
-  open: async (options?: any): Promise<string | string[] | null> => {
+  open: async (options?: DialogOptions): Promise<string | string[] | null> => {
     if (IS_MOCK) {
-      console.log("Mock dialog.open called", options);
+      console.warn("[Mock] dialog.open called", options);
       return null;
     }
     return tauriOpen(options);
   },
-  save: async (options?: any): Promise<string | null> => {
+  save: async (options?: DialogOptions): Promise<string | null> => {
     if (IS_MOCK) {
-      console.log("Mock dialog.save called", options);
+      console.warn("[Mock] dialog.save called", options);
       return null;
     }
     return tauriSave(options);

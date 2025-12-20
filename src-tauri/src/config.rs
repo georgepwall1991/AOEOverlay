@@ -1012,9 +1012,15 @@ mod tests {
             toggle_compact: "F6".to_string(),
             reset_build_order: "F7".to_string(),
             toggle_pause: "F8".to_string(),
+            activate_branch_main: "F9".to_string(),
+            activate_branch_1: "1".to_string(),
+            activate_branch_2: "2".to_string(),
+            activate_branch_3: "3".to_string(),
+            activate_branch_4: "4".to_string(),
         };
         assert_eq!(config.toggle_overlay, "F1");
         assert_eq!(config.toggle_pause, "F8");
+        assert_eq!(config.activate_branch_main, "F9");
     }
 
     // BuildOrderStep tests
