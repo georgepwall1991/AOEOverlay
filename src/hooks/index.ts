@@ -15,3 +15,5 @@ export * from "./useTTS";
 export * from "./useTimer";
 export * from "./useReminders";
 export * from "./useMetronome";
+export * from "./useHotkeyListener";
+export * from "./useBuildOrderDialogs";

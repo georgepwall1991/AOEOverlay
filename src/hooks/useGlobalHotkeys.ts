@@ -1,5 +1,6 @@
-import { useEffect, useCallback, useRef } from "react";
-import { listen, type UnlistenFn, IS_MOCK, emit } from "@/lib/tauri";
+import { useEffect, useCallback, useMemo } from "react";
+import { IS_MOCK, emit } from "@/lib/tauri";
+import { useHotkeyListeners, hotkey, type HotkeyConfig } from "./useHotkeyListener";
 import {
   useBuildOrderStore,
   useOverlayStore,
@@ -21,10 +22,6 @@ export function useGlobalHotkeys() {
   const { updateConfig } = useConfigStore();
   const { startTimer, resetTimer, recordStepTime, togglePause } = useTimerStore();
   const { resetBadges } = useBadgeStore();
-
-  // Track unlisten functions to prevent race conditions during cleanup
-  const unlistenFnsRef = useRef<UnlistenFn[]>([]);
-  const isCleaningUpRef = useRef(false);
 
   // Convert icon markers to readable text for TTS (e.g., "[icon:town_center]" -> "town center")
   const convertIconMarkersForTTS = useCallback((text: string): string => {
@@ -116,7 +113,7 @@ export function useGlobalHotkeys() {
     }
   }, [nextStep, startTimer, recordStepTime, speakStep]);
 
-  // Handle reset with timer reset and badge reset
+  // Handle reset with timer reset and badge reset (logs its own telemetry)
   const handleReset = useCallback(() => {
     resetSteps();
     resetTimer();
@@ -125,150 +122,85 @@ export function useGlobalHotkeys() {
     logTelemetryEvent("hotkey:build:reset", { source: "hotkey" });
   }, [resetSteps, resetTimer, resetBadges]);
 
-  useEffect(() => {
-    // Prevent setting up listeners if already cleaning up
-    if (isCleaningUpRef.current) return;
+  // Handlers that need custom telemetry (with metadata)
+  const handleCycleBuildOrder = useCallback(() => {
+    cycleBuildOrder();
+    resetTimer();
+    resetBadges();
+  }, [cycleBuildOrder, resetTimer, resetBadges]);
 
-    // Clear previous listeners synchronously before setting up new ones
-    unlistenFnsRef.current.forEach((unlisten) => {
-      try {
-        unlisten();
-      } catch (error) {
-        console.error("Failed to clean up hotkey listener:", error);
-      }
+  const handleToggleClickThrough = useCallback(async () => {
+    const newState = await toggleClickThrough();
+    updateConfig({ click_through: newState });
+    logTelemetryEvent("hotkey:overlay:click-through", {
+      source: "hotkey",
+      meta: { enabled: newState },
     });
-    unlistenFnsRef.current = [];
+  }, [updateConfig]);
 
-    const setupListeners = async () => {
-      // Don't set up if cleanup started while we were waiting
-      if (isCleaningUpRef.current) return;
+  const handleToggleCompact = useCallback(async () => {
+    const newState = await toggleCompactMode();
+    updateConfig({ compact_mode: newState });
+    logTelemetryEvent("hotkey:overlay:compact", {
+      source: "hotkey",
+      meta: { enabled: newState },
+    });
+  }, [updateConfig]);
 
-      const listeners = await Promise.all([
-        listen("hotkey-toggle-overlay", () => {
-          toggleVisibility();
-          logTelemetryEvent("hotkey:overlay:toggle", { source: "hotkey" });
-        }),
-        listen("hotkey-previous-step", () => {
-          previousStep();
-          logTelemetryEvent("hotkey:step:previous", { source: "hotkey" });
-        }),
-        listen("hotkey-next-step", () => {
-          handleNextStep();
-          logTelemetryEvent("hotkey:step:next", { source: "hotkey" });
-        }),
-        listen("hotkey-cycle-build-order", () => {
-          cycleBuildOrder();
-          resetTimer();
-          resetBadges();
-          logTelemetryEvent("hotkey:build:cycle", { source: "hotkey" });
-        }),
-        listen("hotkey-toggle-click-through", async () => {
-          const newState = await toggleClickThrough();
-          updateConfig({ click_through: newState });
-          logTelemetryEvent("hotkey:overlay:click-through", {
-            source: "hotkey",
-            meta: { enabled: newState },
-          });
-        }),
-        listen("hotkey-toggle-compact", async () => {
-          const newState = await toggleCompactMode();
-          updateConfig({ compact_mode: newState });
-          logTelemetryEvent("hotkey:overlay:compact", {
-            source: "hotkey",
-            meta: { enabled: newState },
-          });
-        }),
-        listen("hotkey-reset-build-order", () => {
-          handleReset();
-        }),
-        listen("hotkey-toggle-pause", () => {
-          togglePause();
-          logTelemetryEvent("hotkey:timer:toggle-pause", { source: "hotkey" });
-        }),
-        listen("hotkey-activate-branch-main", () => {
-          setActiveBranch(null);
-          logTelemetryEvent("hotkey:branch:main", { source: "hotkey" });
-        }),
-        listen("hotkey-activate-branch-1", () => {
-          const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
-          const order = buildOrders[currentOrderIndex];
-          if (order?.branches?.[0]) setActiveBranch(order.branches[0].id);
-          logTelemetryEvent("hotkey:branch:1", { source: "hotkey" });
-        }),
-        listen("hotkey-activate-branch-2", () => {
-          const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
-          const order = buildOrders[currentOrderIndex];
-          if (order?.branches?.[1]) setActiveBranch(order.branches[1].id);
-          logTelemetryEvent("hotkey:branch:2", { source: "hotkey" });
-        }),
-        listen("hotkey-activate-branch-3", () => {
-          const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
-          const order = buildOrders[currentOrderIndex];
-          if (order?.branches?.[2]) setActiveBranch(order.branches[2].id);
-          logTelemetryEvent("hotkey:branch:3", { source: "hotkey" });
-        }),
-        listen("hotkey-activate-branch-4", () => {
-          const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
-          const order = buildOrders[currentOrderIndex];
-          if (order?.branches?.[3]) setActiveBranch(order.branches[3].id);
-          logTelemetryEvent("hotkey:branch:4", { source: "hotkey" });
-        }),
-        // Tray icon events (frontend controls visibility, not native window)
-        listen("tray-toggle-overlay", () => {
-          toggleVisibility();
-          logTelemetryEvent("tray:overlay:toggle", { source: "tray" });
-        }),
-        listen("tray-show-overlay", () => {
-          setVisible(true);
-          logTelemetryEvent("tray:overlay:show", { source: "tray" });
-        }),
-        listen("tray-hide-overlay", () => {
-          setVisible(false);
-          logTelemetryEvent("tray:overlay:hide", { source: "tray" });
-        }),
-      ]);
+  // Branch activation helper
+  const activateBranch = useCallback((branchIndex: number) => {
+    const { buildOrders, currentOrderIndex } = useBuildOrderStore.getState();
+    const order = buildOrders[currentOrderIndex];
+    if (order?.branches?.[branchIndex]) {
+      setActiveBranch(order.branches[branchIndex].id);
+    }
+  }, [setActiveBranch]);
 
-      // Store unlisten functions for cleanup, but only if not cleaning up
-      if (!isCleaningUpRef.current) {
-        unlistenFnsRef.current = listeners;
-      } else {
-        // Cleanup started while setting up - unlisten immediately
-        listeners.forEach((unlisten) => unlisten());
-      }
-    };
+  // Build hotkey configurations
+  const hotkeys: HotkeyConfig[] = useMemo(() => [
+    // Overlay controls
+    hotkey("hotkey-toggle-overlay", toggleVisibility, "hotkey:overlay:toggle"),
+    hotkey("hotkey-toggle-click-through", handleToggleClickThrough, ""), // handles own telemetry
+    hotkey("hotkey-toggle-compact", handleToggleCompact, ""), // handles own telemetry
 
-    setupListeners().catch((error) =>
-      console.error("Failed to set up hotkey listeners:", error)
-    );
+    // Step navigation
+    hotkey("hotkey-previous-step", previousStep, "hotkey:step:previous"),
+    hotkey("hotkey-next-step", handleNextStep, "hotkey:step:next"),
 
-    return () => {
-      isCleaningUpRef.current = true;
-      unlistenFnsRef.current.forEach((unlisten) => {
-        try {
-          unlisten();
-        } catch (error) {
-          console.error("Failed to clean up hotkey listener:", error);
-        }
-      });
-      unlistenFnsRef.current = [];
-      // Reset cleanup flag after a tick to allow re-setup
-      setTimeout(() => {
-        isCleaningUpRef.current = false;
-      }, 0);
-    };
-  }, [
-    handleNextStep,
-    previousStep,
-    cycleBuildOrder,
-    handleReset,
+    // Build order controls
+    hotkey("hotkey-cycle-build-order", handleCycleBuildOrder, "hotkey:build:cycle"),
+    hotkey("hotkey-reset-build-order", handleReset, ""), // handles own telemetry
+
+    // Timer control
+    hotkey("hotkey-toggle-pause", togglePause, "hotkey:timer:toggle-pause"),
+
+    // Branch activation
+    hotkey("hotkey-activate-branch-main", () => setActiveBranch(null), "hotkey:branch:main"),
+    hotkey("hotkey-activate-branch-1", () => activateBranch(0), "hotkey:branch:1"),
+    hotkey("hotkey-activate-branch-2", () => activateBranch(1), "hotkey:branch:2"),
+    hotkey("hotkey-activate-branch-3", () => activateBranch(2), "hotkey:branch:3"),
+    hotkey("hotkey-activate-branch-4", () => activateBranch(3), "hotkey:branch:4"),
+
+    // Tray icon events
+    hotkey("tray-toggle-overlay", toggleVisibility, "tray:overlay:toggle", "tray"),
+    hotkey("tray-show-overlay", () => setVisible(true), "tray:overlay:show", "tray"),
+    hotkey("tray-hide-overlay", () => setVisible(false), "tray:overlay:hide", "tray"),
+  ], [
     toggleVisibility,
-    setVisible,
-    updateConfig,
-    resetTimer,
-    resetBadges,
+    handleToggleClickThrough,
+    handleToggleCompact,
+    previousStep,
+    handleNextStep,
+    handleCycleBuildOrder,
+    handleReset,
     togglePause,
     setActiveBranch,
+    activateBranch,
+    setVisible,
   ]);
+
+  // Set up all hotkey listeners using the factory hook
+  useHotkeyListeners(hotkeys);
 
   useEffect(() => {
     if (!IS_MOCK) return;

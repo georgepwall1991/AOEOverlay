@@ -1,15 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useBuildOrderStore } from "@/stores";
-import { saveBuildOrder, deleteBuildOrder } from "@/lib/tauri";
-import { importAge4Builder } from "@/lib/age4builder";
-import { importAoe4WorldBuild } from "@/lib/aoe4world";
-import {
-  importAoe4GuidesBuild,
-  browseAoe4GuidesBuilds,
-  type Aoe4GuidesBuildSummary
-} from "@/lib/aoe4guides";
+import { saveBuildOrder } from "@/lib/tauri";
 import type { BuildOrder } from "@/types";
-import { useBuildOrderFiltering, useBrowseFiltering } from "@/hooks/useBuildOrderFiltering";
+import { useBuildOrderFiltering } from "@/hooks/useBuildOrderFiltering";
+import { useBuildOrderDialogs } from "@/hooks/useBuildOrderDialogs";
 import { BuildOrderEditor } from "./BuildOrderEditor";
 import { BuildOrderHeader } from "./BuildOrderHeader";
 import { BuildOrderDialogs } from "./BuildOrderDialogs";
@@ -25,51 +19,18 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
   const { buildOrders, setBuildOrders } = useBuildOrderStore();
   const [editingOrder, setEditingOrder] = useState<BuildOrder | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  // Import states
-  const [showImportDialog, setShowImportDialog] = useState(false);
-  const [importJson, setImportJson] = useState("");
-  const [importError, setImportError] = useState<string | null>(null);
+  // Use the dialogs hook for all dialog state management
+  const dialogs = useBuildOrderDialogs({ buildOrders, setBuildOrders });
 
-  const [showUrlImportDialog, setShowUrlImportDialog] = useState(false);
-  const [importUrl, setImportUrl] = useState("");
-  const [urlImportError, setUrlImportError] = useState<string | null>(null);
+  // Use filtering hook for search
+  const { searchQuery, setSearchQuery, filteredOrders } = useBuildOrderFiltering({
+    buildOrders,
+    filterCiv,
+    filterDiff,
+  });
 
-  const [showAoe4GuidesUrlDialog, setShowAoe4GuidesUrlDialog] = useState(false);
-  const [aoe4GuidesUrl, setAoe4GuidesUrl] = useState("");
-  const [aoe4GuidesUrlError, setAoe4GuidesUrlError] = useState<string | null>(null);
-
-  const [isImporting, setIsImporting] = useState(false);
-
-  // Browse state
-  const [showBrowseDialog, setShowBrowseDialog] = useState(false);
-  const [browseResults, setBrowseResults] = useState<Aoe4GuidesBuildSummary[]>([]);
-  const [browseCivFilter, setBrowseCivFilter] = useState<string>("");
-  const [isBrowsing, setIsBrowsing] = useState(false);
-  const [browseError, setBrowseError] = useState<string | null>(null);
-
-  // Use filtering hooks
-  const {
-    searchQuery,
-    setSearchQuery,
-    filteredOrders,
-    importedAoe4GuidesIds,
-  } = useBuildOrderFiltering({ buildOrders, filterCiv, filterDiff });
-
-  const {
-    browseSearchQuery,
-    setBrowseSearchQuery,
-    browseStrategyFilter,
-    setBrowseStrategyFilter,
-    browseMatchupFilter,
-    setBrowseMatchupFilter,
-    browseSortBy,
-    setBrowseSortBy,
-    filteredBrowseResults,
-  } = useBrowseFiltering({ browseResults });
-
-  // Handlers
+  // Build order handlers
   const handleToggleEnabled = async (order: BuildOrder) => {
     const updated = { ...order, enabled: !order.enabled };
     try {
@@ -111,16 +72,6 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteBuildOrder(id);
-      setBuildOrders(buildOrders.filter((o) => o.id !== id));
-      setDeleteConfirm(null);
-    } catch (error) {
-      console.error("Failed to delete build order:", error);
-    }
-  };
-
   const handleSave = async (order: BuildOrder) => {
     try {
       await saveBuildOrder(order);
@@ -150,103 +101,6 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
     });
   };
 
-  const handleImport = async () => {
-    setImportError(null);
-    try {
-      const imported = importAge4Builder(importJson);
-      const existingIds = new Set(buildOrders.map(o => o.id));
-      if (existingIds.has(imported.id)) {
-        imported.id = `${imported.id}-${Date.now()}`;
-      }
-      await saveBuildOrder(imported);
-      setBuildOrders([...buildOrders, imported]);
-      setShowImportDialog(false);
-      setImportJson("");
-    } catch (error) {
-      setImportError(error instanceof Error ? error.message : "Failed to import");
-    }
-  };
-
-  const handleUrlImport = async () => {
-    setUrlImportError(null);
-    setIsImporting(true);
-    try {
-      const imported = await importAoe4WorldBuild(importUrl);
-      const existingIds = new Set(buildOrders.map(o => o.id));
-      if (existingIds.has(imported.id)) {
-        imported.id = `${imported.id}-${Date.now()}`;
-      }
-      await saveBuildOrder(imported);
-      setBuildOrders([...buildOrders, imported]);
-      setShowUrlImportDialog(false);
-      setImportUrl("");
-    } catch (error) {
-      setUrlImportError(error instanceof Error ? error.message : "Failed to import from URL");
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
-  const handleAoe4GuidesUrlImport = async () => {
-    setAoe4GuidesUrlError(null);
-    setIsImporting(true);
-    try {
-      const imported = await importAoe4GuidesBuild(aoe4GuidesUrl);
-      const existingIds = new Set(buildOrders.map((o) => o.id));
-      if (existingIds.has(imported.id)) {
-        imported.id = `${imported.id}-${Date.now()}`;
-      }
-      await saveBuildOrder(imported);
-      setBuildOrders([...buildOrders, imported]);
-      setShowAoe4GuidesUrlDialog(false);
-      setAoe4GuidesUrl("");
-    } catch (error) {
-      setAoe4GuidesUrlError(error instanceof Error ? error.message : "Failed to import");
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
-  const handleBrowseBuilds = useCallback(async () => {
-    setIsBrowsing(true);
-    setBrowseError(null);
-    try {
-      const results = await browseAoe4GuidesBuilds(
-        browseCivFilter ? { civ: browseCivFilter } : undefined
-      );
-      setBrowseResults(results);
-    } catch (error) {
-      setBrowseError(error instanceof Error ? error.message : "Failed to load builds");
-    } finally {
-      setIsBrowsing(false);
-    }
-  }, [browseCivFilter]);
-
-  const handleImportFromBrowse = async (buildId: string) => {
-    setIsImporting(true);
-    setBrowseError(null);
-    try {
-      const imported = await importAoe4GuidesBuild(buildId);
-      const existingIds = new Set(buildOrders.map((o) => o.id));
-      if (existingIds.has(imported.id)) {
-        imported.id = `${imported.id}-${Date.now()}`;
-      }
-      await saveBuildOrder(imported);
-      setBuildOrders([...buildOrders, imported]);
-      setShowBrowseDialog(false);
-    } catch (error) {
-      setBrowseError(error instanceof Error ? error.message : "Failed to import");
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
-  useEffect(() => {
-    if (showBrowseDialog && browseResults.length === 0) {
-      handleBrowseBuilds();
-    }
-  }, [showBrowseDialog, browseResults.length, handleBrowseBuilds]);
-
   if (editingOrder) {
     return (
       <BuildOrderEditor
@@ -266,10 +120,10 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
       <BuildOrderHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onBrowseClick={() => setShowBrowseDialog(true)}
-        onImportAoe4World={() => setShowUrlImportDialog(true)}
-        onImportAoe4Guides={() => setShowAoe4GuidesUrlDialog(true)}
-        onImportJson={() => setShowImportDialog(true)}
+        onBrowseClick={() => dialogs.browseDialog.setShow(true)}
+        onImportAoe4World={() => dialogs.importUrlDialog.setShow(true)}
+        onImportAoe4Guides={() => dialogs.importAoe4GuidesDialog.setShow(true)}
+        onImportJson={() => dialogs.importJsonDialog.setShow(true)}
         onCreateNew={handleCreateNew}
       />
 
@@ -285,53 +139,12 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
           onTogglePin={handleTogglePin}
           onToggleFavorite={handleToggleFavorite}
           onEdit={setEditingOrder}
-          onDeleteRequest={setDeleteConfirm}
+          onDeleteRequest={dialogs.deleteDialog.setConfirmId}
           onExport={onExport}
         />
       )}
 
-      <BuildOrderDialogs
-        deleteConfirm={deleteConfirm}
-        onDeleteConfirmChange={setDeleteConfirm}
-        onDelete={handleDelete}
-        showImportDialog={showImportDialog}
-        onImportDialogChange={setShowImportDialog}
-        importJson={importJson}
-        onImportJsonChange={setImportJson}
-        importError={importError}
-        onImport={handleImport}
-        showUrlImportDialog={showUrlImportDialog}
-        onUrlImportDialogChange={setShowUrlImportDialog}
-        importUrl={importUrl}
-        onImportUrlChange={setImportUrl}
-        urlImportError={urlImportError}
-        onUrlImport={handleUrlImport}
-        isImporting={isImporting}
-        showAoe4GuidesUrlDialog={showAoe4GuidesUrlDialog}
-        onAoe4GuidesUrlDialogChange={setShowAoe4GuidesUrlDialog}
-        aoe4GuidesUrl={aoe4GuidesUrl}
-        onAoe4GuidesUrlChange={setAoe4GuidesUrl}
-        aoe4GuidesUrlError={aoe4GuidesUrlError}
-        onAoe4GuidesUrlImport={handleAoe4GuidesUrlImport}
-        showBrowseDialog={showBrowseDialog}
-        onBrowseDialogChange={setShowBrowseDialog}
-        filteredBrowseResults={filteredBrowseResults}
-        browseCivFilter={browseCivFilter}
-        onBrowseCivFilterChange={setBrowseCivFilter}
-        browseSearchQuery={browseSearchQuery}
-        onBrowseSearchQueryChange={setBrowseSearchQuery}
-        browseStrategyFilter={browseStrategyFilter}
-        onBrowseStrategyFilterChange={setBrowseStrategyFilter}
-        browseMatchupFilter={browseMatchupFilter}
-        onBrowseMatchupFilterChange={setBrowseMatchupFilter}
-        browseSortBy={browseSortBy}
-        onBrowseSortByChange={setBrowseSortBy}
-        isBrowsing={isBrowsing}
-        browseError={browseError}
-        onRefreshBrowse={handleBrowseBuilds}
-        onImportFromBrowse={handleImportFromBrowse}
-        importedAoe4GuidesIds={importedAoe4GuidesIds}
-      />
+      <BuildOrderDialogs dialogs={dialogs} />
     </div>
   );
 }

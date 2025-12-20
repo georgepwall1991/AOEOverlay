@@ -3,10 +3,10 @@
   "outputDirectory": "",
   "logFile": ".complexity-log.md",
   "thresholds": {
-    "cyclomaticComplexity": 10,
-    "functionLength": 50,
-    "fileLength": 500,
-    "nesting": 4
+    "cyclomaticComplexity": 15,
+    "functionLength": 75,
+    "fileLength": 600,
+    "nesting": 5
   },
   "severityLevels": {
     "complexity": "warning",

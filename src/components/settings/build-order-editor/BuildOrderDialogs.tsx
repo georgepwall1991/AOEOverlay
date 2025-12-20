@@ -34,109 +34,30 @@ import {
     TrendingUp, Clock, ThumbsUp, Sparkles, Flame, User, Eye, Download, Check, Swords
 } from "lucide-react";
 import { CIVILIZATIONS } from "@/types";
-import { getCivNameFromCode, type Aoe4GuidesBuildSummary } from "@/lib/aoe4guides";
+import { getCivNameFromCode } from "@/lib/aoe4guides";
 import { STRATEGY_OPTIONS } from "./constants";
+import type { BuildOrderDialogsState } from "@/hooks/useBuildOrderDialogs";
 
 interface BuildOrderDialogsProps {
-    // Delete confirm
-    deleteConfirm: string | null;
-    onDeleteConfirmChange: (id: string | null) => void;
-    onDelete: (id: string) => void;
-
-    // Import JSON
-    showImportDialog: boolean;
-    onImportDialogChange: (show: boolean) => void;
-    importJson: string;
-    onImportJsonChange: (json: string) => void;
-    importError: string | null;
-    onImport: () => void;
-
-    // Import URL (AoE4World)
-    showUrlImportDialog: boolean;
-    onUrlImportDialogChange: (show: boolean) => void;
-    importUrl: string;
-    onImportUrlChange: (url: string) => void;
-    urlImportError: string | null;
-    onUrlImport: () => void;
-    isImporting: boolean;
-
-    // Import URL (AoE4Guides)
-    showAoe4GuidesUrlDialog: boolean;
-    onAoe4GuidesUrlDialogChange: (show: boolean) => void;
-    aoe4GuidesUrl: string;
-    onAoe4GuidesUrlChange: (url: string) => void;
-    aoe4GuidesUrlError: string | null;
-    onAoe4GuidesUrlImport: () => void;
-
-    // Browse AOE4 Guides
-    showBrowseDialog: boolean;
-    onBrowseDialogChange: (show: boolean) => void;
-    filteredBrowseResults: Aoe4GuidesBuildSummary[];
-    browseCivFilter: string;
-    onBrowseCivFilterChange: (civ: string) => void;
-    browseSearchQuery: string;
-    onBrowseSearchQueryChange: (query: string) => void;
-    browseStrategyFilter: string;
-    onBrowseStrategyFilterChange: (strategy: string) => void;
-    browseMatchupFilter: string;
-    onBrowseMatchupFilterChange: (civ: string) => void;
-    browseSortBy: "popular" | "recent" | "upvotes";
-    onBrowseSortByChange: (sort: "popular" | "recent" | "upvotes") => void;
-    isBrowsing: boolean;
-    browseError: string | null;
-    onRefreshBrowse: () => void;
-    onImportFromBrowse: (id: string) => void;
-    // Track already-imported builds
-    importedAoe4GuidesIds: Set<string>;
+    dialogs: BuildOrderDialogsState;
 }
 
-export function BuildOrderDialogs({
-    deleteConfirm,
-    onDeleteConfirmChange,
-    onDelete,
-    showImportDialog,
-    onImportDialogChange,
-    importJson,
-    onImportJsonChange,
-    importError,
-    onImport,
-    showUrlImportDialog,
-    onUrlImportDialogChange,
-    importUrl,
-    onImportUrlChange,
-    urlImportError,
-    onUrlImport,
-    isImporting,
-    showAoe4GuidesUrlDialog,
-    onAoe4GuidesUrlDialogChange,
-    aoe4GuidesUrl,
-    onAoe4GuidesUrlChange,
-    aoe4GuidesUrlError,
-    onAoe4GuidesUrlImport,
-    showBrowseDialog,
-    onBrowseDialogChange,
-    filteredBrowseResults,
-    browseCivFilter,
-    onBrowseCivFilterChange,
-    browseSearchQuery,
-    onBrowseSearchQueryChange,
-    browseStrategyFilter,
-    onBrowseStrategyFilterChange,
-    browseMatchupFilter,
-    onBrowseMatchupFilterChange,
-    browseSortBy,
-    onBrowseSortByChange,
-    isBrowsing,
-    browseError,
-    onRefreshBrowse,
-    onImportFromBrowse,
-    importedAoe4GuidesIds,
-}: BuildOrderDialogsProps) {
+export function BuildOrderDialogs({ dialogs }: BuildOrderDialogsProps) {
+    const {
+        deleteDialog,
+        importJsonDialog,
+        importUrlDialog,
+        importAoe4GuidesDialog,
+        browseDialog,
+        importedAoe4GuidesIds,
+    } = dialogs;
+
     return (
         <>
+            {/* Delete Confirmation Dialog */}
             <AlertDialog
-                open={!!deleteConfirm}
-                onOpenChange={(open) => !open && onDeleteConfirmChange(null)}
+                open={!!deleteDialog.confirmId}
+                onOpenChange={(open) => !open && deleteDialog.setConfirmId(null)}
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
@@ -150,7 +71,7 @@ export function BuildOrderDialogs({
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => deleteConfirm && onDelete(deleteConfirm)}
+                            onClick={deleteDialog.onDelete}
                         >
                             Delete
                         </AlertDialogAction>
@@ -158,13 +79,12 @@ export function BuildOrderDialogs({
                 </AlertDialogContent>
             </AlertDialog>
 
+            {/* Import JSON Dialog */}
             <Dialog
-                open={showImportDialog}
+                open={importJsonDialog.show}
                 onOpenChange={(open) => {
-                    onImportDialogChange(open);
-                    if (!open) {
-                        onImportJsonChange("");
-                    }
+                    importJsonDialog.setShow(open);
+                    if (!open) importJsonDialog.setValue("");
                 }}
             >
                 <DialogContent className="max-w-2xl">
@@ -187,20 +107,20 @@ export function BuildOrderDialogs({
                     <div className="space-y-4">
                         <Textarea
                             placeholder='Paste JSON here... (starts with { "civilization": ...})'
-                            value={importJson}
-                            onChange={(e) => onImportJsonChange(e.target.value)}
+                            value={importJsonDialog.value}
+                            onChange={(e) => importJsonDialog.setValue(e.target.value)}
                             className="min-h-[200px] font-mono text-xs"
                         />
-                        {importError && (
-                            <p className="text-sm text-destructive">{importError}</p>
+                        {importJsonDialog.error && (
+                            <p className="text-sm text-destructive">{importJsonDialog.error}</p>
                         )}
                     </div>
 
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => onImportDialogChange(false)}>
+                        <Button variant="outline" onClick={() => importJsonDialog.setShow(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={onImport} disabled={!importJson.trim()}>
+                        <Button onClick={importJsonDialog.onImport} disabled={!importJsonDialog.value.trim()}>
                             <Upload className="w-4 h-4 mr-1" />
                             Import Build Order
                         </Button>
@@ -208,13 +128,12 @@ export function BuildOrderDialogs({
                 </DialogContent>
             </Dialog>
 
+            {/* Import URL (AoE4World) Dialog */}
             <Dialog
-                open={showUrlImportDialog}
+                open={importUrlDialog.show}
                 onOpenChange={(open) => {
-                    onUrlImportDialogChange(open);
-                    if (!open) {
-                        onImportUrlChange("");
-                    }
+                    importUrlDialog.setShow(open);
+                    if (!open) importUrlDialog.setValue("");
                 }}
             >
                 <DialogContent>
@@ -236,27 +155,30 @@ export function BuildOrderDialogs({
                     <div className="space-y-4">
                         <Input
                             placeholder="https://aoe4world.com/builds/123"
-                            value={importUrl}
-                            onChange={(e) => onImportUrlChange(e.target.value)}
+                            value={importUrlDialog.value}
+                            onChange={(e) => importUrlDialog.setValue(e.target.value)}
                             onKeyDown={(e) => {
-                                if (e.key === "Enter" && importUrl.trim() && !isImporting) {
-                                    onUrlImport();
+                                if (e.key === "Enter" && importUrlDialog.value.trim() && !importUrlDialog.isImporting) {
+                                    importUrlDialog.onImport();
                                 }
                             }}
                         />
-                        {urlImportError && <p className="text-sm text-destructive">{urlImportError}</p>}
+                        {importUrlDialog.error && <p className="text-sm text-destructive">{importUrlDialog.error}</p>}
                     </div>
 
                     <DialogFooter>
                         <Button
                             variant="outline"
-                            onClick={() => onUrlImportDialogChange(false)}
-                            disabled={isImporting}
+                            onClick={() => importUrlDialog.setShow(false)}
+                            disabled={importUrlDialog.isImporting}
                         >
                             Cancel
                         </Button>
-                        <Button onClick={onUrlImport} disabled={!importUrl.trim() || isImporting}>
-                            {isImporting ? (
+                        <Button
+                            onClick={importUrlDialog.onImport}
+                            disabled={!importUrlDialog.value.trim() || importUrlDialog.isImporting}
+                        >
+                            {importUrlDialog.isImporting ? (
                                 <>
                                     <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                     Importing...
@@ -272,13 +194,12 @@ export function BuildOrderDialogs({
                 </DialogContent>
             </Dialog>
 
+            {/* Import URL (AoE4Guides) Dialog */}
             <Dialog
-                open={showAoe4GuidesUrlDialog}
+                open={importAoe4GuidesDialog.show}
                 onOpenChange={(open) => {
-                    onAoe4GuidesUrlDialogChange(open);
-                    if (!open) {
-                        onAoe4GuidesUrlChange("");
-                    }
+                    importAoe4GuidesDialog.setShow(open);
+                    if (!open) importAoe4GuidesDialog.setValue("");
                 }}
             >
                 <DialogContent>
@@ -300,30 +221,32 @@ export function BuildOrderDialogs({
                     <div className="space-y-4">
                         <Input
                             placeholder="https://aoe4guides.com/build/ABC123"
-                            value={aoe4GuidesUrl}
-                            onChange={(e) => onAoe4GuidesUrlChange(e.target.value)}
+                            value={importAoe4GuidesDialog.value}
+                            onChange={(e) => importAoe4GuidesDialog.setValue(e.target.value)}
                             onKeyDown={(e) => {
-                                if (e.key === "Enter" && aoe4GuidesUrl.trim() && !isImporting) {
-                                    onAoe4GuidesUrlImport();
+                                if (e.key === "Enter" && importAoe4GuidesDialog.value.trim() && !importAoe4GuidesDialog.isImporting) {
+                                    importAoe4GuidesDialog.onImport();
                                 }
                             }}
                         />
-                        {aoe4GuidesUrlError && <p className="text-sm text-destructive">{aoe4GuidesUrlError}</p>}
+                        {importAoe4GuidesDialog.error && (
+                            <p className="text-sm text-destructive">{importAoe4GuidesDialog.error}</p>
+                        )}
                     </div>
 
                     <DialogFooter>
                         <Button
                             variant="outline"
-                            onClick={() => onAoe4GuidesUrlDialogChange(false)}
-                            disabled={isImporting}
+                            onClick={() => importAoe4GuidesDialog.setShow(false)}
+                            disabled={importAoe4GuidesDialog.isImporting}
                         >
                             Cancel
                         </Button>
                         <Button
-                            onClick={onAoe4GuidesUrlImport}
-                            disabled={!aoe4GuidesUrl.trim() || isImporting}
+                            onClick={importAoe4GuidesDialog.onImport}
+                            disabled={!importAoe4GuidesDialog.value.trim() || importAoe4GuidesDialog.isImporting}
                         >
-                            {isImporting ? (
+                            {importAoe4GuidesDialog.isImporting ? (
                                 <>
                                     <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                     Importing...
@@ -339,12 +262,8 @@ export function BuildOrderDialogs({
                 </DialogContent>
             </Dialog>
 
-            <Dialog
-                open={showBrowseDialog}
-                onOpenChange={(open) => {
-                    onBrowseDialogChange(open);
-                }}
-            >
+            {/* Browse AOE4 Guides Dialog */}
+            <Dialog open={browseDialog.show} onOpenChange={browseDialog.setShow}>
                 <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
                     <div className="relative bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border-b px-6 py-5 flex-shrink-0">
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80" />
@@ -377,13 +296,13 @@ export function BuildOrderDialogs({
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                 <Input
                                     placeholder="Search builds..."
-                                    value={browseSearchQuery}
-                                    onChange={(e) => onBrowseSearchQueryChange(e.target.value)}
+                                    value={browseDialog.searchQuery}
+                                    onChange={(e) => browseDialog.setSearchQuery(e.target.value)}
                                     className="pl-10 bg-muted/50"
                                 />
-                                {browseSearchQuery && (
+                                {browseDialog.searchQuery && (
                                     <button
-                                        onClick={() => onBrowseSearchQueryChange("")}
+                                        onClick={() => browseDialog.setSearchQuery("")}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                                     >
                                         <X className="w-4 h-4" />
@@ -393,8 +312,8 @@ export function BuildOrderDialogs({
 
                             <div className="flex flex-wrap items-center gap-2">
                                 <Select
-                                    value={browseCivFilter || "all"}
-                                    onValueChange={(value) => onBrowseCivFilterChange(value === "all" ? "" : value)}
+                                    value={browseDialog.civFilter || "all"}
+                                    onValueChange={(value) => browseDialog.setCivFilter(value === "all" ? "" : value)}
                                 >
                                     <SelectTrigger className="w-[180px] bg-muted/50">
                                         <Globe className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -411,8 +330,8 @@ export function BuildOrderDialogs({
                                 </Select>
 
                                 <Select
-                                    value={browseStrategyFilter || "all"}
-                                    onValueChange={(value) => onBrowseStrategyFilterChange(value === "all" ? "" : value)}
+                                    value={browseDialog.strategyFilter || "all"}
+                                    onValueChange={(value) => browseDialog.setStrategyFilter(value === "all" ? "" : value)}
                                 >
                                     <SelectTrigger className="w-[160px] bg-muted/50">
                                         <Zap className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -432,8 +351,8 @@ export function BuildOrderDialogs({
                                 </Select>
 
                                 <Select
-                                    value={browseMatchupFilter || "all"}
-                                    onValueChange={(value) => onBrowseMatchupFilterChange(value === "all" ? "" : value)}
+                                    value={browseDialog.matchupFilter || "all"}
+                                    onValueChange={(value) => browseDialog.setMatchupFilter(value === "all" ? "" : value)}
                                 >
                                     <SelectTrigger className="w-[140px] bg-muted/50">
                                         <Swords className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -450,8 +369,8 @@ export function BuildOrderDialogs({
                                 </Select>
 
                                 <Select
-                                    value={browseSortBy}
-                                    onValueChange={(value) => onBrowseSortByChange(value as "popular" | "recent" | "upvotes")}
+                                    value={browseDialog.sortBy}
+                                    onValueChange={(value) => browseDialog.setSortBy(value as "popular" | "recent" | "upvotes")}
                                 >
                                     <SelectTrigger className="w-[140px] bg-muted/50">
                                         <ArrowUpDown className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -480,34 +399,38 @@ export function BuildOrderDialogs({
                                 </Select>
 
                                 <Button
-                                    onClick={onRefreshBrowse}
-                                    disabled={isBrowsing}
+                                    onClick={browseDialog.onRefresh}
+                                    disabled={browseDialog.isLoading}
                                     size="sm"
                                     className="bg-gradient-to-r from-amber-500 to-orange-600 border-none text-white"
                                 >
-                                    {isBrowsing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+                                    {browseDialog.isLoading ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Search className="w-4 h-4 mr-2" />
+                                    )}
                                     Refresh
                                 </Button>
 
-                                {filteredBrowseResults.length > 0 && !isBrowsing && (
+                                {browseDialog.results.length > 0 && !browseDialog.isLoading && (
                                     <div className="flex items-center gap-2 text-sm text-muted-foreground ml-auto">
                                         <Sparkles className="w-4 h-4 text-amber-500" />
-                                        <span className="font-medium">{filteredBrowseResults.length}</span>
+                                        <span className="font-medium">{browseDialog.results.length}</span>
                                         <span>builds</span>
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {browseError && (
+                        {browseDialog.error && (
                             <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-                                {browseError}
+                                {browseDialog.error}
                             </div>
                         )}
 
                         <ScrollArea className="flex-1 min-h-0 -mx-2 px-2">
                             <div className="grid gap-3 pb-2">
-                                {filteredBrowseResults.map((build) => (
+                                {browseDialog.results.map((build) => (
                                     <div
                                         key={build.id}
                                         className="group p-4 rounded-xl border bg-card/50 hover:bg-card hover:border-amber-500/30 transition-all duration-200"
@@ -569,10 +492,10 @@ export function BuildOrderDialogs({
                                                         ? "bg-muted text-muted-foreground hover:bg-muted/80"
                                                         : "bg-gradient-to-r from-amber-500 to-orange-600 text-white"
                                                 }`}
-                                                onClick={() => onImportFromBrowse(build.id)}
-                                                disabled={isImporting}
+                                                onClick={() => browseDialog.onImport(build.id)}
+                                                disabled={browseDialog.isImporting}
                                             >
-                                                {isImporting ? (
+                                                {browseDialog.isImporting ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
                                                 ) : importedAoe4GuidesIds.has(build.id) ? (
                                                     <>
@@ -590,14 +513,14 @@ export function BuildOrderDialogs({
                                     </div>
                                 ))}
 
-                                {filteredBrowseResults.length === 0 && !isBrowsing && !browseError && (
+                                {browseDialog.results.length === 0 && !browseDialog.isLoading && !browseDialog.error && (
                                     <div className="text-center py-16 text-muted-foreground">
                                         <p className="text-sm font-medium">No builds found</p>
                                         <p className="text-xs mt-1">Try adjusting your filters or search query</p>
                                     </div>
                                 )}
 
-                                {isBrowsing && (
+                                {browseDialog.isLoading && (
                                     <div className="text-center py-16 text-muted-foreground">
                                         <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-amber-500" />
                                         <p className="text-sm font-medium">Loading builds...</p>
@@ -610,7 +533,7 @@ export function BuildOrderDialogs({
                     <DialogFooter className="flex-shrink-0 border-t px-6 py-4 bg-muted/30">
                         <div className="flex items-center justify-between w-full">
                             <p className="text-xs text-muted-foreground">Powered by AOE4 Guides API</p>
-                            <Button variant="outline" onClick={() => onBrowseDialogChange(false)}>
+                            <Button variant="outline" onClick={() => browseDialog.setShow(false)}>
                                 Close
                             </Button>
                         </div>
