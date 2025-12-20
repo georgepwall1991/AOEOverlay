@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useBuildOrderStore } from "@/stores";
 import { saveBuildOrder, deleteBuildOrder } from "@/lib/tauri";
 import { importAge4Builder } from "@/lib/age4builder";
@@ -9,6 +9,7 @@ import {
   type Aoe4GuidesBuildSummary
 } from "@/lib/aoe4guides";
 import type { BuildOrder } from "@/types";
+import { useBuildOrderFiltering, useBrowseFiltering } from "@/hooks/useBuildOrderFiltering";
 import { BuildOrderEditor } from "./BuildOrderEditor";
 import { BuildOrderHeader } from "./build-order/BuildOrderHeader";
 import { BuildOrderDialogs } from "./build-order/BuildOrderDialogs";
@@ -22,7 +23,6 @@ interface BuildOrderManagerProps {
 
 export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrderManagerProps) {
   const { buildOrders, setBuildOrders } = useBuildOrderStore();
-  const [searchQuery, setSearchQuery] = useState("");
   const [editingOrder, setEditingOrder] = useState<BuildOrder | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -46,95 +46,28 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
   const [showBrowseDialog, setShowBrowseDialog] = useState(false);
   const [browseResults, setBrowseResults] = useState<Aoe4GuidesBuildSummary[]>([]);
   const [browseCivFilter, setBrowseCivFilter] = useState<string>("");
-  const [browseSearchQuery, setBrowseSearchQuery] = useState<string>("");
-  const [browseStrategyFilter, setBrowseStrategyFilter] = useState<string>("");
-  const [browseMatchupFilter, setBrowseMatchupFilter] = useState<string>("");
-  const [browseSortBy, setBrowseSortBy] = useState<"popular" | "recent" | "upvotes">("popular");
   const [isBrowsing, setIsBrowsing] = useState(false);
   const [browseError, setBrowseError] = useState<string | null>(null);
 
-  // Filter local build orders
-  const filteredOrders = useMemo(() => {
-    return buildOrders.filter((order) => {
-      if (filterCiv && order.civilization !== filterCiv) return false;
-      if (filterDiff && order.difficulty !== filterDiff) return false;
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        return (
-          order.name.toLowerCase().includes(query) ||
-          order.description?.toLowerCase().includes(query)
-        );
-      }
-      return true;
-    });
-  }, [buildOrders, filterCiv, filterDiff, searchQuery]);
+  // Use filtering hooks
+  const {
+    searchQuery,
+    setSearchQuery,
+    filteredOrders,
+    importedAoe4GuidesIds,
+  } = useBuildOrderFiltering({ buildOrders, filterCiv, filterDiff });
 
-  // Track which aoe4guides builds have already been imported
-  // Build IDs are in format "aoe4guides-{originalId}" or "aoe4guides-{originalId}-{timestamp}"
-  const importedAoe4GuidesIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const order of buildOrders) {
-      if (order.id.startsWith("aoe4guides-")) {
-        // Extract original ID: "aoe4guides-ABC123" -> "ABC123"
-        // Also handles "aoe4guides-ABC123-1234567890" -> "ABC123"
-        const match = order.id.match(/^aoe4guides-([a-zA-Z0-9]+)/);
-        if (match) {
-          ids.add(match[1]);
-        }
-      }
-    }
-    return ids;
-  }, [buildOrders]);
-
-  // Filter and sort browse results
-  const filteredBrowseResults = useMemo(() => {
-    let results = [...browseResults];
-    if (browseSearchQuery.trim()) {
-      const query = browseSearchQuery.toLowerCase();
-      results = results.filter(
-        (build) =>
-          build.title.toLowerCase().includes(query) ||
-          build.author.toLowerCase().includes(query) ||
-          build.description?.toLowerCase().includes(query)
-      );
-    }
-    if (browseStrategyFilter) {
-      results = results.filter((build) =>
-        build.strategy?.toLowerCase().includes(browseStrategyFilter.toLowerCase())
-      );
-    }
-    // Filter by matchup (vs civilization) - search in title and description
-    if (browseMatchupFilter) {
-      const matchup = browseMatchupFilter.toLowerCase();
-      // Also check for common abbreviations (e.g., "HRE" for "Holy Roman Empire")
-      results = results.filter((build) => {
-        const titleLower = build.title.toLowerCase();
-        const descLower = build.description?.toLowerCase() || "";
-        return (
-          titleLower.includes(matchup) ||
-          descLower.includes(matchup) ||
-          titleLower.includes("vs " + matchup) ||
-          titleLower.includes("vs. " + matchup) ||
-          titleLower.includes("against " + matchup) ||
-          descLower.includes("vs " + matchup) ||
-          descLower.includes("vs. " + matchup) ||
-          descLower.includes("against " + matchup)
-        );
-      });
-    }
-    switch (browseSortBy) {
-      case "popular":
-        results.sort((a, b) => b.views - a.views);
-        break;
-      case "upvotes":
-        results.sort((a, b) => b.upvotes - a.upvotes);
-        break;
-      case "recent":
-        // API returns recent first
-        break;
-    }
-    return results;
-  }, [browseResults, browseSearchQuery, browseStrategyFilter, browseMatchupFilter, browseSortBy]);
+  const {
+    browseSearchQuery,
+    setBrowseSearchQuery,
+    browseStrategyFilter,
+    setBrowseStrategyFilter,
+    browseMatchupFilter,
+    setBrowseMatchupFilter,
+    browseSortBy,
+    setBrowseSortBy,
+    filteredBrowseResults,
+  } = useBrowseFiltering({ browseResults });
 
   // Handlers
   const handleToggleEnabled = async (order: BuildOrder) => {

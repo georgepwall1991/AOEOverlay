@@ -1,37 +1,14 @@
-import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { useState, useCallback } from "react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import type { BuildOrder, BuildOrderBranch, BuildOrderStep, Civilization, Difficulty } from "@/types";
-import { CIVILIZATIONS, DIFFICULTIES } from "@/types";
+import { BuildOrderMetadata } from "./BuildOrderMetadata";
+import { StepEditor } from "./StepEditor";
+import { BranchEditor } from "./BranchEditor";
+import type { BuildOrder, BuildOrderBranch, BuildOrderStep, Resources } from "@/types";
 
-const ICON_OPTIONS = [
-  "villager",
-  "scout",
-  "spearman",
-  "archer",
-  "knight",
-  "barracks",
-  "archery_range",
-  "stable",
-  "house",
-  "town_center",
-  "food",
-  "wood",
-  "gold",
-  "stone",
-];
 interface BuildOrderEditorProps {
   buildOrder: BuildOrder;
   onSave: (order: BuildOrder) => void;
@@ -51,21 +28,23 @@ export function BuildOrderEditor({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const updateOrder = (updates: Partial<BuildOrder>) => {
+  const updateOrder = useCallback((updates: Partial<BuildOrder>) => {
     setOrder((prev) => ({ ...prev, ...updates }));
     // Clear related errors
     Object.keys(updates).forEach((key) => {
-      if (errors[key]) {
-        setErrors((prev) => {
+      setErrors((prev) => {
+        if (prev[key]) {
           const newErrors = { ...prev };
           delete newErrors[key];
           return newErrors;
-        });
-      }
+        }
+        return prev;
+      });
     });
-  };
+  }, []);
 
-  const addStep = () => {
+  // Step management for main steps
+  const addStep = useCallback(() => {
     const newStep: BuildOrderStep = {
       id: `step-${Date.now()}`,
       description: "",
@@ -73,28 +52,200 @@ export function BuildOrderEditor({
       resources: undefined,
     };
     updateOrder({ steps: [...order.steps, newStep] });
-  };
+  }, [order.steps, updateOrder]);
 
-  const updateStep = (index: number, updates: Partial<BuildOrderStep>) => {
-    const newSteps = [...order.steps];
-    newSteps[index] = { ...newSteps[index], ...updates };
-    updateOrder({ steps: newSteps });
-  };
+  const updateStep = useCallback(
+    (index: number, updates: Partial<BuildOrderStep>) => {
+      const newSteps = [...order.steps];
+      newSteps[index] = { ...newSteps[index], ...updates };
+      updateOrder({ steps: newSteps });
+    },
+    [order.steps, updateOrder]
+  );
 
-  const removeStep = (index: number) => {
-    updateOrder({ steps: order.steps.filter((_, i) => i !== index) });
-  };
+  const removeStep = useCallback(
+    (index: number) => {
+      updateOrder({ steps: order.steps.filter((_, i) => i !== index) });
+    },
+    [order.steps, updateOrder]
+  );
 
-  const moveStep = (index: number, direction: "up" | "down") => {
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= order.steps.length) return;
+  const moveStep = useCallback(
+    (index: number, direction: "up" | "down") => {
+      const newIndex = direction === "up" ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= order.steps.length) return;
+      const newSteps = [...order.steps];
+      [newSteps[index], newSteps[newIndex]] = [newSteps[newIndex], newSteps[index]];
+      updateOrder({ steps: newSteps });
+    },
+    [order.steps, updateOrder]
+  );
 
-    const newSteps = [...order.steps];
-    [newSteps[index], newSteps[newIndex]] = [newSteps[newIndex], newSteps[index]];
-    updateOrder({ steps: newSteps });
-  };
+  const updateStepResources = useCallback(
+    (index: number, resource: keyof Resources, value: string) => {
+      const numValue = value === "" ? undefined : parseInt(value, 10);
+      const step = order.steps[index];
+      const resources = step.resources || {};
 
-  const validate = (): boolean => {
+      if (numValue === undefined || isNaN(numValue)) {
+        const newResources = { ...resources };
+        delete newResources[resource];
+        if (Object.keys(newResources).length === 0) {
+          updateStep(index, { resources: undefined });
+        } else {
+          updateStep(index, { resources: newResources });
+        }
+      } else {
+        updateStep(index, { resources: { ...resources, [resource]: numValue } });
+      }
+    },
+    [order.steps, updateStep]
+  );
+
+  const appendIconToStep = useCallback(
+    (index: number, icon: string) => {
+      const step = order.steps[index];
+      const nextDescription = `${step.description} [icon:${icon}]`.trim();
+      updateStep(index, { description: nextDescription });
+    },
+    [order.steps, updateStep]
+  );
+
+  // Branch management
+  const addBranch = useCallback(() => {
+    const newBranch: BuildOrderBranch = {
+      id: `branch-${Date.now()}`,
+      name: "New branch",
+      trigger: "",
+      startStepIndex: Math.max(0, order.steps.length - 1),
+      steps: [],
+    };
+    updateOrder({ branches: [...(order.branches ?? []), newBranch] });
+  }, [order.steps.length, order.branches, updateOrder]);
+
+  const updateBranch = useCallback(
+    (branchId: string, updates: Partial<BuildOrderBranch>) => {
+      const branches = order.branches ?? [];
+      updateOrder({
+        branches: branches.map((b) => (b.id === branchId ? { ...b, ...updates } : b)),
+      });
+    },
+    [order.branches, updateOrder]
+  );
+
+  const removeBranch = useCallback(
+    (branchId: string) => {
+      updateOrder({ branches: (order.branches ?? []).filter((b) => b.id !== branchId) });
+    },
+    [order.branches, updateOrder]
+  );
+
+  const addBranchStep = useCallback(
+    (branchId: string) => {
+      const branches = order.branches ?? [];
+      const index = branches.findIndex((b) => b.id === branchId);
+      if (index === -1) return;
+      const newStep: BuildOrderStep = {
+        id: `step-${Date.now()}`,
+        description: "",
+        timing: "",
+        resources: undefined,
+      };
+      const updated = [...branches];
+      updated[index] = { ...branches[index], steps: [...branches[index].steps, newStep] };
+      updateOrder({ branches: updated });
+    },
+    [order.branches, updateOrder]
+  );
+
+  const updateBranchStep = useCallback(
+    (branchId: string, stepIndex: number, updates: Partial<BuildOrderStep>) => {
+      const branches = order.branches ?? [];
+      const branchIndex = branches.findIndex((b) => b.id === branchId);
+      if (branchIndex === -1) return;
+      const branch = branches[branchIndex];
+      const steps = [...branch.steps];
+      steps[stepIndex] = { ...steps[stepIndex], ...updates };
+      const updated = [...branches];
+      updated[branchIndex] = { ...branch, steps };
+      updateOrder({ branches: updated });
+    },
+    [order.branches, updateOrder]
+  );
+
+  const removeBranchStep = useCallback(
+    (branchId: string, stepIndex: number) => {
+      const branches = order.branches ?? [];
+      const branchIndex = branches.findIndex((b) => b.id === branchId);
+      if (branchIndex === -1) return;
+      const branch = branches[branchIndex];
+      const updated = [...branches];
+      updated[branchIndex] = { ...branch, steps: branch.steps.filter((_, i) => i !== stepIndex) };
+      updateOrder({ branches: updated });
+    },
+    [order.branches, updateOrder]
+  );
+
+  const moveBranchStep = useCallback(
+    (branchId: string, stepIndex: number, direction: "up" | "down") => {
+      const branches = order.branches ?? [];
+      const branchIndex = branches.findIndex((b) => b.id === branchId);
+      if (branchIndex === -1) return;
+      const branch = branches[branchIndex];
+      const newIndex = direction === "up" ? stepIndex - 1 : stepIndex + 1;
+      if (newIndex < 0 || newIndex >= branch.steps.length) return;
+      const steps = [...branch.steps];
+      [steps[stepIndex], steps[newIndex]] = [steps[newIndex], steps[stepIndex]];
+      const updated = [...branches];
+      updated[branchIndex] = { ...branch, steps };
+      updateOrder({ branches: updated });
+    },
+    [order.branches, updateOrder]
+  );
+
+  const updateBranchStepResources = useCallback(
+    (branchId: string, index: number, resource: keyof Resources, value: string) => {
+      const branches = order.branches ?? [];
+      const branchIndex = branches.findIndex((b) => b.id === branchId);
+      if (branchIndex === -1) return;
+      const branch = branches[branchIndex];
+      const steps = [...branch.steps];
+      const step = steps[index];
+      const resources = step.resources || {};
+      const numValue = value === "" ? undefined : parseInt(value, 10);
+
+      if (numValue === undefined || isNaN(numValue)) {
+        const newResources = { ...resources };
+        delete (newResources as Record<typeof resource, number | undefined>)[resource];
+        if (Object.keys(newResources).length === 0) {
+          steps[index] = { ...step, resources: undefined };
+        } else {
+          steps[index] = { ...step, resources: newResources };
+        }
+      } else {
+        steps[index] = { ...step, resources: { ...resources, [resource]: numValue } };
+      }
+
+      const updated = [...branches];
+      updated[branchIndex] = { ...branch, steps };
+      updateOrder({ branches: updated });
+    },
+    [order.branches, updateOrder]
+  );
+
+  const appendIconToBranchStep = useCallback(
+    (branchId: string, index: number, icon: string) => {
+      const branch = order.branches?.find((b) => b.id === branchId);
+      if (!branch) return;
+      const step = branch.steps[index];
+      const nextDescription = `${step.description} [icon:${icon}]`.trim();
+      updateBranchStep(branchId, index, { description: nextDescription });
+    },
+    [order.branches, updateBranchStep]
+  );
+
+  // Validation
+  const validate = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!order.name.trim()) {
@@ -111,181 +262,23 @@ export function BuildOrderEditor({
       }
     });
 
-    (order.branches ?? []).forEach((branch, branchIndex) => {
+    (order.branches ?? []).forEach((branch) => {
       branch.steps.forEach((step, idx) => {
         if (!step.description.trim()) {
-          newErrors[`branch-${branch.id}-step-${idx}`] = `Branch ${branchIndex + 1} step ${idx + 1} description is required`;
+          newErrors[`branch-${branch.id}-step-${idx}`] = "Description required";
         }
       });
     });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [order]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (validate()) {
       onSave(order);
     }
-  };
-
-  const updateStepResources = (
-    index: number,
-    resource: "food" | "wood" | "gold" | "stone",
-    value: string
-  ) => {
-    const numValue = value === "" ? undefined : parseInt(value, 10);
-    const step = order.steps[index];
-    const resources = step.resources || {};
-
-    if (numValue === undefined || isNaN(numValue)) {
-      const newResources = { ...resources };
-      delete newResources[resource];
-      // If all resources are empty, set to undefined
-      if (Object.keys(newResources).length === 0) {
-        updateStep(index, { resources: undefined });
-      } else {
-        updateStep(index, { resources: newResources });
-      }
-    } else {
-      updateStep(index, {
-        resources: { ...resources, [resource]: numValue },
-      });
-    }
-  };
-
-  const appendIconToStep = (index: number, icon: string) => {
-    const step = order.steps[index];
-    const nextDescription = `${step.description} [icon:${icon}]`.trim();
-    updateStep(index, { description: nextDescription });
-  };
-
-  const addBranch = () => {
-    const newBranch: BuildOrderBranch = {
-      id: `branch-${Date.now()}`,
-      name: "New branch",
-      trigger: "",
-      startStepIndex: Math.max(0, order.steps.length - 1),
-      steps: [],
-    };
-    updateOrder({ branches: [...(order.branches ?? []), newBranch] });
-  };
-
-  const updateBranch = (branchId: string, updates: Partial<BuildOrderBranch>) => {
-    const branches = order.branches ?? [];
-    updateOrder({
-      branches: branches.map((branch) =>
-        branch.id === branchId ? { ...branch, ...updates } : branch
-      ),
-    });
-  };
-
-  const removeBranch = (branchId: string) => {
-    const branches = order.branches ?? [];
-    updateOrder({ branches: branches.filter((branch) => branch.id !== branchId) });
-  };
-
-  const addBranchStep = (branchId: string) => {
-    const branches = order.branches ?? [];
-    const index = branches.findIndex((b) => b.id === branchId);
-    if (index === -1) return;
-    const newStep: BuildOrderStep = {
-      id: `step-${Date.now()}`,
-      description: "",
-      timing: "",
-      resources: undefined,
-    };
-    const updated = [...branches];
-    updated[index] = { ...branches[index], steps: [...branches[index].steps, newStep] };
-    updateOrder({ branches: updated });
-  };
-
-  const updateBranchStep = (
-    branchId: string,
-    stepIndex: number,
-    updates: Partial<BuildOrderStep>
-  ) => {
-    const branches = order.branches ?? [];
-    const branchIndex = branches.findIndex((b) => b.id === branchId);
-    if (branchIndex === -1) return;
-    const branch = branches[branchIndex];
-    const steps = [...branch.steps];
-    steps[stepIndex] = { ...steps[stepIndex], ...updates };
-    const updated = [...branches];
-    updated[branchIndex] = { ...branch, steps };
-    updateOrder({ branches: updated });
-  };
-
-  const removeBranchStep = (branchId: string, stepIndex: number) => {
-    const branches = order.branches ?? [];
-    const branchIndex = branches.findIndex((b) => b.id === branchId);
-    if (branchIndex === -1) return;
-    const branch = branches[branchIndex];
-    const updated = [...branches];
-    updated[branchIndex] = {
-      ...branch,
-      steps: branch.steps.filter((_, i) => i !== stepIndex),
-    };
-    updateOrder({ branches: updated });
-  };
-
-  const moveBranchStep = (branchId: string, stepIndex: number, direction: "up" | "down") => {
-    const branches = order.branches ?? [];
-    const branchIndex = branches.findIndex((b) => b.id === branchId);
-    if (branchIndex === -1) return;
-    const branch = branches[branchIndex];
-    const newIndex = direction === "up" ? stepIndex - 1 : stepIndex + 1;
-    if (newIndex < 0 || newIndex >= branch.steps.length) return;
-    const steps = [...branch.steps];
-    [steps[stepIndex], steps[newIndex]] = [steps[newIndex], steps[stepIndex]];
-    const updated = [...branches];
-    updated[branchIndex] = { ...branch, steps };
-    updateOrder({ branches: updated });
-  };
-
-  const updateBranchStepResources = (
-    branchId: string,
-    index: number,
-    resource: "food" | "wood" | "gold" | "stone",
-    value: string
-  ) => {
-    const branches = order.branches ?? [];
-    const branchIndex = branches.findIndex((b) => b.id === branchId);
-    if (branchIndex === -1) return;
-    const branch = branches[branchIndex];
-    const steps = [...branch.steps];
-    const step = steps[index];
-    const resources = step.resources || {};
-
-    const numValue = value === "" ? undefined : parseInt(value, 10);
-
-    if (numValue === undefined || isNaN(numValue)) {
-      const newResources = { ...resources };
-      delete (newResources as Record<typeof resource, number | undefined>)[resource];
-      if (Object.keys(newResources).length === 0) {
-        steps[index] = { ...step, resources: undefined };
-      } else {
-        steps[index] = { ...step, resources: newResources };
-      }
-    } else {
-      steps[index] = {
-        ...step,
-        resources: { ...resources, [resource]: numValue },
-      };
-    }
-
-    const updated = [...branches];
-    updated[branchIndex] = { ...branch, steps };
-    updateOrder({ branches: updated });
-  };
-
-  const appendIconToBranchStep = (branchId: string, index: number, icon: string) => {
-    const branch = order.branches?.find((b) => b.id === branchId);
-    if (!branch) return;
-    const step = branch.steps[index];
-    const nextDescription = `${step.description} [icon:${icon}]`.trim();
-    updateBranchStep(branchId, index, { description: nextDescription });
-  };
+  }, [validate, onSave, order]);
 
   return (
     <div className="space-y-4">
@@ -300,73 +293,8 @@ export function BuildOrderEditor({
       </div>
 
       <div className="space-y-4">
-        {/* Basic info */}
-        <div className="grid gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              value={order.name}
-              onChange={(e) => updateOrder({ name: e.target.value })}
-              placeholder="e.g., Fast Castle into Knights"
-              className={errors.name ? "border-destructive" : ""}
-            />
-            {errors.name && (
-              <p className="text-xs text-destructive">{errors.name}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Civilization</Label>
-              <Select
-                value={order.civilization}
-                onValueChange={(value) => updateOrder({ civilization: value as Civilization })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CIVILIZATIONS.map((civ) => (
-                    <SelectItem key={civ} value={civ}>
-                      {civ}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Difficulty</Label>
-              <Select
-                value={order.difficulty}
-                onValueChange={(value) => updateOrder({ difficulty: value as Difficulty })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DIFFICULTIES.map((diff) => (
-                    <SelectItem key={diff} value={diff}>
-                      {diff}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={order.description}
-              onChange={(e) => updateOrder({ description: e.target.value })}
-              placeholder="Brief description of this build order..."
-              rows={2}
-            />
-          </div>
-        </div>
+        {/* Metadata form */}
+        <BuildOrderMetadata order={order} errors={errors} onUpdate={updateOrder} />
 
         <Separator />
 
@@ -380,140 +308,23 @@ export function BuildOrderEditor({
             </Button>
           </div>
 
-          {errors.steps && (
-            <p className="text-xs text-destructive">{errors.steps}</p>
-          )}
+          {errors.steps && <p className="text-xs text-destructive">{errors.steps}</p>}
 
           <ScrollArea className="h-[300px] pr-4">
             <div className="space-y-3">
               {order.steps.map((step, index) => (
-                <div
+                <StepEditor
                   key={step.id}
-                  className="p-3 rounded-lg border bg-card space-y-3"
-                >
-                  {/* Step header */}
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Step {index + 1}
-                    </span>
-                    <div className="flex-1" />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => moveStep(index, "up")}
-                      disabled={index === 0}
-                    >
-                      <ChevronUp className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => moveStep(index, "down")}
-                      disabled={index === order.steps.length - 1}
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
-                      onClick={() => removeStep(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  {/* Step content */}
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-[1fr,120px,80px] gap-2">
-                      <Input
-                        value={step.description}
-                        onChange={(e) =>
-                          updateStep(index, { description: e.target.value })
-                        }
-                        placeholder="Step description..."
-                        className={
-                          errors[`step-${index}`] ? "border-destructive" : ""
-                        }
-                      />
-                      <Select onValueChange={(icon) => appendIconToStep(index, icon)}>
-                        <SelectTrigger className="h-9 text-xs">
-                          <SelectValue placeholder="Insert icon" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ICON_OPTIONS.map((icon) => (
-                            <SelectItem key={icon} value={icon}>
-                              {icon}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        value={step.timing || ""}
-                        onChange={(e) =>
-                          updateStep(index, { timing: e.target.value || undefined })
-                        }
-                        placeholder="0:00"
-                        className="font-mono text-sm"
-                      />
-                    </div>
-
-                    {/* Resources */}
-                    <div className="grid grid-cols-4 gap-2">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-red-400">Food</Label>
-                        <Input
-                          type="number"
-                          value={step.resources?.food ?? ""}
-                          onChange={(e) =>
-                            updateStepResources(index, "food", e.target.value)
-                          }
-                          placeholder="-"
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-green-400">Wood</Label>
-                        <Input
-                          type="number"
-                          value={step.resources?.wood ?? ""}
-                          onChange={(e) =>
-                            updateStepResources(index, "wood", e.target.value)
-                          }
-                          placeholder="-"
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-yellow-400">Gold</Label>
-                        <Input
-                          type="number"
-                          value={step.resources?.gold ?? ""}
-                          onChange={(e) =>
-                            updateStepResources(index, "gold", e.target.value)
-                          }
-                          placeholder="-"
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-400">Stone</Label>
-                        <Input
-                          type="number"
-                          value={step.resources?.stone ?? ""}
-                          onChange={(e) =>
-                            updateStepResources(index, "stone", e.target.value)
-                          }
-                          placeholder="-"
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  step={step}
+                  index={index}
+                  totalSteps={order.steps.length}
+                  error={errors[`step-${index}`]}
+                  onUpdate={(updates) => updateStep(index, updates)}
+                  onRemove={() => removeStep(index)}
+                  onMove={(dir) => moveStep(index, dir)}
+                  onUpdateResources={(res, val) => updateStepResources(index, res, val)}
+                  onAppendIcon={(icon) => appendIconToStep(index, icon)}
+                />
               ))}
 
               {order.steps.length === 0 && (
@@ -552,203 +363,22 @@ export function BuildOrderEditor({
 
         <div className="space-y-3">
           {(order.branches ?? []).map((branch) => (
-            <div key={branch.id} className="p-3 rounded-lg border bg-card space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="grid gap-2 flex-1">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label>Branch Name</Label>
-                      <Input
-                        value={branch.name}
-                        onChange={(e) => updateBranch(branch.id, { name: e.target.value })}
-                        placeholder="Defense, Aggression..."
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label>Trigger (hint)</Label>
-                      <Input
-                        value={branch.trigger ?? ""}
-                        onChange={(e) => updateBranch(branch.id, { trigger: e.target.value })}
-                        placeholder="e.g., Rushed or Ahead"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label>Start at Step #</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={order.steps.length}
-                        value={branch.startStepIndex}
-                        onChange={(e) =>
-                          updateBranch(branch.id, {
-                            startStepIndex: Math.max(
-                              0,
-                              Math.min(order.steps.length, parseInt(e.target.value, 10) || 0)
-                            ),
-                          })
-                        }
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Replaces steps from this position onward
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                  onClick={() => removeBranch(branch.id)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm">Branch Steps</Label>
-                  <Button variant="outline" size="sm" onClick={() => addBranchStep(branch.id)}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add Step
-                  </Button>
-                </div>
-
-                {branch.steps.length === 0 ? (
-                  <p className="text-xs text-muted-foreground border border-dashed rounded p-3">
-                    No branch steps yet.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {branch.steps.map((step, index) => (
-                      <div
-                        key={step.id}
-                        className="p-3 rounded-md border bg-background/50 space-y-2"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-muted-foreground">
-                            Step {index + 1}
-                          </span>
-                          <div className="flex-1" />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => moveBranchStep(branch.id, index, "up")}
-                            disabled={index === 0}
-                          >
-                            <ChevronUp className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => moveBranchStep(branch.id, index, "down")}
-                            disabled={index === branch.steps.length - 1}
-                          >
-                            <ChevronDown className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:text-destructive"
-                            onClick={() => removeBranchStep(branch.id, index)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-
-                        <div className="grid grid-cols-[1fr,120px,80px] gap-2">
-                          <Input
-                            value={step.description}
-                            onChange={(e) =>
-                              updateBranchStep(branch.id, index, { description: e.target.value })
-                            }
-                            placeholder="Step description..."
-                          />
-                          <Select
-                            onValueChange={(icon) => appendIconToBranchStep(branch.id, index, icon)}
-                          >
-                            <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="Insert icon" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ICON_OPTIONS.map((icon) => (
-                                <SelectItem key={icon} value={icon}>
-                                  {icon}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Input
-                            value={step.timing || ""}
-                            onChange={(e) =>
-                              updateBranchStep(branch.id, index, {
-                                timing: e.target.value || undefined,
-                              })
-                            }
-                            placeholder="0:00"
-                            className="font-mono text-sm"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-xs text-red-400">Food</Label>
-                            <Input
-                              type="number"
-                              value={step.resources?.food ?? ""}
-                              onChange={(e) =>
-                                updateBranchStepResources(branch.id, index, "food", e.target.value)
-                              }
-                              placeholder="-"
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-green-400">Wood</Label>
-                            <Input
-                              type="number"
-                              value={step.resources?.wood ?? ""}
-                              onChange={(e) =>
-                                updateBranchStepResources(branch.id, index, "wood", e.target.value)
-                              }
-                              placeholder="-"
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-yellow-400">Gold</Label>
-                            <Input
-                              type="number"
-                              value={step.resources?.gold ?? ""}
-                              onChange={(e) =>
-                                updateBranchStepResources(branch.id, index, "gold", e.target.value)
-                              }
-                              placeholder="-"
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-gray-400">Stone</Label>
-                            <Input
-                              type="number"
-                              value={step.resources?.stone ?? ""}
-                              onChange={(e) =>
-                                updateBranchStepResources(branch.id, index, "stone", e.target.value)
-                              }
-                              placeholder="-"
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <BranchEditor
+              key={branch.id}
+              branch={branch}
+              maxStartStepIndex={order.steps.length}
+              errors={errors}
+              onUpdate={(updates) => updateBranch(branch.id, updates)}
+              onRemove={() => removeBranch(branch.id)}
+              onAddStep={() => addBranchStep(branch.id)}
+              onUpdateStep={(idx, upd) => updateBranchStep(branch.id, idx, upd)}
+              onRemoveStep={(idx) => removeBranchStep(branch.id, idx)}
+              onMoveStep={(idx, dir) => moveBranchStep(branch.id, idx, dir)}
+              onUpdateStepResources={(idx, res, val) =>
+                updateBranchStepResources(branch.id, idx, res, val)
+              }
+              onAppendIconToStep={(idx, icon) => appendIconToBranchStep(branch.id, idx, icon)}
+            />
           ))}
         </div>
       </div>
@@ -758,9 +388,7 @@ export function BuildOrderEditor({
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button onClick={handleSave}>
-          {isNew ? "Create" : "Save Changes"}
-        </Button>
+        <Button onClick={handleSave}>{isNew ? "Create" : "Save Changes"}</Button>
       </div>
     </div>
   );
