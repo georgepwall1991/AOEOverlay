@@ -107,7 +107,7 @@ pub fn recreate_overlay_window(app: AppHandle) -> Result<(), String> {
     // Windows-specific: force alpha channel and focus for transparent windows
     #[cfg(target_os = "windows")]
     {
-        crate::force_layered_alpha_opaque(&window);
+        crate::windows::force_layered_alpha_opaque(&window);
         let _ = window.set_focus();
     }
 
