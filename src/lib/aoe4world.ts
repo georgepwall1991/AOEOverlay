@@ -11,6 +11,8 @@ import type {
 } from "@/types";
 import { BuildOrderSchema } from "@/types";
 import { z } from "zod";
+import { sanitizeTiming } from "@/stores/timerStore";
+import { IntelligentConverter } from "./intelligentConverter";
 
 const API_BASE = "https://aoe4world.com/api/v0";
 
@@ -110,6 +112,19 @@ class Aoe4WorldApi {
   async getPlayerRank(profileId: number, leaderboard: string = "rm_solo"): Promise<number | null> {
     const response = await this.getLeaderboard(leaderboard, { profile_id: profileId, limit: 1 });
     return response.data[0]?.rank ?? null;
+  }
+
+  /**
+   * Attempt to find an ongoing match for a player
+   */
+  async getLiveMatch(profileId: number) {
+    const response = await this.getPlayerGames(profileId, { limit: 1 });
+    const lastGame = response.data?.[0];
+
+    if (lastGame && lastGame.ongoing) {
+      return lastGame;
+    }
+    return null;
   }
 }
 
@@ -271,7 +286,7 @@ function formatBuildTiming(timing: string | number | null | undefined): string |
   }
 
   // Already a string
-  const timingStr = timing.toString().trim();
+  const timingStr = sanitizeTiming(timing.toString());
   if (!timingStr) return undefined;
 
   // Check if it's already in mm:ss format
@@ -303,6 +318,8 @@ function convertBuild(build: Aoe4WorldBuild): BuildOrder {
     );
   }
 
+  const intelligentConverter = new IntelligentConverter();
+
   const steps: BuildOrderStep[] = build.steps.map((step, index) => {
     const ourStep: BuildOrderStep = {
       id: `step-${step.position || index + 1}`,
@@ -316,15 +333,17 @@ function convertBuild(build: Aoe4WorldBuild): BuildOrder {
     }
 
     // Add resources if any are set
-    if (step.food || step.wood || step.gold || step.stone) {
+    if (step.food || step.wood || step.gold || step.stone || step.villagers || step.population) {
       ourStep.resources = {};
       if (step.food) ourStep.resources.food = step.food;
       if (step.wood) ourStep.resources.wood = step.wood;
       if (step.gold) ourStep.resources.gold = step.gold;
       if (step.stone) ourStep.resources.stone = step.stone;
+      if (step.villagers) ourStep.resources.villagers = step.villagers;
+      if (step.population) ourStep.resources.builders = step.population; // Map population to builders as a fallback if explicit builders not available
     }
 
-    return ourStep;
+    return intelligentConverter.processStep(ourStep, index);
   });
 
   // Build description from author info

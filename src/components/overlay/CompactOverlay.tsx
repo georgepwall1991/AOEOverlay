@@ -25,7 +25,7 @@ export function CompactOverlay() {
   const [animateStep, setAnimateStep] = useState(false);
   const prevStepIndex = useRef(currentStepIndex);
   const containerRef = useAutoResize();
-  const { isRunning, isPaused, start, deltaStatus, deltaCompact } = useTimer();
+  const { isRunning, isPaused, start, deltaStatus } = useTimer();
   const scale = config.ui_scale ?? 1;
 
   // Font and icon sizing for compact mode - shrunk for pro HUD look
@@ -39,6 +39,7 @@ export function CompactOverlay() {
     config.font_size === "large" ? 22 : config.font_size === "small" ? 16 : 18;
 
   const currentStep = activeSteps[currentStepIndex];
+  const prevStep = currentStepIndex > 0 ? activeSteps[currentStepIndex - 1] : null;
   const nextStepPreview = activeSteps[currentStepIndex + 1];
   const totalSteps = activeSteps.length;
 
@@ -76,10 +77,16 @@ export function CompactOverlay() {
     >
       <div
         className={cn(
-          "flex flex-col",
+          "flex flex-col relative",
           floatingStyle ? "floating-panel" : "glass-panel"
         )}
       >
+        {/* Compact HUD Corners */}
+        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-white/20 rounded-tl-lg pointer-events-none" />
+        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-white/20 rounded-tr-lg pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-white/20 rounded-bl-lg pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-white/20 rounded-br-lg pointer-events-none" />
+
         <CompactHeader
           config={config}
           updateConfig={updateConfig}
@@ -92,12 +99,12 @@ export function CompactOverlay() {
           <CompactStepContent
             currentStep={currentStep}
             nextStepPreview={nextStepPreview}
+            previousResources={prevStep?.resources}
             currentStepIndex={currentStepIndex}
             totalSteps={totalSteps}
             fontSize={fontSize}
             iconSize={iconSize}
             paceDotClass={paceDotClass}
-            deltaCompact={deltaCompact}
             isRunning={isRunning}
             isPaused={isPaused}
             animateStep={animateStep}

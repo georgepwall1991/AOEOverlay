@@ -1,6 +1,29 @@
-use tauri::{AppHandle, Emitter, Manager};
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState, Modifiers};
 use crate::state::AppState;
+
+// Parse a hotkey string like "Alt+F1" or "Ctrl+Shift+A"
+fn parse_shortcut(key_str: &str) -> Option<Shortcut> {
+    let parts: Vec<&str> = key_str.split('+').collect();
+    let mut modifiers = Modifiers::empty();
+    let mut code = None;
+
+    for part in parts {
+        match part.to_uppercase().as_str() {
+            "ALT" => modifiers.insert(Modifiers::ALT),
+            "CTRL" | "CONTROL" => modifiers.insert(Modifiers::CONTROL),
+            "SHIFT" => modifiers.insert(Modifiers::SHIFT),
+            "SUPER" | "META" | "COMMAND" | "WINDOWS" | "CMD" => modifiers.insert(Modifiers::SUPER),
+            rest => {
+                if let Some(c) = string_to_code(rest) {
+                    code = Some(c);
+                }
+            }
+        }
+    }
+
+    code.map(|c| Shortcut::new(Some(modifiers), c))
+}
 
 // Map string hotkey name to Code enum
 fn string_to_code(key: &str) -> Option<Code> {
@@ -72,21 +95,30 @@ fn string_to_code(key: &str) -> Option<Code> {
     }
 }
 
-fn register_single_hotkey(
-    app: &AppHandle,
+fn register_single_hotkey<R: Runtime>(
+    app: &AppHandle<R>,
     key_str: &str,
     event_name: &'static str,
 ) -> Result<(), String> {
-    if let Some(code) = string_to_code(key_str) {
-        let app_handle = app.clone();
-        let shortcut = Shortcut::new(None, code);
+    if let Some(shortcut) = parse_shortcut(key_str) {
         #[cfg(debug_assertions)]
         let key_owned = key_str.to_string(); // Own the string for the closure (debug only)
         #[cfg(debug_assertions)]
         println!("[Hotkeys] Registering {} -> {}", key_str, event_name);
+        
+        let app_handle = app.clone();
         app.global_shortcut()
-            .on_shortcut(shortcut, move |_app, _shortcut, event| {
+            .on_shortcut(shortcut, move |app, _shortcut, event| {
                 if event.state == ShortcutState::Pressed {
+                    // Suppression logic: Don't emit if the settings window is currently focused.
+                    if let Some(settings_win) = app.get_webview_window("settings") {
+                        if settings_win.is_focused().unwrap_or(false) {
+                            #[cfg(debug_assertions)]
+                            println!("[Hotkeys] Settings focused, suppressing {}", key_owned);
+                            return;
+                        }
+                    }
+
                     #[cfg(debug_assertions)]
                     println!("[Hotkeys] {} pressed, emitting {}", key_owned, event_name);
                     let _ = app_handle.emit(event_name, ());
@@ -99,7 +131,7 @@ fn register_single_hotkey(
     Ok(())
 }
 
-pub fn register_hotkeys(app: &AppHandle) -> Result<(), String> {
+pub fn register_hotkeys<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
     // Unregister all existing shortcuts
     if let Err(e) = app.global_shortcut().unregister_all() {
         eprintln!("Warning: Failed to unregister existing hotkeys: {}", e);
@@ -112,7 +144,7 @@ pub fn register_hotkeys(app: &AppHandle) -> Result<(), String> {
     };
 
     // Register all hotkeys using helper
-    let hotkeys: [(&str, &'static str); 13] = [
+    let hotkeys: [(&str, &'static str); 14] = [
         (&hotkey_config.toggle_overlay, "hotkey-toggle-overlay"),
         (&hotkey_config.previous_step, "hotkey-previous-step"),
         (&hotkey_config.next_step, "hotkey-next-step"),
@@ -121,6 +153,7 @@ pub fn register_hotkeys(app: &AppHandle) -> Result<(), String> {
         (&hotkey_config.toggle_compact, "hotkey-toggle-compact"),
         (&hotkey_config.reset_build_order, "hotkey-reset-build-order"),
         (&hotkey_config.toggle_pause, "hotkey-toggle-pause"),
+        (&hotkey_config.toggle_counters, "hotkey-toggle-counters"),
         (&hotkey_config.activate_branch_main, "hotkey-activate-branch-main"),
         (&hotkey_config.activate_branch_1, "hotkey-activate-branch-1"),
         (&hotkey_config.activate_branch_2, "hotkey-activate-branch-2"),
@@ -139,6 +172,22 @@ pub fn register_hotkeys(app: &AppHandle) -> Result<(), String> {
 mod tests {
     use super::*;
     use tauri_plugin_global_shortcut::Code;
+
+    #[test]
+    fn test_parse_shortcut() {
+        let s1 = parse_shortcut("Alt+F1").unwrap();
+        assert_eq!(s1.code, Code::F1);
+        assert!(s1.modifiers.contains(Modifiers::ALT));
+
+        let s2 = parse_shortcut("Ctrl+Shift+A").unwrap();
+        assert_eq!(s2.code, Code::KeyA);
+        assert!(s2.modifiers.contains(Modifiers::CONTROL));
+        assert!(s2.modifiers.contains(Modifiers::SHIFT));
+
+        let s3 = parse_shortcut("F3").unwrap();
+        assert_eq!(s3.code, Code::F3);
+        assert!(s3.modifiers.is_empty());
+    }
 
     #[test]
     fn test_string_to_code() {

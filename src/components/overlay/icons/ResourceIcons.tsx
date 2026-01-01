@@ -7,11 +7,12 @@ const RESOURCE_ICONS = {
   gold: "/icons/resource_gold.webp",
   stone: "/icons/resource_stone.webp",
   villager: "/icons/villager.webp",
+  builders: "/icons/villager.webp", // Use same icon for builders
   pop: "/icons/house.webp",
 } as const;
 
 interface ResourceIconProps {
-  type: "food" | "wood" | "gold" | "stone" | "villager" | "pop";
+  type: "food" | "wood" | "gold" | "stone" | "villager" | "builders" | "pop";
   size?: number;
   className?: string;
   glow?: boolean;

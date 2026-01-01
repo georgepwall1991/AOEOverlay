@@ -1,9 +1,8 @@
+import { useState, useRef, useEffect } from "react";
 import { useBuildOrderStore, useCurrentBuildOrder, useActiveSteps, useActiveBranchId } from "@/stores";
 import { BuildOrderStep } from "./BuildOrderStep";
-import { BuildSelectorDropdown } from "./BuildSelectorDropdown";
 import { logTelemetryEvent, cn } from "@/lib/utils";
 import { useTimer } from "@/hooks";
-import { CheckCircle2 } from "lucide-react";
 import { ActiveStepResources } from "../indicators/ActiveStepResources";
 
 export function BuildOrderDisplay() {
@@ -15,6 +14,20 @@ export function BuildOrderDisplay() {
   const activeSteps = useActiveSteps();
   const activeBranchName = currentOrder?.branches?.find((b) => b.id === activeBranchId)?.name;
   const { isRunning, start } = useTimer();
+  
+  // Celebration effect when step changes
+  const [celebrating, setCelebrating] = useState(false);
+  const prevStepRef = useRef(currentStepIndex);
+
+  useEffect(() => {
+    if (currentStepIndex > prevStepRef.current) {
+      setCelebrating(true);
+      const timer = setTimeout(() => setCelebrating(false), 800);
+      prevStepRef.current = currentStepIndex;
+      return () => clearTimeout(timer);
+    }
+    prevStepRef.current = currentStepIndex;
+  }, [currentStepIndex]);
 
   if (!currentOrder) {
     return (
@@ -35,10 +48,6 @@ export function BuildOrderDisplay() {
   const endIndex = Math.min(activeSteps.length, startIndex + visibleRange);
   const visibleSteps = activeSteps.slice(startIndex, endIndex);
 
-  const progressPercent =
-    activeSteps.length > 0 ? ((currentStepIndex + 1) / activeSteps.length) * 100 : 0;
-  const isComplete = activeSteps.length > 0 && currentStepIndex >= activeSteps.length - 1;
-
   const handleBranchSelect = (branchId: string | null) => {
     setActiveBranch(branchId);
     logTelemetryEvent("action:branch:set", {
@@ -48,101 +57,73 @@ export function BuildOrderDisplay() {
   };
 
   return (
-    <div className="flex flex-col">
-      {/* Header with build selector and progress */}
-      <div className="px-2 py-2 flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <BuildSelectorDropdown />
-          </div>
-
-          {/* Progress indicator */}
-          <div data-testid="progress-indicator" className="flex items-center gap-2 flex-shrink-0">
-            <div className={cn(
-              "w-28 h-2 rounded-full overflow-hidden transition-all duration-300 bg-white/5 border border-white/5 backdrop-blur-sm relative",
-              isComplete ? "bg-emerald-900/30" : "bg-white/5"
-            )}>
-              <div
-                className={cn(
-                  "h-full transition-all duration-[800ms] cubic-bezier(0.16, 1, 0.3, 1) relative",
-                  isComplete
-                    ? "bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)]"
-                    : "progress-fill-themed shadow-[0_0_15px_var(--civ-glow)]"
-                )}
-                style={{ width: `${progressPercent}%` }}
-              >
-                {/* Glow tip */}
-                <div className="absolute right-0 top-0 bottom-0 w-2 bg-white/40 blur-sm shadow-[0_0_10px_white]" />
-              </div>
-            </div>
-            <span data-testid="step-counter" className={cn(
-              "text-sm font-mono tabular-nums font-bold flex items-center gap-1 transition-colors",
-              isComplete ? "text-emerald-400" : "text-[hsl(var(--civ-color))]"
-            )}>
-              {isComplete && <CheckCircle2 className="w-3.5 h-3.5" />}
-              {activeSteps.length === 0 ? 0 : currentStepIndex + 1}/{activeSteps.length}
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* Branch controls - Streamlined */}
+      {(activeBranchName || (currentOrder.branches && currentOrder.branches.length > 0)) && (
+        <div className="px-6 py-2 flex items-center gap-3 overflow-x-auto custom-scrollbar border-b border-white/[0.03] text-halo">
+          {activeBranchName && (
+            <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] bg-amber-500/15 text-amber-200 border border-amber-400/40 whitespace-nowrap font-bold uppercase tracking-widest">
+              {activeBranchName}
             </span>
-          </div>
-        </div>
+          )}
 
-        {/* Branch controls */}
-        {(activeBranchName || (currentOrder.branches && currentOrder.branches.length > 0)) && (
-          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
-            {activeBranchName && (
-              <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] bg-amber-500/15 text-amber-200 border border-amber-400/40 whitespace-nowrap">
-                {activeBranchName}
-              </span>
-            )}
-
-            {currentOrder.branches && currentOrder.branches.length > 0 && (
-              <div className="flex items-center gap-1 flex-nowrap">
+          {currentOrder.branches && currentOrder.branches.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-nowrap">
+              <button
+                onClick={() => handleBranchSelect(null)}
+                className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${!activeBranchId
+                  ? "bg-white/[0.08] text-white shadow-sm"
+                  : "text-white/40 hover:text-white/70"
+                  }`}
+              >
+                Base
+              </button>
+              {currentOrder.branches.map((branch) => (
                 <button
-                  onClick={() => handleBranchSelect(null)}
-                  className={`px-2 py-0.5 rounded text-[10px] border transition-colors whitespace-nowrap ${!activeBranchId
-                    ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
-                    : "border-white/10 text-white/60 hover:border-white/30 hover:text-white/90"
+                  key={branch.id}
+                  onClick={() => handleBranchSelect(branch.id)}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeBranchId === branch.id
+                    ? "bg-white/[0.08] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/70"
                     }`}
+                  title={branch.trigger ? `Trigger: ${branch.trigger}` : undefined}
                 >
-                  Main
+                  {branch.name}
                 </button>
-                {currentOrder.branches.map((branch) => (
-                  <button
-                    key={branch.id}
-                    onClick={() => handleBranchSelect(branch.id)}
-                    className={`px-2 py-0.5 rounded text-[10px] border transition-colors whitespace-nowrap ${activeBranchId === branch.id
-                      ? "bg-amber-500/20 border-amber-500/60 text-amber-200"
-                      : "border-white/10 text-white/60 hover:border-white/30 hover:text-white/90"
-                      }`}
-                    title={branch.trigger ? `Trigger: ${branch.trigger}` : undefined}
-                  >
-                    {branch.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Hero Resources Section */}
+      <div className="px-6 py-4 bg-gradient-to-b from-white/[0.02] to-transparent">
+        <ActiveStepResources />
       </div>
 
-      <ActiveStepResources />
-
-      {/* Step list */}
-      <div data-testid="steps-container" className="px-2 pb-2 mt-2 space-y-1">
+      {/* Timeline list */}
+      <div 
+        data-testid="steps-container" 
+        className={cn(
+          "px-2 pb-6 space-y-1 overflow-y-auto flex-1 custom-scrollbar scroll-smooth relative",
+          celebrating && "timeline-celebration"
+        )}
+      >
         {visibleSteps.map((step, idx) => {
           const actualIndex = startIndex + idx;
+          const prevStep = actualIndex > 0 ? activeSteps[actualIndex - 1] : null;
+          
           return (
             <BuildOrderStep
               key={step.id}
               step={step}
-              stepNumber={actualIndex + 1}
               isActive={actualIndex === currentStepIndex}
-              isNext={actualIndex === currentStepIndex + 1}
               isPast={actualIndex < currentStepIndex}
+              previousResources={prevStep?.resources}
               onClick={() => {
                 goToStep(actualIndex);
                 if (!isRunning) start();
               }}
-              compact
             />
           );
         })}

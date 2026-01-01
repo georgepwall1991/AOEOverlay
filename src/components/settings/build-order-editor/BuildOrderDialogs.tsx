@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import {
     Upload, Loader2, Link, Search, X, Library, Globe, Zap, ArrowUpDown,
-    TrendingUp, Clock, ThumbsUp, Sparkles, Flame, User, Eye, Download, Check, Swords
+    TrendingUp, Clock, ThumbsUp, Sparkles, Flame, User, Eye, Download, Check, Swords, FileText
 } from "lucide-react";
 import { CIVILIZATIONS } from "@/types";
 import { getCivNameFromCode } from "@/lib/aoe4guides";
@@ -48,6 +48,7 @@ export function BuildOrderDialogs({ dialogs }: BuildOrderDialogsProps) {
         importJsonDialog,
         importUrlDialog,
         importAoe4GuidesDialog,
+        importTextDialog,
         browseDialog,
         importedAoe4GuidesIds,
     } = dialogs;
@@ -257,6 +258,55 @@ export function BuildOrderDialogs({ dialogs }: BuildOrderDialogsProps) {
                                     Import Build Order
                                 </>
                             )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Import Text (Copy-Paste) Dialog */}
+            <Dialog
+                open={importTextDialog.show}
+                onOpenChange={(open) => {
+                    importTextDialog.setShow(open);
+                    if (!open) importTextDialog.setValue("");
+                }}
+            >
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Import from Text (Copy-Paste)</DialogTitle>
+                        <DialogDescription>
+                            Paste a build order from YouTube, Reddit, or any other source.
+                            The AI will attempt to extract timings and villager counts.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 space-y-2">
+                            <p className="text-[10px] font-bold text-amber-200/60 uppercase tracking-widest">Supported Formats:</p>
+                            <ul className="text-[10px] text-amber-100/40 space-y-1 font-mono">
+                                <li>(6/0/0/0) 00:00: Send 6 to sheep</li>
+                                <li>0:45 - Build house</li>
+                                <li>Step 1: 6 on sheep</li>
+                            </ul>
+                        </div>
+                        <Textarea
+                            placeholder="Paste build order text here..."
+                            value={importTextDialog.value}
+                            onChange={(e) => importTextDialog.setValue(e.target.value)}
+                            className="min-h-[250px] text-sm"
+                        />
+                        {importTextDialog.error && (
+                            <p className="text-sm text-destructive">{importTextDialog.error}</p>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => importTextDialog.setShow(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={importTextDialog.onImport} disabled={!importTextDialog.value.trim()}>
+                            <FileText className="w-4 h-4 mr-1" />
+                            Parse & Import
                         </Button>
                     </DialogFooter>
                 </DialogContent>

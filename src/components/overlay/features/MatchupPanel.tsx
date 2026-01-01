@@ -3,10 +3,11 @@ import { Shield, Swords, X, ChevronsDownUp, AlertTriangle, Target, Binoculars, C
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useCurrentBuildOrder, useMatchupStore } from "@/stores";
+import { useCurrentBuildOrder, useMatchupStore, usePlayerStore } from "@/stores";
 import { MATCHUPS } from "@/data/matchups";
 import { CIVILIZATIONS, type Civilization } from "@/types";
 import { logTelemetryEvent, cn } from "@/lib/utils";
+import { Zap, Loader2 } from "lucide-react";
 
 interface HeaderProps {
   isCollapsed?: boolean;
@@ -100,10 +101,13 @@ export function MatchupPanel() {
   const {
     isOpen,
     opponentCiv,
+    isDetecting,
     setOpen,
     setOpponent,
     getOpponentFor,
+    detectMatch,
   } = useMatchupStore();
+  const { savedProfileId } = usePlayerStore();
   const currentOrder = useCurrentBuildOrder();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -135,6 +139,15 @@ export function MatchupPanel() {
     });
   };
 
+  const handleAutoDetect = async () => {
+    if (!savedProfileId) return;
+    const success = await detectMatch(savedProfileId, playerCiv);
+    logTelemetryEvent("action:matchup:auto-detect", { 
+      source: "overlay", 
+      meta: { success } 
+    });
+  };
+
   if (collapsed) {
     return (
       <div className="px-3 py-2 border-b border-white/5 bg-black/40 backdrop-blur-sm animate-fade-in">
@@ -151,7 +164,16 @@ export function MatchupPanel() {
   }
 
   return (
-    <div className="border-b border-white/10 bg-gradient-to-b from-black/60 to-black/40 backdrop-blur-md animate-slide-in relative overflow-hidden">
+    <div className="border-b border-white/10 bg-gradient-to-b from-black/60 to-black/40 backdrop-blur-md animate-slide-in relative overflow-hidden group/matchup">
+      {/* Tactical HUD Corners */}
+      <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-amber-500/40 pointer-events-none z-10" />
+      <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-amber-500/40 pointer-events-none z-10" />
+      <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-amber-500/40 pointer-events-none z-10" />
+      <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-amber-500/40 pointer-events-none z-10" />
+
+      {/* Intel Scanline pulse */}
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-500/[0.02] to-transparent h-1/2 w-full pointer-events-none animate-pulse -z-10" />
+
       {/* Decorative top sheen */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent opacity-50" />
 
@@ -165,22 +187,48 @@ export function MatchupPanel() {
         />
 
 
-        <div className="flex items-center gap-2 p-1 rounded-lg bg-black/40 border border-white/5">
-          <div className="px-2 py-1">
-            <Swords className="w-4 h-4 text-white/40" />
+        <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 p-1 rounded-lg bg-black/40 border border-white/5">
+            <div className="px-2 py-1">
+              <Swords className="w-4 h-4 text-white/40" />
+            </div>
+            <Select value={defaultOpponent ?? ""} onValueChange={handleOpponentChange}>
+              <SelectTrigger className="h-7 border-0 bg-transparent focus:ring-0 text-amber-100 font-medium text-xs">
+                <SelectValue placeholder="Select opponent" />
+              </SelectTrigger>
+              <SelectContent className="border-amber-500/20 bg-black/95 text-amber-100">
+                {CIVILIZATIONS.filter((civ) => civ !== playerCiv).map((civ) => (
+                  <SelectItem key={civ} value={civ} className="focus:bg-amber-500/20 focus:text-amber-100">
+                    {civ}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Select value={defaultOpponent ?? ""} onValueChange={handleOpponentChange}>
-            <SelectTrigger className="h-7 border-0 bg-transparent focus:ring-0 text-amber-100 font-medium text-xs">
-              <SelectValue placeholder="Select opponent" />
-            </SelectTrigger>
-            <SelectContent className="border-amber-500/20 bg-black/95 text-amber-100">
-              {CIVILIZATIONS.filter((civ) => civ !== playerCiv).map((civ) => (
-                <SelectItem key={civ} value={civ} className="focus:bg-amber-500/20 focus:text-amber-100">
-                  {civ}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+          {/* Auto-detect button */}
+          {savedProfileId && (
+            <Button
+              size="sm"
+              variant="outline"
+              className={cn(
+                "h-9 px-3 border-amber-500/30 text-amber-200 hover:bg-amber-500/10",
+                isDetecting && "animate-pulse"
+              )}
+              onClick={handleAutoDetect}
+              disabled={isDetecting}
+              title="Detect ongoing match via AoE4World"
+            >
+              {isDetecting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-1.5" />
+                  Auto-Detect
+                </>
+              )}
+            </Button>
+          )}
         </div>
 
         {!matchup ? (
@@ -257,9 +305,10 @@ export function MatchupPanel() {
                       <span>CRITICAL TIMINGS</span>
                     </div>
                     <ul className="space-y-1">
-                      {matchup.dangerTimers.map((item) => (
-                        <li key={item} className="text-[11px] leading-tight text-amber-100/80 pl-1 border-l border-amber-500/30 ml-0.5">
-                          {item}
+                      {matchup.dangerTimers.map((item, idx) => (
+                        <li key={idx} className="text-[11px] leading-tight text-amber-100/80 pl-1 border-l border-amber-500/30 ml-0.5 flex justify-between items-center">
+                          <span>{item.message}</span>
+                          <span className="font-mono text-[9px] text-amber-500/70">{item.time}</span>
                         </li>
                       ))}
                     </ul>

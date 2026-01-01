@@ -7,7 +7,7 @@ export interface MatchupEntry {
   responses: string[];
   scoutFor: string[];
   counterTips?: string[];
-  dangerTimers?: string[];
+  dangerTimers?: { time: string; message: string }[];
 }
 
 export const MATCHUPS: MatchupEntry[] = [
@@ -31,8 +31,10 @@ export const MATCHUPS: MatchupEntry[] = [
       "Use outpost + arrow slits on exposed deer/gold",
     ],
     dangerTimers: [
-      "House at 0:45, second at 1:25 to avoid block",
-      "Council Hall up by ~2:30; first longbows at ~4:20",
+      { time: "0:45", message: "First house due" },
+      { time: "1:25", message: "Second house due" },
+      { time: "2:30", message: "Council Hall target" },
+      { time: "4:20", message: "First longbows window" },
     ],
   },
   {
@@ -55,8 +57,8 @@ export const MATCHUPS: MatchupEntry[] = [
       "Tower your gold if barracks is forward",
     ],
     dangerTimers: [
-      "House before 0:45 to dodge supply block",
-      "First knight at ~4:20; pressure before mass longbows",
+      { time: "0:45", message: "House due" },
+      { time: "4:20", message: "First knight window" },
     ],
   },
   {
@@ -79,8 +81,9 @@ export const MATCHUPS: MatchupEntry[] = [
       "Prioritize armor upgrades; deny knights on relics",
     ],
     dangerTimers: [
-      "First house at 0:40; second by 1:20",
-      "Grab relics by 7:00 to keep eco safe",
+      { time: "0:40", message: "First house due" },
+      { time: "1:20", message: "Second house due" },
+      { time: "7:00", message: "Relic window active" },
     ],
   },
   {
@@ -103,8 +106,8 @@ export const MATCHUPS: MatchupEntry[] = [
       "Match Song boom with pressure; avoid late fight",
     ],
     dangerTimers: [
-      "Ger + House before 0:50",
-      "Punish Song landmark before ~4:00 if possible",
+      { time: "0:50", message: "Ger + House due" },
+      { time: "4:00", message: "Song Landmark window" },
     ],
   },
   {
@@ -127,8 +130,8 @@ export const MATCHUPS: MatchupEntry[] = [
       "Research Siege Engineering early",
     ],
     dangerTimers: [
-      "Longbows arrive ~5:00",
-      "Ram push potential ~7:00",
+      { time: "5:00", message: "Longbows arrive" },
+      { time: "7:00", message: "Ram push potential" },
     ],
   },
   {
@@ -150,10 +153,8 @@ export const MATCHUPS: MatchupEntry[] = [
       "Don't let them mass Janissaries",
     ],
     dangerTimers: [
-      "Dark Age spear raid ~2:30",
-      "Feudal push ~5:30",
+      { time: "2:30", message: "Spear raid window" },
+      { time: "5:30", message: "Feudal push window" },
     ],
   },
 ];
-
-

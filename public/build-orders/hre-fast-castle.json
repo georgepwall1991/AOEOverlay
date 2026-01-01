@@ -2,93 +2,63 @@
   "id": "hre-fast-castle",
   "name": "HRE Fast Castle",
   "civilization": "Holy Roman Empire",
-  "description": "Economic boom into Castle Age with Prelate buffs. Strong macro play leading to powerful late-game army.",
+  "description": "Uses [icon:monk] Prelate buffs to reach Castle Age rapidly. Focuses on [icon:relic] Relic control and heavy infantry.",
   "difficulty": "Intermediate",
   "enabled": true,
   "steps": [
     {
       "id": "step-1",
-      "description": "[icon:villager] Queue villagers, rally to [icon:sheep] sheep. [icon:monk] Prelate on sheep",
+      "description": "Send [icon:monk] Prelate to [icon:sheep] sheep. 6 starting villagers to sheep.",
       "timing": "0:00",
-      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
+      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
     {
       "id": "step-2",
-      "description": "[icon:villager] Villager to [icon:sheep] sheep ([icon:monk] Prelate +40% gather rate)",
+      "description": "1st new [icon:villager] builds [icon:house] house, then rallies to [icon:gold] gold.",
       "timing": "0:25",
-      "resources": { "food": 7, "wood": 0, "gold": 0, "stone": 0 }
+      "resources": { "food": 6, "wood": 0, "gold": 1, "stone": 0, "villagers": 7 }
     },
     {
       "id": "step-3",
-      "description": "[icon:villager] Villager to [icon:wood] wood",
-      "timing": "0:50",
-      "resources": { "food": 7, "wood": 1, "gold": 0, "stone": 0 }
+      "description": "2nd, 3rd and 4th new [icon:villager] to [icon:gold] gold. Build [icon:mining_camp] Mining Camp.",
+      "timing": "1:15",
+      "resources": { "food": 6, "wood": 0, "gold": 4, "stone": 0, "villagers": 10 }
     },
     {
       "id": "step-4",
-      "description": "[icon:villager] Villager to [icon:wood] wood",
-      "timing": "1:10",
-      "resources": { "food": 7, "wood": 2, "gold": 0, "stone": 0 }
+      "description": "5th and 6th new [icon:villager] to [icon:food] food. Total 8 on food.",
+      "timing": "2:00",
+      "resources": { "food": 8, "wood": 0, "gold": 4, "stone": 0, "villagers": 12 }
     },
     {
       "id": "step-5",
-      "description": "[icon:lumber_camp] Build Lumber Camp, [icon:villager] villager to [icon:wood] wood",
-      "timing": "1:30",
-      "resources": { "food": 7, "wood": 3, "gold": 0, "stone": 0 }
+      "description": "[icon:feudal_age] Age up with [icon:landmark] Aachen Chapel! Build next to [icon:wood] wood and [icon:food] food.",
+      "timing": "2:45",
+      "resources": { "food": 8, "wood": 0, "gold": 4, "stone": 0, "villagers": 14, "builders": 3 }
     },
     {
       "id": "step-6",
-      "description": "[icon:villager] Villager to [icon:wood] wood",
-      "timing": "1:50",
-      "resources": { "food": 7, "wood": 4, "gold": 0, "stone": 0 }
+      "description": "Place [icon:monk] Prelate inside Aachen Chapel. Rally new villagers to [icon:wood] wood.",
+      "timing": "3:00",
+      "resources": { "food": 8, "wood": 2, "gold": 4, "stone": 0, "villagers": 16 }
     },
     {
       "id": "step-7",
-      "description": "[icon:feudal_age] Build Meinwerk Palace with 2 [icon:villager] villagers",
-      "timing": "2:15",
-      "resources": { "food": 7, "wood": 2, "gold": 0, "stone": 0 }
+      "description": "[icon:feudal_age] Feudal Age reached! Immediately transition 2 from food to [icon:gold] gold.",
+      "timing": "4:00",
+      "resources": { "food": 6, "wood": 4, "gold": 8, "stone": 0, "villagers": 18 }
     },
     {
       "id": "step-8",
-      "description": "[icon:villager] Continue villagers to [icon:food] food",
-      "timing": "2:45",
-      "resources": { "food": 9, "wood": 2, "gold": 0, "stone": 0 }
+      "description": "[icon:castle_age] Age up with [icon:landmark] Regnitz Cathedral! Use 4 builders.",
+      "timing": "5:30",
+      "resources": { "food": 8, "wood": 4, "gold": 8, "stone": 0, "villagers": 20, "builders": 4 }
     },
     {
       "id": "step-9",
-      "description": "[icon:feudal_age] Feudal Age! Send 4 [icon:villager] to [icon:gold] gold",
-      "timing": "3:30",
-      "resources": { "food": 9, "wood": 4, "gold": 4, "stone": 0 }
-    },
-    {
-      "id": "step-10",
-      "description": "[icon:mining_camp] Build Mining Camp, [icon:monk] Prelate to [icon:gold] gold miners",
-      "timing": "4:00",
-      "resources": { "food": 9, "wood": 4, "gold": 5, "stone": 0 }
-    },
-    {
-      "id": "step-11",
-      "description": "[icon:villager] Queue more villagers, balance [icon:food] food and [icon:gold] gold",
-      "timing": "4:30",
-      "resources": { "food": 10, "wood": 4, "gold": 6, "stone": 0 }
-    },
-    {
-      "id": "step-12",
-      "description": "[icon:castle_age] Build Regnitz Cathedral - use 3 [icon:villager] villagers",
-      "timing": "5:30",
-      "resources": { "food": 10, "wood": 3, "gold": 6, "stone": 0 }
-    },
-    {
-      "id": "step-13",
-      "description": "[icon:castle_age] Castle Age! Place 3 [icon:relic] relics in Regnitz (+900 [icon:gold]/min)",
+      "description": "[icon:monk] Produce Prelates to secure [icon:relic] Relics immediately upon aging up.",
       "timing": "7:00",
-      "resources": { "food": 12, "wood": 5, "gold": 8, "stone": 0 }
-    },
-    {
-      "id": "step-14",
-      "description": "[icon:barracks] Barracks + [icon:archery_range] Archery Range, mass [icon:man_at_arms] MAA + [icon:crossbowman] Crossbows",
-      "timing": "7:30",
-      "resources": { "food": 12, "wood": 6, "gold": 10, "stone": 0 }
+      "resources": { "food": 10, "wood": 6, "gold": 10, "stone": 0, "villagers": 26 }
     }
   ]
 }

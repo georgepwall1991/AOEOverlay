@@ -6,6 +6,8 @@
 import { z } from "zod";
 import type { BuildOrder, BuildOrderStep, Civilization, Difficulty } from "@/types";
 import { BuildOrderSchema } from "@/types";
+import { sanitizeTiming } from "@/stores/timerStore";
+import { IntelligentConverter } from "./intelligentConverter";
 
 // ============================================================================
 // Zod Schemas for API Response Validation
@@ -145,6 +147,8 @@ const CIVILIZATION_CODE_MAP: Record<string, Civilization> = {
   AYY: "Ayyubids",
   ZXL: "Zhu Xi's Legacy",
   DRA: "Order of the Dragon",
+  KTE: "Order of the Dragon", // Knights of the Teutonic Order (Variant)
+  HOL: "Holy Roman Empire", // Holy Roman Empire (Alias)
   // Dynasties of the East DLC
   GHO: "Golden Horde",
   MAC: "Macedonian Dynasty",
@@ -170,6 +174,9 @@ export const CIVILIZATION_TO_CODE: Record<string, string> = {
   Ayyubids: "AYY",
   "Zhu Xi's Legacy": "ZXL",
   "Order of the Dragon": "DRA",
+  // Aliases/Variants
+  "Knights Templar": "KTE", 
+  "Teutonic Order": "KTE",
   // Dynasties of the East DLC
   "Golden Horde": "GHO",
   "Macedonian Dynasty": "MAC",
@@ -247,12 +254,24 @@ function strategyToDifficulty(strategy?: string): Difficulty {
 }
 
 /**
- * Parse resource string to number
+ * Parse resource string to number, handling relative values like "+3" or "-2"
  */
-function parseResource(value?: string): number | undefined {
-  if (!value || value === "") return undefined;
-  const num = parseInt(value, 10);
-  return isNaN(num) || num <= 0 ? undefined : num;
+function parseResource(value?: string, previousValue = 0): number | undefined {
+  if (!value || value.trim() === "" || value.includes("<br")) return undefined;
+  
+  const cleanValue = value.trim();
+  const num = parseInt(cleanValue, 10);
+  
+  if (isNaN(num)) return undefined;
+
+  // Handle relative updates (e.g., "+3" or "-2")
+  if (cleanValue.startsWith("+") || cleanValue.startsWith("-")) {
+    return Math.max(0, previousValue + num);
+  }
+
+  // Absolute 0 or negative values are treated as undefined to keep the UI clean
+  // unless we explicitly want to show 0 (but the app's current standard is to hide zeros)
+  return num <= 0 ? undefined : num;
 }
 
 /**
@@ -290,9 +309,19 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   "man-at-arms-1": "man_at_arms",
   spearman: "spearman",
   "spearman-1": "spearman",
-  "spearman_1": "spearman",
+  spearman_1: "spearman",
   horseman: "horseman",
   "horseman-1": "horseman",
+  prelate: "prelate",
+  landsknecht: "landsknecht",
+  "landsknecht-3": "landsknecht",
+  mangudai: "mangudai",
+  keshik: "keshik",
+  "keshik-2": "keshik",
+  khan: "khan",
+  "khan-1": "khan",
+  king: "king",
+  "king-2": "king",
   crossbowman: "crossbowman",
   "crossbowman-3": "crossbowman",
   handcannoneer: "handcannoneer",
@@ -307,6 +336,21 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   // Civ-specific units
   ronin_unit: "ronin",
   ronin: "ronin",
+  "imperial-official": "imperial_official",
+  "imperialofficial": "imperial_official",
+  "zhuge-nu": "zhuge_nu",
+  "zhuge_nu": "zhuge_nu",
+  "zhuge-nu-2": "zhuge_nu",
+  "palace-guard": "palace_guard",
+  "palace_guard": "palace_guard",
+  "palace-guard-3": "palace_guard",
+  "nest-of-bees": "nest_of_bees",
+  "nest_of_bees": "nest_of_bees",
+  "fire-lancer": "fire_lancer",
+  "fire_lancer": "fire_lancer",
+  "fire-lancer-3": "fire_lancer",
+  "grenadier": "grenadier",
+  "grenadier-4": "grenadier",
   // Civ-specific villagers -> generic villager
   villager_delhi: "villager",
   villager_abbasid: "villager",
@@ -442,7 +486,32 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   culverin: "culverin",
   "ribauldequin-4": "ribauldequin",
   ribauldequin: "ribauldequin",
-  // Map resources
+  "council-hall": "council_hall",
+  council_hall: "council_hall",
+  "school-of-cavalry": "school_of_cavalry",
+  school_of_cavalry: "school_of_cavalry",
+  "meinwerk-palace": "meinwerk_palace",
+  "white-tower": "white_tower",
+  "aachen-chapel": "aachen_chapel",
+  "regnitz-cathedral": "regnitz_cathedral",
+  "golden-gate": "golden_gate",
+  "barbican-of-the-sun": "barbican_of_the_sun",
+  "imperial-academy": "imperial_academy",
+  "astronomical-clocktower": "astronomical_clocktower",
+  "house-of-wisdom": "house_of_wisdom",
+  "military-wing": "military_wing",
+  "economic-wing": "economic_wing",
+  "trade-wing": "trade_wing",
+  "culture-wing": "culture_wing",
+  ozutsu: "ozutsu",
+  "ozutsu-4": "ozutsu",
+  "onna-bugeisha-2": "onna_bugeisha",
+  onna_bugeisha: "onna_bugeisha",
+  "samurai-1": "samurai",
+  samurai: "samurai",
+  "shinobi-2": "shinobi",
+  shinobi: "shinobi",
+  // Map icons
   deer: "deer",
   boar: "boar",
   fish: "fish",
@@ -454,6 +523,13 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   rally: "rally",
   repair: "repair",
   time: "time",
+  // Techs
+  "fresh-foodstuffs": "upgrade",
+  "fresh_foodstuffs": "upgrade",
+  "boot-camp": "upgrade",
+  "boot_camp": "upgrade",
+  "all-see-eye": "upgrade",
+  "all_see_eye": "upgrade",
 };
 
 /**
@@ -763,26 +839,35 @@ function convertHtmlToIconMarkers(html: string): string {
 function convertBuild(build: Aoe4GuidesBuild): BuildOrder {
   const steps: BuildOrderStep[] = [];
   let stepNumber = 1;
+  const intelligentConverter = new IntelligentConverter();
+
+  // Tracking running totals for relative resource updates (+3, -2, etc.)
+  let currentFood = 0;
+  let currentWood = 0;
+  let currentGold = 0;
+  let currentStone = 0;
+  let currentVillagers = 0;
+  let currentBuilders = 0;
 
   // Flatten the nested age phases into steps
   for (const phase of build.steps) {
     // Add age transition marker if it's an age-up phase
     if (phase.type === "ageUp") {
       const nextAgeName = getAgeName(phase.age + 1);
-      steps.push({
+      steps.push(intelligentConverter.processStep({
         id: `step-${stepNumber}`,
         description: `[Age Up to ${nextAgeName}]`,
-      });
+      }, stepNumber - 1));
       stepNumber++;
     }
 
     // Add gameplan as a step if it exists and is non-empty
     if (phase.gameplan && phase.gameplan.trim()) {
       const cleanGameplan = convertHtmlToIconMarkers(phase.gameplan);
-      steps.push({
+      steps.push(intelligentConverter.processStep({
         id: `step-${stepNumber}`,
         description: cleanGameplan.charAt(0).toUpperCase() + cleanGameplan.slice(1),
-      });
+      }, stepNumber - 1));
       stepNumber++;
     }
 
@@ -816,29 +901,56 @@ function convertBuild(build: Aoe4GuidesBuild): BuildOrder {
         description: cleanDescription,
       };
 
-      // Add timing if available (clean HTML tags from timing)
+      // Add timing if available (clean HTML tags and normalize spills like 00:60 -> 1:00)
       if (step.time && step.time.trim()) {
-        ourStep.timing = step.time
-          .replace(/<br\s*\/?>/gi, "")
-          .replace(/<[^>]+>/g, "")
-          .trim();
+        const cleanTime = sanitizeTiming(step.time) || "";
+        
+        // Normalize time (e.g. 00:60 -> 1:00)
+        const timeParts = cleanTime.split(':');
+        if (timeParts.length === 2) {
+          let mins = parseInt(timeParts[0], 10);
+          let secs = parseInt(timeParts[1], 10);
+          if (!isNaN(mins) && !isNaN(secs)) {
+            if (secs >= 60) {
+              mins += Math.floor(secs / 60);
+              secs = secs % 60;
+            }
+            ourStep.timing = `${mins}:${secs.toString().padStart(2, '0')}`;
+          } else {
+            ourStep.timing = cleanTime;
+          }
+        } else {
+          ourStep.timing = cleanTime;
+        }
       }
 
-      // Add resources if any are set
-      const food = parseResource(step.food);
-      const wood = parseResource(step.wood);
-      const gold = parseResource(step.gold);
-      const stone = parseResource(step.stone);
+      // Add resources with relative support
+      const food = parseResource(step.food, currentFood);
+      const wood = parseResource(step.wood, currentWood);
+      const gold = parseResource(step.gold, currentGold);
+      const stone = parseResource(step.stone, currentStone);
+      const villagers = parseResource(step.villagers, currentVillagers);
+      const builders = parseResource(step.builders, currentBuilders);
 
-      if (food || wood || gold || stone) {
+      // Update running totals
+      if (food !== undefined) currentFood = food;
+      if (wood !== undefined) currentWood = wood;
+      if (gold !== undefined) currentGold = gold;
+      if (stone !== undefined) currentStone = stone;
+      if (villagers !== undefined) currentVillagers = villagers;
+      if (builders !== undefined) currentBuilders = builders;
+
+      if (food !== undefined || wood !== undefined || gold !== undefined || stone !== undefined || villagers !== undefined || builders !== undefined) {
         ourStep.resources = {};
-        if (food) ourStep.resources.food = food;
-        if (wood) ourStep.resources.wood = wood;
-        if (gold) ourStep.resources.gold = gold;
-        if (stone) ourStep.resources.stone = stone;
+        if (food !== undefined) ourStep.resources.food = food;
+        if (wood !== undefined) ourStep.resources.wood = wood;
+        if (gold !== undefined) ourStep.resources.gold = gold;
+        if (stone !== undefined) ourStep.resources.stone = stone;
+        if (villagers !== undefined) ourStep.resources.villagers = villagers;
+        if (builders !== undefined) ourStep.resources.builders = builders;
       }
 
-      steps.push(ourStep);
+      steps.push(intelligentConverter.processStep(ourStep, stepNumber - 1));
       stepNumber++;
     }
   }

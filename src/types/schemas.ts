@@ -6,6 +6,8 @@ export const ResourcesSchema = z
     wood: z.number().int().nonnegative().optional(),
     gold: z.number().int().nonnegative().optional(),
     stone: z.number().int().nonnegative().optional(),
+    villagers: z.number().int().nonnegative().optional(),
+    builders: z.number().int().nonnegative().optional(),
   })
   .partial();
 
@@ -34,5 +36,7 @@ export const BuildOrderSchema = z.object({
   enabled: z.boolean(),
   branches: z.array(BuildOrderBranchSchema).optional(),
 });
+
+
 
 

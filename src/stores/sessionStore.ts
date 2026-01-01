@@ -19,16 +19,19 @@ export interface SessionRecord {
 interface SessionState {
   currentSession: SessionRecord | null;
   history: SessionRecord[];
+  isReportOpen: boolean;
   
   startSession: (buildOrderId: string, buildOrderName: string) => void;
   recordStep: (step: StepRecord) => void;
   endSession: () => void;
   clearHistory: () => void;
+  setReportOpen: (open: boolean) => void;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
   currentSession: null,
   history: [],
+  isReportOpen: false,
 
   startSession: (buildOrderId, buildOrderName) => set({
     currentSession: {
@@ -37,7 +40,8 @@ export const useSessionStore = create<SessionState>((set) => ({
       buildOrderName,
       timestamp: Date.now(),
       steps: [],
-    }
+    },
+    isReportOpen: false,
   }),
 
   recordStep: (step) => set((state) => {
@@ -57,8 +61,10 @@ export const useSessionStore = create<SessionState>((set) => ({
     return {
       history: [state.currentSession, ...state.history].slice(0, 50), // Keep last 50
       currentSession: null,
+      isReportOpen: true,
     };
   }),
 
   clearHistory: () => set({ history: [] }),
+  setReportOpen: (isReportOpen) => set({ isReportOpen }),
 }));

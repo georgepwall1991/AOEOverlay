@@ -191,9 +191,12 @@ function estimateTiming(stepIndex: number): string {
  * Convert age4builder.com JSON format to our overlay format
  * @throws Error if the build order exceeds MAX_BUILD_ORDER_STEPS
  */
+import { IntelligentConverter } from "./intelligentConverter";
+
 export function convertAge4Builder(input: Age4BuilderFormat): BuildOrder {
   const steps: BuildOrderStep[] = [];
   let stepNumber = 1;
+  const intelligentConverter = new IntelligentConverter();
 
   for (const step of input.build_order) {
     // Each note becomes a separate step for clarity
@@ -218,21 +221,31 @@ export function convertAge4Builder(input: Age4BuilderFormat): BuildOrder {
       };
 
       // Include resources if they're meaningful (not all -1)
-      if (
+      const hasGatherers = 
         step.resources.food >= 0 ||
         step.resources.wood >= 0 ||
         step.resources.gold >= 0 ||
-        step.resources.stone >= 0
-      ) {
-        ourStep.resources = {
-          food: Math.max(0, step.resources.food),
-          wood: Math.max(0, step.resources.wood),
-          gold: Math.max(0, step.resources.gold),
-          stone: Math.max(0, step.resources.stone),
-        };
+        step.resources.stone >= 0;
+      
+      const hasMeaningfulResources = hasGatherers || step.villager_count >= 0;
+
+      if (hasMeaningfulResources) {
+        ourStep.resources = {};
+        
+        // If there are gatherer counts, include the full set for consistency
+        if (hasGatherers) {
+          ourStep.resources.food = Math.max(0, step.resources.food);
+          ourStep.resources.wood = Math.max(0, step.resources.wood);
+          ourStep.resources.gold = Math.max(0, step.resources.gold);
+          ourStep.resources.stone = Math.max(0, step.resources.stone);
+        }
+        
+        if (step.villager_count >= 0) {
+          ourStep.resources.villagers = step.villager_count;
+        }
       }
 
-      steps.push(ourStep);
+      steps.push(intelligentConverter.processStep(ourStep, stepNumber - 1));
       stepNumber++;
     }
   }

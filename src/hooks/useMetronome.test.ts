@@ -5,12 +5,19 @@ import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useConfigStore } from '@/stores/configStore';
 import { DEFAULT_CONFIG } from '@/types';
 
-const { mockInvoke } = vi.hoisted(() => ({
-  mockInvoke: vi.fn().mockResolvedValue(undefined),
+// Mock useTTS
+const mockSpeakReminder = vi.fn().mockResolvedValue(undefined);
+vi.mock('./useTTS', () => ({
+  useTTS: () => ({
+    speakReminder: mockSpeakReminder,
+  }),
 }));
 
-vi.mock('@tauri-apps/api/core', () => ({
-  invoke: mockInvoke,
+// Mock useSound
+vi.mock('./useSound', () => ({
+  useSound: () => ({
+    playSound: vi.fn().mockResolvedValue(false),
+  }),
 }));
 
 describe('useMetronome', () => {
@@ -19,6 +26,7 @@ describe('useMetronome', () => {
     useMetronomeStore.setState({
       lastTickTimestamp: 0,
       isPulsing: false,
+      currentTaskIndex: 0,
     });
     useConfigStore.setState({
       config: {
@@ -27,10 +35,11 @@ describe('useMetronome', () => {
           enabled: false,
           intervalSeconds: 1,
           volume: 0.5,
+          coachLoop: true,
         }
       }
     });
-    mockInvoke.mockClear();
+    mockSpeakReminder.mockClear();
   });
 
   afterEach(() => {
@@ -44,10 +53,10 @@ describe('useMetronome', () => {
       vi.advanceTimersByTime(2000);
     });
     
-    expect(mockInvoke).not.toHaveBeenCalledWith('speak', expect.anything());
+    expect(mockSpeakReminder).not.toHaveReturned();
   });
 
-  it('should tick when enabled', async () => {
+  it('should tick and speak macro task when enabled', async () => {
     act(() => {
       useConfigStore.setState({
         config: {
@@ -56,6 +65,7 @@ describe('useMetronome', () => {
             enabled: true,
             intervalSeconds: 1,
             volume: 0.5,
+            coachLoop: true,
           }
         }
       });
@@ -67,15 +77,10 @@ describe('useMetronome', () => {
       await vi.advanceTimersByTimeAsync(1100);
     });
     
-    expect(mockInvoke).toHaveBeenCalledWith('speak', expect.objectContaining({
-      text: 'Tick'
-    }));
+    expect(mockSpeakReminder).toHaveBeenCalledWith('Check town center');
   });
 
   it('should update lastTickTimestamp after tick', async () => {
-    const now = 10000;
-    vi.setSystemTime(now);
-    
     act(() => {
       useConfigStore.setState({
         config: {
@@ -84,6 +89,7 @@ describe('useMetronome', () => {
             enabled: true,
             intervalSeconds: 1,
             volume: 0.5,
+            coachLoop: true,
           }
         }
       });

@@ -165,6 +165,10 @@ const MOCK_BUILD_ORDERS: BuildOrder[] = [
 const MOCK_CONFIG_KEY = "aoe4-overlay-config-mock";
 const MOCK_BUILDS_KEY = "aoe4-overlay-builds-mock";
 
+// Debounce timer for config saving
+let saveConfigTimeout: number | null = null;
+const SAVE_DEBOUNCE_MS = 500;
+
 // Config commands
 export async function getConfig(): Promise<AppConfig> {
   if (IS_MOCK) {
@@ -182,12 +186,31 @@ export async function getConfig(): Promise<AppConfig> {
 }
 
 export async function saveConfig(config: AppConfig): Promise<void> {
+  // Always emit immediately so other windows update UI instantly
+  await emit(CONFIG_CHANGED_EVENT, config);
+
   if (IS_MOCK) {
     localStorage.setItem(MOCK_CONFIG_KEY, JSON.stringify(config));
-    await emit(CONFIG_CHANGED_EVENT, config);
     return;
   }
-  return invoke("save_config", { config });
+
+  // Debounce the actual disk/native save
+  return new Promise((resolve, reject) => {
+    if (saveConfigTimeout !== null) {
+      clearTimeout(saveConfigTimeout);
+    }
+
+    saveConfigTimeout = window.setTimeout(async () => {
+      try {
+        await invoke("save_config", { config });
+        saveConfigTimeout = null;
+        resolve();
+      } catch (error) {
+        saveConfigTimeout = null;
+        reject(error);
+      }
+    }, SAVE_DEBOUNCE_MS);
+  });
 }
 
 export async function reloadHotkeys(): Promise<void> {

@@ -887,7 +887,7 @@ describe("aoe4guides API", () => {
 
       const result = await fetchAoe4GuidesBuild("test");
 
-      expect(result.steps[0].resources?.food).toBeUndefined();
+      expect(result.steps[0].resources?.food).toBe(0);
       expect(result.steps[0].resources?.wood).toBeUndefined();
       expect(result.steps[0].resources?.gold).toBe(50);
       expect(result.steps[0].resources?.stone).toBeUndefined();

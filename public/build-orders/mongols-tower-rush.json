@@ -2,69 +2,39 @@
   "id": "mongols-tower-rush",
   "name": "Mongols Tower Rush",
   "civilization": "Mongols",
-  "description": "Aggressive Dark Age tower rush exploiting Mongol mobility. High-risk, high-reward cheese strategy.",
-  "difficulty": "Advanced",
+  "description": "High aggression strategy. Uses [icon:outpost] Towers to deny enemy resources early. High risk, high reward.",
+  "difficulty": "Expert",
   "enabled": true,
   "steps": [
     {
       "id": "step-1",
-      "description": "[icon:town_center] Pack Ger immediately, move TC toward enemy base",
+      "description": "Pack [icon:ger] Ger. Pack [icon:town_center] TC. Move TC towards the center of the map.",
       "timing": "0:00",
-      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
+      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
     {
       "id": "step-2",
-      "description": "[icon:villager] Queue villagers, rally to [icon:sheep] sheep (sheep follow TC)",
-      "timing": "0:20",
-      "resources": { "food": 7, "wood": 0, "gold": 0, "stone": 0 }
+      "description": "Unpack TC near [icon:wood] wood and [icon:sheep] sheep. Unpack Ger on wood.",
+      "timing": "0:45",
+      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
     {
       "id": "step-3",
-      "description": "[icon:town_center] Unpack TC in aggressive forward position",
-      "timing": "1:00",
-      "resources": { "food": 8, "wood": 0, "gold": 0, "stone": 0 }
+      "description": "Send 1 [icon:villager] to build [icon:outpost] Outpost near enemy [icon:gold] gold.",
+      "timing": "1:15",
+      "resources": { "food": 6, "wood": 1, "gold": 0, "stone": 0, "villagers": 7 }
     },
     {
       "id": "step-4",
-      "description": "Send 3 [icon:villager] to [icon:wood] wood for tower",
-      "timing": "1:15",
-      "resources": { "food": 6, "wood": 3, "gold": 0, "stone": 0 }
+      "description": "Produce 2 [icon:spearman] Spearmen to protect the tower builder.",
+      "timing": "2:00",
+      "resources": { "food": 6, "wood": 3, "gold": 0, "stone": 0, "villagers": 9 }
     },
     {
       "id": "step-5",
-      "description": "[icon:outpost] Build Outpost near enemy [icon:gold] gold or [icon:wood] woodline",
-      "timing": "1:45",
-      "resources": { "food": 6, "wood": 2, "gold": 0, "stone": 0 }
-    },
-    {
-      "id": "step-6",
-      "description": "Send [icon:villager] to [icon:stone] stone for more [icon:outpost] towers",
-      "timing": "2:15",
-      "resources": { "food": 6, "wood": 2, "gold": 0, "stone": 2 }
-    },
-    {
-      "id": "step-7",
-      "description": "[icon:outpost] Build second tower, deny enemy resources",
+      "description": "[icon:attack] Garrison tower. Deny enemy gold. Build 2nd [icon:outpost] on wood line.",
       "timing": "2:45",
-      "resources": { "food": 6, "wood": 2, "gold": 0, "stone": 3 }
-    },
-    {
-      "id": "step-8",
-      "description": "[icon:spearman] Produce Spearmen from Ger to protect [icon:outpost] towers",
-      "timing": "3:15",
-      "resources": { "food": 8, "wood": 3, "gold": 0, "stone": 2 }
-    },
-    {
-      "id": "step-9",
-      "description": "[icon:attack] Continue [icon:outpost] tower pressure, expand denial",
-      "timing": "4:00",
-      "resources": { "food": 8, "wood": 3, "gold": 0, "stone": 3 }
-    },
-    {
-      "id": "step-10",
-      "description": "[icon:feudal_age] If enemy contained, transition to Feudal Age",
-      "timing": "5:00",
-      "resources": { "food": 10, "wood": 4, "gold": 2, "stone": 2 }
+      "resources": { "food": 8, "wood": 4, "gold": 0, "stone": 0, "villagers": 12 }
     }
   ]
 }

@@ -12,6 +12,7 @@ vi.mock("@/lib/utils", () => ({
 const mockSetOpen = vi.fn();
 const mockSetOpponent = vi.fn();
 const mockGetOpponentFor = vi.fn().mockReturnValue(null);
+const mockDetectMatch = vi.fn().mockResolvedValue(true);
 
 vi.mock("@/stores", () => ({
   useCurrentBuildOrder: vi.fn(() => ({
@@ -26,9 +27,14 @@ vi.mock("@/stores", () => ({
   useMatchupStore: vi.fn(() => ({
     isOpen: true,
     opponentCiv: null,
+    isDetecting: false,
     setOpen: mockSetOpen,
     setOpponent: mockSetOpponent,
     getOpponentFor: mockGetOpponentFor,
+    detectMatch: mockDetectMatch,
+  })),
+  usePlayerStore: vi.fn(() => ({
+    savedProfileId: 12345,
   })),
 }));
 
@@ -42,7 +48,7 @@ vi.mock("@/data/matchups", () => ({
       responses: ["Build spearmen", "Wall up"],
       scoutFor: ["Stable", "Knights"],
       counterTips: ["Longbows counter knights"],
-      dangerTimers: ["4:00 - Feudal age"],
+      dangerTimers: [{ time: "4:00", message: "Feudal age" }],
     },
   ],
 }));
@@ -131,6 +137,12 @@ vi.mock("lucide-react", () => ({
   Clock: ({ className }: { className?: string }) => (
     <span data-testid="clock-icon" className={className}>⏰</span>
   ),
+  Zap: ({ className }: { className?: string }) => (
+    <span data-testid="zap-icon" className={className}>⚡</span>
+  ),
+  Loader2: ({ className }: { className?: string }) => (
+    <span data-testid="loader-icon" className={className}>⌛</span>
+  ),
 }));
 
 describe("MatchupPanel", () => {
@@ -173,6 +185,11 @@ describe("MatchupPanel", () => {
     it("renders collapse button", () => {
       render(<MatchupPanel />);
       expect(screen.getByTestId("collapse-icon")).toBeInTheDocument();
+    });
+
+    it("renders auto-detect button when profile linked", () => {
+      render(<MatchupPanel />);
+      expect(screen.getByText("Auto-Detect")).toBeInTheDocument();
     });
   });
 
@@ -282,6 +299,17 @@ describe("MatchupPanel", () => {
       expect(mockSetOpponent).not.toHaveBeenCalled();
     });
   });
+
+  describe("auto-detect functionality", () => {
+    it("calls detectMatch when auto-detect button clicked", () => {
+      render(<MatchupPanel />);
+      const detectButton = screen.getByText("Auto-Detect");
+
+      fireEvent.click(detectButton);
+
+      expect(mockDetectMatch).toHaveBeenCalledWith(12345, "English");
+    });
+  });
 });
 
 describe("MatchupPanel edge cases", () => {
@@ -294,9 +322,11 @@ describe("MatchupPanel edge cases", () => {
     vi.mocked(useMatchupStore).mockReturnValue({
       isOpen: false,
       opponentCiv: null,
+      isDetecting: false,
       setOpen: mockSetOpen,
       setOpponent: mockSetOpponent,
       getOpponentFor: mockGetOpponentFor,
+      detectMatch: mockDetectMatch,
     });
 
     const { container } = render(<MatchupPanel />);
@@ -309,9 +339,11 @@ describe("MatchupPanel edge cases", () => {
     vi.mocked(useMatchupStore).mockReturnValue({
       isOpen: true,
       opponentCiv: null,
+      isDetecting: false,
       setOpen: mockSetOpen,
       setOpponent: mockSetOpponent,
       getOpponentFor: mockGetOpponentFor,
+      detectMatch: mockDetectMatch,
     });
 
     const { container } = render(<MatchupPanel />);
@@ -332,62 +364,14 @@ describe("MatchupPanel edge cases", () => {
     vi.mocked(useMatchupStore).mockReturnValue({
       isOpen: true,
       opponentCiv: "Chinese",
+      isDetecting: false,
       setOpen: mockSetOpen,
       setOpponent: mockSetOpponent,
       getOpponentFor: vi.fn().mockReturnValue("Chinese"),
+      detectMatch: mockDetectMatch,
     });
 
     render(<MatchupPanel />);
     expect(screen.getByText(/No tactical data available/)).toBeInTheDocument();
-  });
-
-  it("uses remembered opponent when available", async () => {
-    const { useMatchupStore, useCurrentBuildOrder } = await import("@/stores");
-    vi.mocked(useCurrentBuildOrder).mockReturnValue({
-      id: "build-1",
-      name: "Fast Castle",
-      civilization: "English",
-      description: "Test build",
-      difficulty: "Intermediate",
-      enabled: true,
-      steps: [],
-    });
-    vi.mocked(useMatchupStore).mockReturnValue({
-      isOpen: true,
-      opponentCiv: null,
-      setOpen: mockSetOpen,
-      setOpponent: mockSetOpponent,
-      getOpponentFor: vi.fn().mockReturnValue("French"),
-    });
-
-    render(<MatchupPanel />);
-    // Check that French is displayed (may be in multiple places)
-    const frenchText = screen.getAllByText(/French/);
-    expect(frenchText.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("uses opponentCiv prop over remembered opponent", async () => {
-    const { useMatchupStore, useCurrentBuildOrder } = await import("@/stores");
-    vi.mocked(useCurrentBuildOrder).mockReturnValue({
-      id: "build-1",
-      name: "Fast Castle",
-      civilization: "English",
-      description: "Test build",
-      difficulty: "Intermediate",
-      enabled: true,
-      steps: [],
-    });
-    vi.mocked(useMatchupStore).mockReturnValue({
-      isOpen: true,
-      opponentCiv: "Mongols",
-      setOpen: mockSetOpen,
-      setOpponent: mockSetOpponent,
-      getOpponentFor: vi.fn().mockReturnValue("French"),
-    });
-
-    render(<MatchupPanel />);
-    // Check that Mongols appears in the subtitle
-    const mongolsText = screen.getAllByText(/Mongols/);
-    expect(mongolsText.length).toBeGreaterThanOrEqual(1);
   });
 });

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { saveBuildOrder, deleteBuildOrder } from "@/lib/tauri";
 import { importAge4Builder } from "@/lib/age4builder";
 import { importAoe4WorldBuild } from "@/lib/aoe4world";
+import { parseTextBuildOrder } from "@/lib/textParser";
 import {
   importAoe4GuidesBuild,
   browseAoe4GuidesBuilds,
@@ -51,6 +52,7 @@ export interface BuildOrderDialogsState {
   importJsonDialog: ImportDialogState;
   importUrlDialog: ImportDialogState;
   importAoe4GuidesDialog: ImportDialogState;
+  importTextDialog: ImportDialogState;
   browseDialog: BrowseDialogState;
   importedAoe4GuidesIds: Set<string>;
 }
@@ -85,6 +87,11 @@ export function useBuildOrderDialogs({
   const [showAoe4GuidesUrlDialog, setShowAoe4GuidesUrlDialog] = useState(false);
   const [aoe4GuidesUrl, setAoe4GuidesUrl] = useState("");
   const [aoe4GuidesUrlError, setAoe4GuidesUrlError] = useState<string | null>(null);
+
+  // Text import dialog state
+  const [showTextImportDialog, setShowTextImportDialog] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [textImportError, setTextImportError] = useState<string | null>(null);
 
   // Shared importing state
   const [isImporting, setIsImporting] = useState(false);
@@ -181,6 +188,19 @@ export function useBuildOrderDialogs({
       setIsImporting(false);
     }
   }, [aoe4GuidesUrl, addBuildOrder]);
+
+  // Import Text handler
+  const handleImportText = useCallback(async () => {
+    setTextImportError(null);
+    try {
+      const imported = parseTextBuildOrder(importText);
+      await addBuildOrder(imported);
+      setShowTextImportDialog(false);
+      setImportText("");
+    } catch (error) {
+      setTextImportError(error instanceof Error ? error.message : "Failed to parse text");
+    }
+  }, [importText, addBuildOrder]);
 
   // Browse handler
   const handleBrowseBuilds = useCallback(async () => {
@@ -312,6 +332,15 @@ export function useBuildOrderDialogs({
       error: aoe4GuidesUrlError,
       onImport: handleAoe4GuidesUrlImport,
       isImporting,
+    },
+    importTextDialog: {
+      show: showTextImportDialog,
+      setShow: setShowTextImportDialog,
+      value: importText,
+      setValue: setImportText,
+      error: textImportError,
+      onImport: handleImportText,
+      isImporting: false,
     },
     browseDialog: {
       show: showBrowseDialog,

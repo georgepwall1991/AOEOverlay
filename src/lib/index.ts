@@ -1,6 +1,10 @@
 export * from "./utils";
 export * from "./tauri";
 export * from "./age4builder";
+export * from "./textParser";
+export * from "./iconNormalizer";
+export * from "./buildOrderRouter";
+export * from "./importErrors";
 // Re-export aoe4guides without MAX_BUILD_ORDER_STEPS (already exported from age4builder)
 export {
   importAoe4GuidesBuild,

@@ -8,6 +8,7 @@ import {
   useTimerStore,
   useBadgeStore,
   useSessionStore,
+  useCounterGridStore,
   resolveActiveSteps,
 } from "@/stores";
 import { parseTimingToSeconds } from "@/stores/timerStore";
@@ -19,6 +20,7 @@ export function useGlobalHotkeys() {
   const { nextStep, previousStep, cycleBuildOrder, resetSteps, setActiveBranch } =
     useBuildOrderStore();
   const { toggleVisibility, setVisible } = useOverlayStore();
+  const { toggle: toggleCounters } = useCounterGridStore();
   const { updateConfig } = useConfigStore();
   const { startTimer, resetTimer, recordStepTime, togglePause } = useTimerStore();
   const { resetBadges } = useBadgeStore();
@@ -174,6 +176,9 @@ export function useGlobalHotkeys() {
     // Timer control
     hotkey("hotkey-toggle-pause", togglePause, "hotkey:timer:toggle-pause"),
 
+    // Counter Grid
+    hotkey("hotkey-toggle-counters", toggleCounters, "hotkey:counters:toggle"),
+
     // Branch activation
     hotkey("hotkey-activate-branch-main", () => setActiveBranch(null), "hotkey:branch:main"),
     hotkey("hotkey-activate-branch-1", () => activateBranch(0), "hotkey:branch:1"),
@@ -232,6 +237,7 @@ export function useGlobalHotkeys() {
         [h.activate_branch_2]: "hotkey-activate-branch-2",
         [h.activate_branch_3]: "hotkey-activate-branch-3",
         [h.activate_branch_4]: "hotkey-activate-branch-4",
+        [h.toggle_counters]: "hotkey-toggle-counters",
       };
 
       const eventName = keyMap[e.key];

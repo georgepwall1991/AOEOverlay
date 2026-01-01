@@ -1,5 +1,5 @@
 import { useConfig } from '@/hooks/useConfig';
-import { DEFAULT_METRONOME_CONFIG } from '@/types';
+import { DEFAULT_METRONOME_CONFIG, type MetronomeConfig } from '@/types';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -9,7 +9,7 @@ export function MetronomeSettings() {
   const { config, updateAndSave } = useConfig();
   const metronome = config.metronome ?? DEFAULT_METRONOME_CONFIG;
 
-  const updateMetronome = (updates: Partial<typeof DEFAULT_METRONOME_CONFIG>) => {
+  const updateMetronome = (updates: Partial<MetronomeConfig>) => {
     updateAndSave({
       metronome: { ...metronome, ...updates }
     });
@@ -32,7 +32,18 @@ export function MetronomeSettings() {
         Plays a subtle rhythmic audio cue and visual pulse to help you maintain your macro habits (TC queue, resources, scouting).
       </p>
 
-      <div className="space-y-4 pt-2">
+      <div className="flex items-center justify-between pt-2">
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Macro Coaching Cycle</Label>
+        <Switch 
+          checked={metronome.coachLoop} 
+          onCheckedChange={(coachLoop) => updateMetronome({ coachLoop })} 
+        />
+      </div>
+      <p className="text-[10px] text-muted-foreground italic">
+        Whispers tasks like "Check TC" or "Glance minimap" instead of just a generic tick.
+      </p>
+
+      <div className="space-y-4 pt-4 border-t border-white/5">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-xs">Interval (seconds)</Label>

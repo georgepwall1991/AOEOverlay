@@ -2,138 +2,92 @@ import { cn } from "@/lib/utils";
 import type { BuildOrderStep as StepType } from "@/types";
 import { ResourceIndicator } from "../indicators/ResourceIndicator";
 import { VillagerDistributionBar } from "../indicators/VillagerDistributionBar";
-import { StepNumber } from "./StepNumber";
-import { StepTiming } from "./StepTiming";
-import { useConfigStore } from "@/stores";
 import { useStepHighlight } from "@/hooks/useStepHighlight";
 import { useAdjustedTiming } from "@/hooks/useAdjustedTiming";
 import { renderIconText } from "../icons/GameIcons";
 
 interface BuildOrderStepProps {
   step: StepType;
-  stepNumber: number;
   isActive: boolean;
-  isNext: boolean;
   isPast: boolean;
   onClick: () => void;
-  compact?: boolean;
+  previousResources?: StepType["resources"];
 }
 
 export function BuildOrderStep({
   step,
-  stepNumber,
   isActive,
-  isNext,
   isPast,
   onClick,
-  compact = false,
+  previousResources,
 }: BuildOrderStepProps) {
-  const { config } = useConfigStore();
-  const floatingStyle = config.floating_style;
   const showHighlight = useStepHighlight(isActive);
   const { displayTiming, showDriftIndicator } = useAdjustedTiming(step, isActive, isPast);
 
-  if (compact) {
-    return (
-      <button
-        data-testid={`step-${stepNumber - 1}`}
-        onClick={onClick}
-        className={cn(
-          "w-full text-left px-2 py-1.5 rounded-lg transition-all duration-300 step-hover-effect",
-          isActive && "step-active-glow py-3 active-step active-step-themed",
-          isNext && "step-next-up",
-          isPast && "opacity-50 grayscale-[0.3]",
-          !isActive && !isPast && !isNext && "opacity-75 hover:opacity-95",
-          showHighlight && "step-enter"
-        )}
-      >
-        <div className="flex items-start gap-3">
-          <StepNumber
-            stepNumber={stepNumber}
-            isActive={isActive}
-            isPast={isPast}
-            showHighlight={showHighlight}
-            compact
-          />
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-1">
-              <StepTiming
-                timing={step.timing}
-                displayTiming={displayTiming}
-                originalTiming={step.timing}
-                isActive={isActive}
-                showDriftIndicator={showDriftIndicator}
-                compact
-              />
-              {step.resources && (
-                <ResourceIndicator resources={step.resources} compact glow={isActive} />
-              )}
-            </div>
-
-            {isActive && step.resources && (
-              <VillagerDistributionBar resources={step.resources} className="mb-2" />
-            )}
-
-            <div
-              className={cn(
-                "leading-snug transition-all duration-200 flex flex-wrap items-center gap-x-1 tracking-pro",
-                isActive ? "text-base text-white font-black" : "text-xs text-white/85 font-semibold",
-                floatingStyle && "text-shadow-strong"
-              )}
-            >
-              {renderIconText(step.description, 24)}
-            </div>
-          </div>
-        </div>
-      </button>
-    );
-  }
-
   return (
     <button
-      data-testid={`step-${stepNumber - 1}`}
       onClick={onClick}
       className={cn(
-        "w-full text-left transition-all duration-300 ease-out p-2 rounded-lg",
-        isActive ? "step-active-glow py-4 active-step active-step-themed" : "step-card step-hover-effect",
-        isNext && "step-next-up",
-        isPast && "opacity-55 grayscale-[0.2]",
-        !isActive && !isPast && !isNext && "opacity-85 hover:opacity-100",
-        showHighlight && "step-enter"
+        "w-full text-left transition-all duration-500 group relative py-3 px-4 rounded-xl",
+        isActive ? "step-entry-active bg-white/[0.03] shadow-lg" : "hover:bg-white/[0.02]",
+        isPast && "opacity-30 grayscale-[0.8] scale-[0.98]",
+        !isActive && !isPast && "opacity-70",
+        showHighlight && "animate-scale-in"
       )}
     >
-      <div className="flex items-start gap-3 relative z-10">
-        <StepNumber
-          stepNumber={stepNumber}
-          isActive={isActive}
-          isPast={isPast}
-        />
+      <div className="flex items-start gap-6">
+        {/* Timeline Dot Integration */}
+        <div className="flex flex-col items-center pt-2">
+          <div className={cn(
+            "timeline-dot",
+            isActive && "timeline-dot-active"
+          )} />
+        </div>
 
         <div className="flex-1 min-w-0">
-          <p
-            className={cn(
-              "leading-snug transition-all duration-300 flex items-center flex-wrap gap-1.5 tracking-pro",
-              isActive ? "text-lg text-white font-black tracking-pro-tight" : "text-[12px] text-white/90 font-semibold",
-              floatingStyle && "text-shadow-strong"
+          {/* Timing & Meta */}
+          <div className="flex items-center gap-2 mb-1 text-halo">
+            {step.timing && (
+              <span className={cn(
+                "font-mono text-[10px] font-bold tracking-widest uppercase",
+                isActive ? "text-[hsl(var(--civ-color))]" : "text-white/30"
+              )}>
+                {displayTiming || step.timing}
+              </span>
             )}
-          >
-            {renderIconText(step.description, isActive ? 32 : 20)}
-          </p>
-
-          <div className={cn("flex items-center gap-3 mt-1.5 flex-wrap", isActive && "mt-2.5")}>
-            <StepTiming
-              timing={step.timing}
-              displayTiming={displayTiming}
-              originalTiming={step.timing}
-              isActive={isActive}
-              showDriftIndicator={showDriftIndicator}
-            />
-            <ResourceIndicator resources={step.resources} glow={isActive} />
+            {showDriftIndicator && (
+              <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" title="Time adjusted for drift" />
+            )}
           </div>
 
+          {/* Description - Bold Hero Text */}
+          <div className={cn(
+            "leading-tight tracking-tight transition-colors text-halo",
+            isActive ? "text-xl text-hero" : "text-sm font-semibold text-white/80"
+          )}>
+            {renderIconText(step.description, isActive ? 28 : 18)}
+          </div>
+
+          {/* Premium Resource Chips */}
+          {step.resources && (
+            <div className={cn(
+              "flex flex-wrap gap-2 mt-3 transition-all duration-500",
+              isActive ? "opacity-100 translate-y-0" : "opacity-60"
+            )}>
+              <ResourceIndicator 
+                resources={step.resources} 
+                previousResources={previousResources}
+                compact={!isActive}
+                glow={isActive} 
+              />
+            </div>
+          )}
+
+          {/* Distribution Bar - Subtle Inline */}
           {isActive && step.resources && (
-            <VillagerDistributionBar resources={step.resources} className="mt-3" />
+            <div className="mt-4 pt-3 border-t border-white/[0.05] animate-slide-up">
+              <VillagerDistributionBar resources={step.resources} />
+            </div>
           )}
         </div>
       </div>

@@ -12,6 +12,7 @@ export interface HotkeyConfig {
   activate_branch_2: string;
   activate_branch_3: string;
   activate_branch_4: string;
+  toggle_counters: string;
 }
 
 export interface WindowPosition {
@@ -51,6 +52,7 @@ export interface ReminderConfig {
   mapControl: ReminderItemConfig;
   macroCheck: ReminderItemConfig; // "Check your production" metronome
   sacredSites: { enabled: boolean }; // One-time alerts at 4:30 and 5:00
+  matchupAlerts: { enabled: boolean }; // Proactive intel alerts from matchups
   calmMode?: {
     enabled: boolean;
     untilSeconds: number; // Delay non-critical reminders until this time
@@ -88,6 +90,7 @@ export interface MetronomeConfig {
   enabled: boolean;
   intervalSeconds: number;
   volume: number;
+  coachLoop: boolean; // Cycle through core macro tasks (TC, minimap, etc.)
 }
 
 export interface CoachPackConfig {
@@ -153,6 +156,7 @@ export const DEFAULT_REMINDER_CONFIG: ReminderConfig = {
   mapControl: { enabled: true, intervalSeconds: 90 },
   macroCheck: { enabled: false, intervalSeconds: 20 }, // Pro-level macro cycle
   sacredSites: { enabled: true }, // Sacred site spawn alerts
+  matchupAlerts: { enabled: true }, // Proactive intel alerts from matchups
   calmMode: { enabled: false, untilSeconds: 180 },
 };
 
@@ -181,6 +185,7 @@ export const DEFAULT_METRONOME_CONFIG: MetronomeConfig = {
   enabled: false,
   intervalSeconds: 20,
   volume: 0.5,
+  coachLoop: true,
 };
 
 export const DEFAULT_COACH_PACK_CONFIG: CoachPackConfig = {
@@ -204,11 +209,12 @@ export const DEFAULT_CONFIG: AppConfig = {
     toggle_compact: "F6",
     reset_build_order: "F7",
     toggle_pause: "F8",
-    activate_branch_main: "0",
-    activate_branch_1: "1",
-    activate_branch_2: "2",
-    activate_branch_3: "3",
-    activate_branch_4: "4",
+    activate_branch_main: "Alt+0",
+    activate_branch_1: "Alt+1",
+    activate_branch_2: "Alt+2",
+    activate_branch_3: "Alt+3",
+    activate_branch_4: "Alt+4",
+    toggle_counters: "TAB",
   },
   click_through: true,
   compact_mode: false, // Default to expanded mode (more info visible)

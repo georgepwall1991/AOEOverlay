@@ -148,6 +148,45 @@ export const GAME_ICONS = {
 
   // Civ-specific units
   ronin: { path: "/icons/ronin.webp", emoji: "⚔️", color: "#dc2626" },
+  landsknecht: { path: "/icons/landsknecht.webp", emoji: "⚔️", color: "#facc15" },
+  prelate: { path: "/icons/prelate.webp", emoji: "⛪", color: "#fbbf24" },
+  mangudai: { path: "/icons/mangudai.webp", emoji: "🏹", color: "#f97316" },
+  keshik: { path: "/icons/keshik.webp", emoji: "🏇", color: "#ea580c" },
+  khan: { path: "/icons/khan.webp", emoji: "🏹", color: "#fbbf24" },
+  king: { path: "/icons/king.webp", emoji: "👑", color: "#fbbf24" },
+  ghazi_raider: { path: "/icons/horseman.webp", emoji: "🏇", color: "#f97316" },
+  streltsy: { path: "/icons/handcannoneer.webp", emoji: "🔫", color: "#7f1d1d" },
+  zhuge_nu: { path: "/icons/zhuge-nu.webp", emoji: "🏹", color: "#dc2626" },
+  palace_guard: { path: "/icons/palace-guard.webp", emoji: "⚔️", color: "#facc15" },
+  nest_of_bees: { path: "/icons/nest-of-bees.webp", emoji: "💥", color: "#f97316" },
+  fire_lancer: { path: "/icons/fire-lancer.webp", emoji: "🔥", color: "#ea580c" },
+  grenadier: { path: "/icons/grenadier.webp", emoji: "💣", color: "#dc2626" },
+  imperial_official: { path: "/icons/imperial-official.webp", emoji: "📜", color: "#fbbf24" },
+  camel_archer: { path: "/icons/archer.webp", emoji: "🐪", color: "#facc15" },
+  warrior_monk: { path: "/icons/monk.webp", emoji: "🧙", color: "#22c55e" },
+
+  // Landmarks & Key Buildings
+  council_hall: { path: "/icons/council-hall.webp", emoji: "🏛️", color: "#ef4444" },
+  school_of_cavalry: { path: "/icons/school-of-cavalry.webp", emoji: "🐴", color: "#3b82f6" },
+  meinwerk_palace: { path: "/icons/meinwerk-palace.webp", emoji: "🔨", color: "#fbbf24" },
+  white_tower: { path: "/icons/white-tower.webp", emoji: "🏯", color: "#64748b" },
+  aachen_chapel: { path: "/icons/aachen-chapel.webp", emoji: "⛪", color: "#fbbf24" },
+  regnitz_cathedral: { path: "/icons/regnitz-cathedral.webp", emoji: "⛪", color: "#fbbf24" },
+  golden_gate: { path: "/icons/golden-gate.webp", emoji: "🪙", color: "#22c55e" },
+  barbican_of_the_sun: { path: "/icons/barbican-of-the-sun.webp", emoji: "🗼", color: "#dc2626" },
+  imperial_academy: { path: "/icons/imperial-academy.webp", emoji: "🏘️", color: "#eab308" },
+  astronomical_clocktower: { path: "/icons/astronomical-clocktower.webp", emoji: "⏰", color: "#3b82f6" },
+  house_of_wisdom: { path: "/icons/house-of-wisdom.webp", emoji: "📚", color: "#0ea5e9" },
+  military_wing: { path: "/icons/military-wing.webp", emoji: "⚔️", color: "#ef4444" },
+  economic_wing: { path: "/icons/economic-wing.webp", emoji: "🌾", color: "#22c55e" },
+  trade_wing: { path: "/icons/trade-wing.webp", emoji: "🐪", color: "#f59e0b" },
+  culture_wing: { path: "/icons/culture-wing.webp", emoji: "🎨", color: "#8b5cf6" },
+
+  // Japanese units
+  samurai: { path: "/icons/samurai.webp", emoji: "⚔️", color: "#dc2626" },
+  onna_bugeisha: { path: "/icons/onna-bugeisha.webp", emoji: "🗡️", color: "#dc2626" },
+  shinobi: { path: "/icons/shinobi.webp", emoji: "🥷", color: "#374151" },
+  ozutsu: { path: "/icons/ozutsu.webp", emoji: "💣", color: "#7f1d1d" },
 
   // Actions
   rally: { path: "/icons/rally.webp", emoji: "🚩", color: "#22c55e" },
@@ -364,16 +403,64 @@ export function GameIcon({ type, size = 20, className, glow = false, showLabel =
 
 // Convenience function to render inline icons in text
 export function renderIconText(text: string, size = 18): React.ReactNode {
-  // Pattern to match [icon:type] syntax
-  const pattern = /\[icon:(\w+)\]/g;
+  if (!text) return "";
+
+  const autoMappings: Record<string, GameIconType> = {
+    "monk": "monk",
+    "official": "imperial_official",
+    "tax": "bounty",
+    "pro scouts": "professional_scouts",
+    "villagers": "villager",
+    "villager": "villager",
+    "vills": "villager",
+    "vill": "villager",
+    "scout": "scout",
+    "knight": "knight",
+    "relic": "relic",
+    "landmark": "landmark",
+    "house": "house",
+    "barracks": "barracks",
+    "stable": "stable",
+    "archery range": "archery_range",
+    "blacksmith": "blacksmith",
+    "mining camp": "mining_camp",
+    "lumber camp": "lumber_camp",
+    "mill": "mill",
+    "dock": "dock",
+    "market": "market",
+    "town center": "town_center",
+    "tc": "town_center",
+  };
+
+  // 1. Identify existing icons so we don't double-process them
+  const iconMarkers: string[] = [];
+  let processedText = text.replace(/\[icon:(\w+)\]/g, (match) => {
+    iconMarkers.push(match);
+    return `__PRESERVED_ICON_${iconMarkers.length - 1}__`;
+  });
+  
+  // 2. Auto-map keywords
+  const sortedKeywords = Object.keys(autoMappings).sort((a, b) => b.length - a.length);
+  for (const keyword of sortedKeywords) {
+    const re = new RegExp(`\\b${keyword}\\b`, "gi");
+    processedText = processedText.replace(re, () => {
+      return `[icon:${autoMappings[keyword.toLowerCase()]}]`;
+    });
+  }
+
+  // 3. Restore preserved icons
+  processedText = processedText.replace(/__PRESERVED_ICON_(\d+)__/g, (_, index) => {
+    return iconMarkers[parseInt(index, 10)];
+  });
+
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
   let match;
 
-  while ((match = pattern.exec(text)) !== null) {
-    // Add text before the icon
+  const pattern = /\[icon:(\w+)\]/g;
+  while ((match = pattern.exec(processedText)) !== null) {
     if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index));
+      parts.push(processedText.slice(lastIndex, match.index));
     }
 
     const iconType = match[1] as GameIconType;
@@ -382,15 +469,16 @@ export function renderIconText(text: string, size = 18): React.ReactNode {
         <GameIcon key={match.index} type={iconType} size={size} className="mx-0.5 align-middle" showLabel={false} />
       );
     } else {
-      parts.push(match[0]); // Keep original if icon not found
+      // Fallback for unknown icons: show as readable text instead of raw tag
+      const fallbackText = iconType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      parts.push(<span key={match.index} className="mx-0.5 font-bold text-amber-400/80">{fallbackText}</span>);
     }
 
     lastIndex = match.index + match[0].length;
   }
 
-  // Add remaining text
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex));
+  if (lastIndex < processedText.length) {
+    parts.push(processedText.slice(lastIndex));
   }
 
   return parts.length > 0 ? parts : text;

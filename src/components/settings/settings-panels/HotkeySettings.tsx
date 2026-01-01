@@ -32,6 +32,7 @@ const PRESET_QWERTY: HotkeyConfig = {
   activate_branch_2: "2",
   activate_branch_3: "3",
   activate_branch_4: "4",
+  toggle_counters: "TAB",
 };
 
 const PRESET_AZERTY: HotkeyConfig = {
@@ -48,6 +49,7 @@ const PRESET_AZERTY: HotkeyConfig = {
   activate_branch_2: "2",
   activate_branch_3: "3",
   activate_branch_4: "4",
+  toggle_counters: "TAB",
 };
 
 interface HotkeyRowProps {
@@ -159,6 +161,11 @@ export function HotkeySettings() {
           label="Toggle Pause"
           value={config.hotkeys.toggle_pause}
           onChange={(key) => handleHotkeyChange("toggle_pause", key)}
+        />
+        <HotkeyRow
+          label="Toggle Counter Reference"
+          value={config.hotkeys.toggle_counters}
+          onChange={(key) => handleHotkeyChange("toggle_counters", key)}
         />
         
         <div className="pt-2">

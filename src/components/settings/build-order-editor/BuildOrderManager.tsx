@@ -124,6 +124,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
         onImportAoe4World={() => dialogs.importUrlDialog.setShow(true)}
         onImportAoe4Guides={() => dialogs.importAoe4GuidesDialog.setShow(true)}
         onImportJson={() => dialogs.importJsonDialog.setShow(true)}
+        onImportText={() => dialogs.importTextDialog.setShow(true)}
         onCreateNew={handleCreateNew}
       />
 

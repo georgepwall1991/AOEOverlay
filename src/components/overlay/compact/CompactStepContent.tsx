@@ -8,12 +8,12 @@ import type { BuildOrderStep } from "@/types";
 interface CompactStepContentProps {
   currentStep: BuildOrderStep;
   nextStepPreview?: BuildOrderStep;
+  previousResources?: BuildOrderStep["resources"];
   currentStepIndex: number;
   totalSteps: number;
   fontSize: string;
   iconSize: number;
   paceDotClass: string;
-  deltaCompact: string | null;
   isRunning: boolean;
   isPaused: boolean;
   animateStep: boolean;
@@ -25,12 +25,12 @@ interface CompactStepContentProps {
 export function CompactStepContent({
   currentStep,
   nextStepPreview,
+  previousResources,
   currentStepIndex,
   totalSteps,
   fontSize,
   iconSize,
   paceDotClass,
-  deltaCompact,
   isRunning,
   isPaused,
   animateStep,
@@ -93,7 +93,12 @@ export function CompactStepContent({
             {/* Active Step Resources Integrated */}
             {currentStep.resources && (
               <div className="flex items-center gap-2.5 opacity-90 scale-90 origin-left -mt-0.5">
-                <ResourceIndicator resources={currentStep.resources} compact glow />
+                <ResourceIndicator 
+                  resources={currentStep.resources} 
+                  previousResources={previousResources}
+                  compact 
+                  glow 
+                />
               </div>
             )}
           </div>

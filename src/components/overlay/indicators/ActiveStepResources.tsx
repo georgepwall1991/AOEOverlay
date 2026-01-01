@@ -8,13 +8,15 @@ export function ActiveStepResources() {
     if (!currentStep) return null;
 
     const resources = currentStep.resources || {};
-    const { food = 0, wood = 0, gold = 0, stone = 0 } = resources;
+    const { food = 0, wood = 0, gold = 0, stone = 0, villagers, builders } = resources;
 
-    const hasResources = food > 0 || wood > 0 || gold > 0 || stone > 0;
+    const hasResources = food > 0 || wood > 0 || gold > 0 || stone > 0 || (villagers ?? 0) > 0 || (builders ?? 0) > 0;
     if (!hasResources) return null;
 
-    const totalVillagers = food + wood + gold + stone;
-    const isVillagerCount = totalVillagers > 0 && totalVillagers < 100 && food < 50 && wood < 50;
+    // Use explicit villager count if provided, otherwise sum up the individual gatherers
+    const displayVillagers = villagers ?? (food + wood + gold + stone);
+    // Use heuristic to decide if we should show the total (don't show if it looks like resource costs)
+    const shouldShowTotal = displayVillagers > 0 && displayVillagers < 100 && food < 50 && wood < 50;
 
     return (
         <div
@@ -34,9 +36,14 @@ export function ActiveStepResources() {
                 <ResourceItem type="stone" value={stone} color="text-slate-400" glow="rgba(148,163,184,0.2)" />
             </div>
 
-            {isVillagerCount && (
+            {(shouldShowTotal || (builders ?? 0) > 0) && (
                 <div className="flex items-center gap-4 border-l border-white/15 pl-4 z-10">
-                    <ResourceItem type="villager" value={totalVillagers} color="text-amber-200" glow="rgba(251,191,36,0.2)" />
+                    {shouldShowTotal && (
+                        <ResourceItem type="villager" value={displayVillagers} color="text-amber-200" glow="rgba(251,191,36,0.2)" />
+                    )}
+                    {(builders ?? 0) > 0 && (
+                        <ResourceItem type="builders" value={builders!} color="text-orange-300" glow="rgba(249,115,22,0.2)" />
+                    )}
                 </div>
             )}
 
@@ -52,7 +59,7 @@ function ResourceItem({
     color,
     glow
 }: {
-    type: "food" | "wood" | "gold" | "stone" | "villager" | "pop";
+    type: "food" | "wood" | "gold" | "stone" | "villager" | "builders" | "pop";
     value: number;
     color: string;
     glow?: string;

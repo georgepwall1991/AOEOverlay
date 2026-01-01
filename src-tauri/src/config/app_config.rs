@@ -59,13 +59,19 @@ pub struct HotkeyConfig {
     pub activate_branch_3: String,
     #[serde(default = "default_branch_4")]
     pub activate_branch_4: String,
+    #[serde(default = "default_toggle_counters")]
+    pub toggle_counters: String,
 }
 
-fn default_branch_main() -> String { "0".to_string() }
-fn default_branch_1() -> String { "1".to_string() }
-fn default_branch_2() -> String { "2".to_string() }
-fn default_branch_3() -> String { "3".to_string() }
-fn default_branch_4() -> String { "4".to_string() }
+fn default_branch_main() -> String { "Alt+0".to_string() }
+fn default_branch_1() -> String { "Alt+1".to_string() }
+fn default_branch_2() -> String { "Alt+2".to_string() }
+fn default_branch_3() -> String { "Alt+3".to_string() }
+fn default_branch_4() -> String { "Alt+4".to_string() }
+
+fn default_toggle_counters() -> String {
+    "TAB".to_string()
+}
 
 fn default_toggle_pause() -> String {
     "F8".to_string()
@@ -132,6 +138,11 @@ pub struct SacredSitesConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MatchupAlertsConfig {
+    pub enabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ReminderConfig {
     pub enabled: bool,
@@ -144,6 +155,8 @@ pub struct ReminderConfig {
     pub macro_check: ReminderItemConfig,
     #[serde(default = "default_sacred_sites")]
     pub sacred_sites: SacredSitesConfig,
+    #[serde(default = "default_matchup_alerts")]
+    pub matchup_alerts: MatchupAlertsConfig,
 }
 
 fn default_macro_check() -> ReminderItemConfig {
@@ -152,6 +165,10 @@ fn default_macro_check() -> ReminderItemConfig {
 
 fn default_sacred_sites() -> SacredSitesConfig {
     SacredSitesConfig { enabled: true }
+}
+
+fn default_matchup_alerts() -> MatchupAlertsConfig {
+    MatchupAlertsConfig { enabled: true }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -206,6 +223,7 @@ impl Default for ReminderConfig {
             map_control: ReminderItemConfig { enabled: true, interval_seconds: 90 },
             macro_check: ReminderItemConfig { enabled: false, interval_seconds: 20 },
             sacred_sites: SacredSitesConfig { enabled: true },
+            matchup_alerts: MatchupAlertsConfig { enabled: true },
         }
     }
 }
@@ -227,11 +245,12 @@ impl Default for AppConfig {
                 toggle_compact: "F6".to_string(),
                 reset_build_order: "F7".to_string(),
                 toggle_pause: "F8".to_string(),
-                activate_branch_main: "0".to_string(),
-                activate_branch_1: "1".to_string(),
-                activate_branch_2: "2".to_string(),
-                activate_branch_3: "3".to_string(),
-                activate_branch_4: "4".to_string(),
+                activate_branch_main: "Alt+0".to_string(),
+                activate_branch_1: "Alt+1".to_string(),
+                activate_branch_2: "Alt+2".to_string(),
+                activate_branch_3: "Alt+3".to_string(),
+                activate_branch_4: "Alt+4".to_string(),
+                toggle_counters: "TAB".to_string(),
             },
             window_position: None,
             window_size: None,
@@ -315,6 +334,7 @@ mod tests {
         assert!(!config.macro_check.enabled);
         assert_eq!(config.macro_check.interval_seconds, 20);
         assert!(config.sacred_sites.enabled);
+        assert!(config.matchup_alerts.enabled);
     }
 
     #[test]
@@ -345,6 +365,7 @@ mod tests {
         assert_eq!(config.hotkeys.toggle_compact, "F6");
         assert_eq!(config.hotkeys.reset_build_order, "F7");
         assert_eq!(config.hotkeys.toggle_pause, "F8");
+        assert_eq!(config.hotkeys.toggle_counters, "TAB");
     }
 
     #[test]
@@ -450,10 +471,12 @@ mod tests {
             activate_branch_2: "2".to_string(),
             activate_branch_3: "3".to_string(),
             activate_branch_4: "4".to_string(),
+            toggle_counters: "TAB".to_string(),
         };
         assert_eq!(config.toggle_overlay, "F1");
         assert_eq!(config.toggle_pause, "F8");
         assert_eq!(config.activate_branch_main, "F9");
+        assert_eq!(config.toggle_counters, "TAB");
     }
 
     #[test]

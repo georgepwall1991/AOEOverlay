@@ -201,10 +201,10 @@ describe("GameIcon", () => {
 
 describe("renderIconText", () => {
   it("returns text without icons as array with single item", () => {
-    const result = renderIconText("Build 5 villagers");
+    const result = renderIconText("Gather resources now");
     // Returns array with single string when no icons
     const { container } = render(<>{result}</>);
-    expect(container.textContent).toBe("Build 5 villagers");
+    expect(container.textContent).toBe("Gather resources now");
   });
 
   it("replaces [icon:type] with GameIcon component", () => {
@@ -221,11 +221,11 @@ describe("renderIconText", () => {
     expect(imgs.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("keeps unknown icon syntax unchanged", () => {
+  it("handles unknown icon syntax with readable fallback", () => {
     const result = renderIconText("[icon:unknown_thing]");
-    // Since we're rendering as ReactNode, check it contains the original text
+    // Should convert to readable text instead of raw tag
     const { container } = render(<>{result}</>);
-    expect(container.textContent).toContain("[icon:unknown_thing]");
+    expect(container.textContent).toBe("Unknown Thing");
   });
 
   it("handles empty string", () => {

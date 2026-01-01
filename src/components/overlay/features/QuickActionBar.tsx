@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { SkipBack, ChevronLeft, Play, Pause, ChevronRight, RefreshCw, Lock, Unlock, Shield } from "lucide-react";
-import { useBuildOrderStore, useConfigStore, useActiveSteps, useBadgeStore, useMatchupStore } from "@/stores";
+import { SkipBack, ChevronLeft, Play, Pause, ChevronRight, RefreshCw, Lock, Unlock, Shield, Swords } from "lucide-react";
+import { useBuildOrderStore, useConfigStore, useActiveSteps, useBadgeStore, useMatchupStore, useCounterGridStore } from "@/stores";
 import { useTimer } from "@/hooks";
 import { cn, logTelemetryEvent } from "@/lib/utils";
 
@@ -53,6 +53,7 @@ export function QuickActionBar() {
   const [isResetting, setIsResetting] = useState(false);
   const [isCycling, setIsCycling] = useState(false);
   const { isOpen, toggle } = useMatchupStore();
+  const { isOpen: isCounterOpen, toggle: toggleCounter } = useCounterGridStore();
 
   useEffect(() => {
     return () => {
@@ -157,6 +158,17 @@ export function QuickActionBar() {
 
   return (
     <div data-testid="quick-action-bar" className="flex items-center justify-center gap-2 px-3 py-2 border-t border-white/5">
+      {/* Counter Grid Toggle */}
+      <ActionButton
+        onClick={toggleCounter}
+        hotkey={hotkeys.toggle_counters || "TAB"}
+        label={isCounterOpen ? "Hide Counters" : "Show Counters"}
+        active={isCounterOpen}
+        testId="toggle-counters-button"
+      >
+        <Swords className={cn("w-4.5 h-4.5", isCounterOpen ? "text-purple-400" : "text-white/60 group-hover:text-purple-200")} />
+      </ActionButton>
+
       {/* Matchup Panel Toggle */}
       <ActionButton
         onClick={toggle}

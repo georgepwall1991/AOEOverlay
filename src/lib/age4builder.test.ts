@@ -229,6 +229,7 @@ describe("age4builder utilities", () => {
         wood: 50,
         gold: 25,
         stone: 0,
+        villagers: 9,
       });
     });
 
@@ -241,8 +242,8 @@ describe("age4builder utilities", () => {
         build_order: [
           {
             age: 1,
-            population_count: 10,
-            villager_count: 9,
+            population_count: -1,
+            villager_count: -1,
             resources: { food: -1, wood: -1, gold: -1, stone: -1 },
             notes: ["Test"],
           },
@@ -276,6 +277,7 @@ describe("age4builder utilities", () => {
         wood: 0,
         gold: 0,
         stone: 0,
+        villagers: 9,
       });
     });
 

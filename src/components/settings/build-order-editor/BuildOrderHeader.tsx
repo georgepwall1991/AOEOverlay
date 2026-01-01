@@ -8,7 +8,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    Search, X, Library, Download, Globe, Upload, Plus, ChevronDown
+    Search, X, Library, Download, Globe, Upload, Plus, ChevronDown, FileText
 } from "lucide-react";
 
 interface BuildOrderHeaderProps {
@@ -18,6 +18,7 @@ interface BuildOrderHeaderProps {
     onImportAoe4World: () => void;
     onImportAoe4Guides: () => void;
     onImportJson: () => void;
+    onImportText: () => void;
     onCreateNew: () => void;
 }
 
@@ -28,6 +29,7 @@ export function BuildOrderHeader({
     onImportAoe4World,
     onImportAoe4Guides,
     onImportJson,
+    onImportText,
     onCreateNew,
 }: BuildOrderHeaderProps) {
     return (
@@ -78,6 +80,10 @@ export function BuildOrderHeader({
                         <DropdownMenuItem onClick={onImportAoe4Guides}>
                             <Globe className="w-4 h-4 mr-2" />
                             From aoe4guides.com
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={onImportText}>
+                            <FileText className="w-4 h-4 mr-2" />
+                            From Text (Copy-Paste)
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={onImportJson}>

@@ -2,93 +2,69 @@
   "id": "french-knight-rush",
   "name": "French Knight Rush",
   "civilization": "French",
-  "description": "Fast Feudal with School of Cavalry for early knight pressure. Exploits French eco bonuses for aggressive play.",
+  "description": "Exploits French faster [icon:villager] production. Fast Feudal into [icon:knight] Royal Knight harassment.",
   "difficulty": "Intermediate",
   "enabled": true,
   "steps": [
     {
       "id": "step-1",
-      "description": "[icon:villager] Queue 2 villagers, rally to [icon:sheep] sheep",
+      "description": "6 villagers to [icon:sheep] sheep. Rally [icon:scout] scout to sheep.",
       "timing": "0:00",
-      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 }
+      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
     {
       "id": "step-2",
-      "description": "[icon:house] Build house with [icon:scout] scout, [icon:villager] villager to [icon:sheep] sheep",
-      "timing": "0:25",
-      "resources": { "food": 7, "wood": 0, "gold": 0, "stone": 0 }
+      "description": "1st new [icon:villager] builds [icon:house] house, then rallies to [icon:gold] gold.",
+      "timing": "0:20",
+      "resources": { "food": 6, "wood": 0, "gold": 1, "stone": 0, "villagers": 7 }
     },
     {
       "id": "step-3",
-      "description": "[icon:villager] Villager to [icon:wood] wood",
-      "timing": "0:50",
-      "resources": { "food": 7, "wood": 1, "gold": 0, "stone": 0 }
+      "description": "2nd new [icon:villager] builds [icon:mining_camp] Mining Camp on [icon:gold] gold. 3rd new villager to [icon:gold] gold.",
+      "timing": "0:45",
+      "resources": { "food": 6, "wood": 0, "gold": 3, "stone": 0, "villagers": 9 }
     },
     {
       "id": "step-4",
-      "description": "[icon:villager] Villager to [icon:wood] wood",
-      "timing": "1:15",
-      "resources": { "food": 7, "wood": 2, "gold": 0, "stone": 0 }
+      "description": "4th new [icon:villager] to [icon:food] food. Total 7 on food.",
+      "timing": "1:30",
+      "resources": { "food": 7, "wood": 0, "gold": 3, "stone": 0, "villagers": 10 }
     },
     {
       "id": "step-5",
-      "description": "[icon:villager] Villager to [icon:gold] gold",
-      "timing": "1:40",
-      "resources": { "food": 7, "wood": 2, "gold": 1, "stone": 0 }
+      "description": "5th new [icon:villager] to [icon:wood] wood. Build [icon:lumber_camp] Lumber Camp.",
+      "timing": "2:00",
+      "resources": { "food": 7, "wood": 1, "gold": 3, "stone": 0, "villagers": 11 }
     },
     {
       "id": "step-6",
-      "description": "[icon:mining_camp] Build Mining Camp, [icon:villager] villager to [icon:gold] gold",
-      "timing": "2:00",
-      "resources": { "food": 7, "wood": 2, "gold": 2, "stone": 0 }
+      "description": "Rally new villagers to [icon:food] food. Total 10 on food.",
+      "timing": "2:30",
+      "resources": { "food": 10, "wood": 1, "gold": 3, "stone": 0, "villagers": 14 }
     },
     {
       "id": "step-7",
-      "description": "[icon:villager] Villager to [icon:gold] gold",
-      "timing": "2:25",
-      "resources": { "food": 7, "wood": 2, "gold": 3, "stone": 0 }
+      "description": "[icon:feudal_age] Age up with [icon:landmark] School of Cavalry! Use 2 villagers from food to build.",
+      "timing": "3:15",
+      "resources": { "food": 8, "wood": 1, "gold": 3, "stone": 0, "villagers": 14, "builders": 2 }
     },
     {
       "id": "step-8",
-      "description": "[icon:lumber_camp] Build Lumber Camp, [icon:villager] villager to [icon:wood] wood",
-      "timing": "2:50",
-      "resources": { "food": 7, "wood": 3, "gold": 3, "stone": 0 }
+      "description": "Shift 2 villagers from food to [icon:wood] wood. Rally new villagers to [icon:wood] wood.",
+      "timing": "3:30",
+      "resources": { "food": 6, "wood": 5, "gold": 3, "stone": 0, "villagers": 16 }
     },
     {
       "id": "step-9",
-      "description": "[icon:feudal_age] Build School of Cavalry - use 2 [icon:villager] villagers",
-      "timing": "3:15",
-      "resources": { "food": 7, "wood": 1, "gold": 3, "stone": 0 }
+      "description": "[icon:feudal_age] Feudal Age! Produce [icon:knight] Royal Knights. Research [icon:upgrade] Chivalry.",
+      "timing": "4:30",
+      "resources": { "food": 8, "wood": 6, "gold": 4, "stone": 0, "villagers": 18 }
     },
     {
       "id": "step-10",
-      "description": "[icon:villager] Continue villagers to [icon:food] food during age up",
-      "timing": "3:45",
-      "resources": { "food": 9, "wood": 1, "gold": 3, "stone": 0 }
-    },
-    {
-      "id": "step-11",
-      "description": "[icon:feudal_age] Feudal Age! [icon:knight] Queue knights from School of Cavalry",
-      "timing": "4:30",
-      "resources": { "food": 9, "wood": 3, "gold": 3, "stone": 0 }
-    },
-    {
-      "id": "step-12",
-      "description": "[icon:stable] Build Stable for double [icon:knight] knight production",
+      "description": "[icon:attack] Harass with 1st [icon:knight]. Target isolated villagers.",
       "timing": "5:00",
-      "resources": { "food": 8, "wood": 4, "gold": 4, "stone": 0 }
-    },
-    {
-      "id": "step-13",
-      "description": "[icon:attack] Harass with 2-3 [icon:knight] knights, target [icon:villager] villagers",
-      "timing": "5:30",
-      "resources": { "food": 8, "wood": 4, "gold": 5, "stone": 0 }
-    },
-    {
-      "id": "step-14",
-      "description": "[icon:knight] Maintain knight pressure while booming behind it",
-      "timing": "6:30",
-      "resources": { "food": 10, "wood": 5, "gold": 6, "stone": 0 }
+      "resources": { "food": 10, "wood": 6, "gold": 4, "stone": 0, "villagers": 20 }
     }
   ]
 }

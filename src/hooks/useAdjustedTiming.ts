@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { BuildOrderStep } from "@/types";
 import { DEFAULT_TIMER_DRIFT_CONFIG } from "@/types";
 import { useConfigStore, useAccumulatedDrift } from "@/stores";
-import { parseTimingToSeconds, formatTime } from "@/stores/timerStore";
+import { parseTimingToSeconds, formatTime, sanitizeTiming } from "@/stores/timerStore";
 
 interface AdjustedTimingResult {
   displayTiming: string | undefined;
@@ -43,7 +43,7 @@ export function useAdjustedTiming(
   }, [step.timing, driftConfig.enabled, accumulatedDrift, isActive, isPast]);
 
   return {
-    displayTiming: adjustedTiming || step.timing,
+    displayTiming: adjustedTiming || sanitizeTiming(step.timing),
     showDriftIndicator: adjustedTiming !== null,
   };
 }

@@ -46,6 +46,10 @@ vi.mock("@/stores", () => ({
     isOpen: false,
     toggle: vi.fn(),
   })),
+  useCounterGridStore: vi.fn(() => ({
+    isOpen: false,
+    toggle: vi.fn(),
+  })),
 }));
 
 // Mock hooks
@@ -102,6 +106,9 @@ vi.mock("lucide-react", () => ({
   ),
   Shield: ({ className }: { className?: string }) => (
     <span data-testid="shield" className={className}>🛡️</span>
+  ),
+  Swords: ({ className }: { className?: string }) => (
+    <span data-testid="swords" className={className}>⚔️</span>
   ),
 }));
 

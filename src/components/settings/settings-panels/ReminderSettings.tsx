@@ -83,6 +83,19 @@ export function ReminderSettings() {
     }
   };
 
+  const handleMatchupAlertsToggle = async () => {
+    const newReminders: ReminderConfig = {
+      ...reminderConfig,
+      matchupAlerts: { enabled: !reminderConfig.matchupAlerts?.enabled },
+    };
+    updateConfig({ reminders: newReminders });
+    try {
+      await saveConfig({ ...config, reminders: newReminders });
+    } catch (error) {
+      console.error("Failed to save reminders config:", error);
+    }
+  };
+
   const handleReminderIntervalChange = async (item: ToggleableReminder, value: string) => {
     const interval = parseInt(value, 10) || 30;
     const newReminders: ReminderConfig = {
@@ -228,6 +241,22 @@ export function ReminderSettings() {
                 </div>
                 <p className="text-xs text-muted-foreground ml-8 mt-1">
                   Alerts at 4:30 and 5:00 for sacred sites
+                </p>
+              </div>
+            </div>
+
+            {/* Matchup Intel Alerts - Proactive Coaching */}
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={reminderConfig.matchupAlerts?.enabled ?? false}
+                    onCheckedChange={handleMatchupAlertsToggle}
+                  />
+                  <Label>Matchup Intel Alerts</Label>
+                </div>
+                <p className="text-xs text-muted-foreground ml-8 mt-1">
+                  Proactive warnings based on opponent's civilization and typical timings
                 </p>
               </div>
             </div>

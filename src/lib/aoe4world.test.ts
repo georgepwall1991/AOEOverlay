@@ -355,6 +355,7 @@ describe("aoe4world API", () => {
       expect(result.steps[0].resources).toEqual({
         food: 100,
         gold: 50,
+        villagers: 150,
       });
     });
 

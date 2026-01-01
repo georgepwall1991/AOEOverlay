@@ -21,11 +21,23 @@ interface TimerState {
   recordStepTime: (suggestedTiming: string | undefined) => void;
 }
 
+// Sanitize timing string by removing HTML tags and other common artifacts
+export function sanitizeTiming(timing: string | undefined): string | undefined {
+  if (!timing) return undefined;
+  return timing
+    .replace(/<br\s*\/?>/gi, "") // Remove <br>, <br/>, <br /> (case insensitive)
+    .replace(/<[^>]+>/g, "")     // Remove any other HTML tags
+    .replace(/\n/g, "")          // Remove newlines
+    .trim();
+}
+
 // Parse timing string like "3:30", "10:45", or "1:30:00" to seconds
 // Supports both mm:ss and hh:mm:ss formats
 export function parseTimingToSeconds(timing: string | undefined): number | null {
-  if (!timing) return null;
-  const parts = timing.split(":");
+  const cleanTiming = sanitizeTiming(timing);
+  if (!cleanTiming) return null;
+  
+  const parts = cleanTiming.split(":");
 
   if (parts.length === 2) {
     // mm:ss format
@@ -192,7 +204,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   },
 
   recordStepTime: (suggestedTiming: string | undefined) => {
-    const { elapsedSeconds } = get();
+    const { elapsedSeconds, isRunning } = get();
     const suggestedSeconds = parseTimingToSeconds(suggestedTiming);
 
     set({ lastStepTime: elapsedSeconds });
@@ -202,8 +214,11 @@ export const useTimerStore = create<TimerState>((set, get) => ({
       const delta = elapsedSeconds - suggestedSeconds;
       set({
         lastDelta: delta,
-        // Update accumulated drift to track total time behind/ahead across steps
-        accumulatedDrift: (get().accumulatedDrift ?? 0) + delta,
+        // Only update accumulated drift if the timer is actually running
+        // This prevents massive drift spikes when navigating while paused or pre-game
+        accumulatedDrift: isRunning
+          ? (get().accumulatedDrift ?? 0) + delta
+          : get().accumulatedDrift,
       });
     }
   },

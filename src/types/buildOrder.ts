@@ -3,6 +3,8 @@ export interface Resources {
   wood?: number;
   gold?: number;
   stone?: number;
+  villagers?: number; // Total villager count
+  builders?: number; // Builders for current building/landmark
 }
 
 export interface BuildOrderStep {
