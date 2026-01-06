@@ -20,8 +20,8 @@ vi.mock("@/stores", () => ({
       click_through: false,
       compact_mode: false,
       hotkeys: {
-        toggle_click_through: "F5",
-        toggle_compact: "F6",
+        toggle_click_through: "Ctrl+Alt+F5",
+        toggle_compact: "Ctrl+Alt+F6",
       },
     },
     updateConfig: mockUpdateConfig,
@@ -116,7 +116,7 @@ describe("StatusIndicators", () => {
       const mockToggle = vi.fn();
       render(<StatusIndicators onToggleClickThrough={mockToggle} />);
 
-      const clickThroughButton = screen.getByTitle("Click-Through Off (F5)");
+      const clickThroughButton = screen.getByTitle("Click-Through Off (Ctrl+Alt+F5)");
       fireEvent.click(clickThroughButton);
 
       expect(mockToggle).toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe("StatusIndicators", () => {
     it("updates config directly if no onToggleClickThrough prop", async () => {
       render(<StatusIndicators />);
 
-      const clickThroughButton = screen.getByTitle("Click-Through Off (F5)");
+      const clickThroughButton = screen.getByTitle("Click-Through Off (Ctrl+Alt+F5)");
       fireEvent.click(clickThroughButton);
 
       await waitFor(() => {
@@ -139,7 +139,7 @@ describe("StatusIndicators", () => {
     it("toggles compact mode when clicked", async () => {
       render(<StatusIndicators />);
 
-      const compactButton = screen.getByTitle("Compact Mode (F6)");
+      const compactButton = screen.getByTitle("Compact Mode (Ctrl+Alt+F6)");
       fireEvent.click(compactButton);
 
       await waitFor(() => {
@@ -243,12 +243,12 @@ describe("StatusIndicators", () => {
   describe("hotkey hints", () => {
     it("shows hotkey in click-through button title", () => {
       render(<StatusIndicators />);
-      expect(screen.getByTitle("Click-Through Off (F5)")).toBeInTheDocument();
+      expect(screen.getByTitle("Click-Through Off (Ctrl+Alt+F5)")).toBeInTheDocument();
     });
 
     it("shows hotkey in compact mode button title", () => {
       render(<StatusIndicators />);
-      expect(screen.getByTitle("Compact Mode (F6)")).toBeInTheDocument();
+      expect(screen.getByTitle("Compact Mode (Ctrl+Alt+F6)")).toBeInTheDocument();
     });
   });
 });
@@ -265,7 +265,7 @@ describe("StatusIndicators with different config states", () => {
         voice: { enabled: false },
         click_through: false,
         compact_mode: false,
-        hotkeys: { toggle_click_through: "F5", toggle_compact: "F6" },
+        hotkeys: { toggle_click_through: "Ctrl+Alt+F5", toggle_compact: "Ctrl+Alt+F6" },
       },
       updateConfig: mockUpdateConfig,
     });
@@ -281,7 +281,7 @@ describe("StatusIndicators with different config states", () => {
         voice: { enabled: true },
         click_through: true,
         compact_mode: false,
-        hotkeys: { toggle_click_through: "F5", toggle_compact: "F6" },
+        hotkeys: { toggle_click_through: "Ctrl+Alt+F5", toggle_compact: "Ctrl+Alt+F6" },
       },
       updateConfig: mockUpdateConfig,
     });
@@ -297,7 +297,7 @@ describe("StatusIndicators with different config states", () => {
         voice: { enabled: true },
         click_through: false,
         compact_mode: true,
-        hotkeys: { toggle_click_through: "F5", toggle_compact: "F6" },
+        hotkeys: { toggle_click_through: "Ctrl+Alt+F5", toggle_compact: "Ctrl+Alt+F6" },
       },
       updateConfig: mockUpdateConfig,
     });
@@ -313,7 +313,7 @@ describe("StatusIndicators with different config states", () => {
         voice: null,
         click_through: false,
         compact_mode: false,
-        hotkeys: { toggle_click_through: "F5", toggle_compact: "F6" },
+        hotkeys: { toggle_click_through: "Ctrl+Alt+F5", toggle_compact: "Ctrl+Alt+F6" },
       },
       updateConfig: mockUpdateConfig,
     });

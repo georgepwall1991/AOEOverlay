@@ -2,13 +2,13 @@
   "id": "hre-fast-castle",
   "name": "HRE Fast Castle",
   "civilization": "Holy Roman Empire",
-  "description": "Uses [icon:monk] Prelate buffs to reach Castle Age rapidly. Focuses on [icon:relic] Relic control and heavy infantry.",
+  "description": "Uses [icon:prelate] Prelate buffs to reach [icon:castle_age] Castle Age rapidly. Focuses on [icon:relic] Relic control and massive gold generation.",
   "difficulty": "Intermediate",
   "enabled": true,
   "steps": [
     {
       "id": "step-1",
-      "description": "Send [icon:monk] Prelate to [icon:sheep] sheep. 6 starting villagers to sheep.",
+      "description": "Send [icon:prelate] Prelate to inspire villagers on [icon:sheep] sheep. 6 starting villagers to sheep. Queue [icon:villager] villagers.",
       "timing": "0:00",
       "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
@@ -20,43 +20,43 @@
     },
     {
       "id": "step-3",
-      "description": "2nd, 3rd and 4th new [icon:villager] to [icon:gold] gold. Build [icon:mining_camp] Mining Camp.",
+      "description": "Send next 3 [icon:villager] villagers to [icon:gold] gold. Build [icon:mining_camp] Mining Camp. (Total 4 on gold).",
       "timing": "1:15",
       "resources": { "food": 6, "wood": 0, "gold": 4, "stone": 0, "villagers": 10 }
     },
     {
       "id": "step-4",
-      "description": "5th and 6th new [icon:villager] to [icon:food] food. Total 8 on food.",
+      "description": "[icon:rally] Rally next 2 [icon:villager] villagers to [icon:food] food. (Total 8 on food).",
       "timing": "2:00",
       "resources": { "food": 8, "wood": 0, "gold": 4, "stone": 0, "villagers": 12 }
     },
     {
       "id": "step-5",
-      "description": "[icon:feudal_age] Age up with [icon:landmark] Aachen Chapel! Build next to [icon:wood] wood and [icon:food] food.",
-      "timing": "2:45",
+      "description": "[icon:feudal_age] Age up with [icon:aachen_chapel] Aachen Chapel! Place it covering both wood and food. Use 3 builders.",
+      "timing": "2:40",
       "resources": { "food": 8, "wood": 0, "gold": 4, "stone": 0, "villagers": 14, "builders": 3 }
     },
     {
       "id": "step-6",
-      "description": "Place [icon:monk] Prelate inside Aachen Chapel. Rally new villagers to [icon:wood] wood.",
+      "description": "Place [icon:prelate] inside Aachen Chapel. Rally all new villagers to [icon:wood] wood. (Total 2 on wood).",
       "timing": "3:00",
       "resources": { "food": 8, "wood": 2, "gold": 4, "stone": 0, "villagers": 16 }
     },
     {
       "id": "step-7",
-      "description": "[icon:feudal_age] Feudal Age reached! Immediately transition 2 from food to [icon:gold] gold.",
+      "description": "[icon:feudal_age] Feudal Age reached! Immediately transition 2 from food to [icon:gold] gold. (Total 6 on gold).",
       "timing": "4:00",
       "resources": { "food": 6, "wood": 4, "gold": 8, "stone": 0, "villagers": 18 }
     },
     {
       "id": "step-8",
-      "description": "[icon:castle_age] Age up with [icon:landmark] Regnitz Cathedral! Use 4 builders.",
+      "description": "[icon:castle_age] Age up with [icon:regnitz_cathedral] Regnitz Cathedral! Use 4 builders. Rally new villagers to gold.",
       "timing": "5:30",
       "resources": { "food": 8, "wood": 4, "gold": 8, "stone": 0, "villagers": 20, "builders": 4 }
     },
     {
       "id": "step-9",
-      "description": "[icon:monk] Produce Prelates to secure [icon:relic] Relics immediately upon aging up.",
+      "description": "Produce [icon:prelate] Prelates to secure [icon:relic] Relics immediately. Capture 3 relics for massive gold income.",
       "timing": "7:00",
       "resources": { "food": 10, "wood": 6, "gold": 10, "stone": 0, "villagers": 26 }
     }

@@ -31,7 +31,7 @@ Shows full build order information:
 - Next 2 upcoming steps
 - Step counter and progress bar
 
-#### Compact Mode (F6)
+#### Compact Mode (Ctrl+Alt+F6)
 Minimal display showing only:
 - Current step description
 - Timer
@@ -45,7 +45,7 @@ Minimal display showing only:
 | **Transparent** | Semi-transparent background (configurable 0-100%) |
 | **Draggable** | Click and drag the header grip to move |
 | **Position Memory** | Remembers position between sessions |
-| **Click-Through** | Toggle with F5 to allow clicks to pass through |
+| **Click-Through** | Toggle with Ctrl+Alt+F5 to allow clicks to pass through |
 
 ### Settings
 
@@ -88,10 +88,10 @@ Renders as actual game icons in the overlay.
 
 ### Step Navigation
 
-- **Previous Step**: F2 (or click step)
-- **Next Step**: F3 (or click step)
+- **Previous Step**: Ctrl+Alt+F2 (or click step)
+- **Next Step**: Ctrl+Alt+F3 (or click step)
 - **Jump to Step**: Click any visible step
-- **Reset**: F7 returns to step 1
+- **Reset**: Ctrl+Alt+F7 returns to step 1
 
 ---
 
@@ -191,13 +191,17 @@ All hotkeys work even when the game has focus.
 
 | Hotkey | Action | Description |
 |--------|--------|-------------|
-| **F1** | Toggle Overlay | Show/hide the overlay window |
-| **F2** | Previous Step | Go back one step |
-| **F3** | Next Step | Advance to next step (starts timer) |
-| **F4** | Cycle Build Order | Switch to next enabled build order |
-| **F5** | Toggle Click-Through | Enable/disable mouse passthrough |
-| **F6** | Toggle Compact Mode | Switch between expanded/compact |
-| **F7** | Reset Build Order | Return to step 1, reset timer |
+| **Ctrl+Alt+F1** | Toggle Overlay | Show/hide the overlay window |
+| **Ctrl+Alt+F2** | Previous Step | Go back one step |
+| **Ctrl+Alt+F3** | Next Step | Advance to next step (starts timer) |
+| **Ctrl+Alt+F4** | Cycle Build Order | Switch to next enabled build order |
+| **Ctrl+Alt+F5** | Toggle Click-Through | Enable/disable mouse passthrough |
+| **Ctrl+Alt+F6** | Toggle Compact Mode | Switch between expanded/compact |
+| **Ctrl+Alt+F7** | Reset Build Order | Return to step 1, reset timer |
+| **Ctrl+Alt+F8** | Start/Pause Timer | Toggle the timer |
+| **Ctrl+Alt+TAB** | Toggle Counter Reference | Show/hide unit counter guide |
+| **Ctrl+Alt+0** | Main Branch | Switch back to the main build branch |
+| **Ctrl+Alt+1-4** | Switch Branch | Switch to a specific build branch |
 
 ### Customization
 

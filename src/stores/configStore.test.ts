@@ -47,9 +47,9 @@ describe("configStore", () => {
     it("has default hotkeys", () => {
       const { result } = renderHook(() => useConfigStore());
 
-      expect(result.current.config.hotkeys.toggle_overlay).toBe("F1");
-      expect(result.current.config.hotkeys.next_step).toBe("F3");
-      expect(result.current.config.hotkeys.previous_step).toBe("F2");
+      expect(result.current.config.hotkeys.toggle_overlay).toBe("Ctrl+Alt+F1");
+      expect(result.current.config.hotkeys.next_step).toBe("Ctrl+Alt+F3");
+      expect(result.current.config.hotkeys.previous_step).toBe("Ctrl+Alt+F2");
     });
   });
 
@@ -314,9 +314,9 @@ describe("configStore selectors", () => {
     it("returns current hotkeys", () => {
       const { result: selectorResult } = renderHook(() => useHotkeys());
 
-      expect(selectorResult.current.toggle_overlay).toBe("F1");
-      expect(selectorResult.current.next_step).toBe("F3");
-      expect(selectorResult.current.previous_step).toBe("F2");
+      expect(selectorResult.current.toggle_overlay).toBe("Ctrl+Alt+F1");
+      expect(selectorResult.current.next_step).toBe("Ctrl+Alt+F3");
+      expect(selectorResult.current.previous_step).toBe("Ctrl+Alt+F2");
     });
 
     it("updates when hotkeys change", () => {

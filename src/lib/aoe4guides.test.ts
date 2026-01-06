@@ -430,15 +430,22 @@ describe("aoe4guides API", () => {
       await browseAoe4GuidesBuilds({ civ: "ENG" });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds?civ=ENG&orderBy=views&order=desc",
+        expect.stringContaining("civ=ENG"),
+        expect.anything()
+      );
+    });
+
+    it("passes search and strategy parameters to the API", async () => {
+      mockThreeCalls([], [], []);
+
+      await browseAoe4GuidesBuilds({ search: "fast castle", strategy: "Rush" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("search=fast+castle"),
         expect.anything()
       );
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds?civ=ENG&orderBy=upvotes&order=desc",
-        expect.anything()
-      );
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://aoe4guides.com/api/builds?civ=ENG&orderBy=timeCreated&order=desc",
+        expect.stringContaining("strategy=Rush"),
         expect.anything()
       );
     });

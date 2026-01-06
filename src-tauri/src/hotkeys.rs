@@ -107,9 +107,12 @@ fn register_single_hotkey<R: Runtime>(
         println!("[Hotkeys] Registering {} -> {}", key_str, event_name);
         
         let app_handle = app.clone();
+        let target_shortcut = shortcut.clone(); // Capture the specific shortcut for this handler
+
         app.global_shortcut()
-            .on_shortcut(shortcut, move |app, _shortcut, event| {
-                if event.state == ShortcutState::Pressed {
+            .on_shortcut(shortcut, move |app, triggered_shortcut, event| {
+                // CRITICAL: on_shortcut is a global hook. We MUST verify the shortcut matches.
+                if *triggered_shortcut == target_shortcut && event.state == ShortcutState::Pressed {
                     // Suppression logic: Don't emit if the settings window is currently focused.
                     if let Some(settings_win) = app.get_webview_window("settings") {
                         if settings_win.is_focused().unwrap_or(false) {
@@ -183,6 +186,11 @@ mod tests {
         assert_eq!(s2.code, Code::KeyA);
         assert!(s2.modifiers.contains(Modifiers::CONTROL));
         assert!(s2.modifiers.contains(Modifiers::SHIFT));
+
+        let s_complex = parse_shortcut("Ctrl+Alt+F1").unwrap();
+        assert_eq!(s_complex.code, Code::F1);
+        assert!(s_complex.modifiers.contains(Modifiers::CONTROL));
+        assert!(s_complex.modifiers.contains(Modifiers::ALT));
 
         let s3 = parse_shortcut("F3").unwrap();
         assert_eq!(s3.code, Code::F3);

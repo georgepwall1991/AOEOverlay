@@ -28,9 +28,9 @@ vi.mock("@/stores", () => ({
   useConfigStore: vi.fn(() => ({
     config: {
       hotkeys: {
-        previous_step: "F2",
-        next_step: "F3",
-        toggle_click_through: "F5",
+        previous_step: "Ctrl+Alt+F2",
+        next_step: "Ctrl+Alt+F3",
+        toggle_click_through: "Ctrl+Alt+F5",
       },
     },
   })),

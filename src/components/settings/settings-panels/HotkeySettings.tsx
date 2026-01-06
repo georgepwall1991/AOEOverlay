@@ -1,55 +1,42 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Keyboard } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig, reloadHotkeys } from "@/lib/tauri";
 import type { HotkeyConfig } from "@/types";
-
-const AVAILABLE_HOTKEYS = [
-  "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-  "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-  "SPACE", "TAB", "DELETE", "HOME", "END", "PAGEUP", "PAGEDOWN", "UP", "DOWN", "LEFT", "RIGHT",
-];
+import { HotkeyCapture } from "./HotkeyCapture";
 
 const PRESET_QWERTY: HotkeyConfig = {
-  toggle_overlay: "F1",
-  previous_step: "F2",
-  next_step: "F3",
-  cycle_build_order: "F4",
-  toggle_click_through: "F5",
-  toggle_compact: "F6",
-  reset_build_order: "F7",
-  toggle_pause: "F8",
-  activate_branch_main: "0",
-  activate_branch_1: "1",
-  activate_branch_2: "2",
-  activate_branch_3: "3",
-  activate_branch_4: "4",
-  toggle_counters: "TAB",
+  toggle_overlay: "Ctrl+Alt+F1",
+  previous_step: "Ctrl+Alt+F2",
+  next_step: "Ctrl+Alt+F3",
+  cycle_build_order: "Ctrl+Alt+F4",
+  toggle_click_through: "Ctrl+Alt+F5",
+  toggle_compact: "Ctrl+Alt+F6",
+  reset_build_order: "Ctrl+Alt+F7",
+  toggle_pause: "Ctrl+Alt+F8",
+  activate_branch_main: "Ctrl+Alt+0",
+  activate_branch_1: "Ctrl+Alt+1",
+  activate_branch_2: "Ctrl+Alt+2",
+  activate_branch_3: "Ctrl+Alt+3",
+  activate_branch_4: "Ctrl+Alt+4",
+  toggle_counters: "Ctrl+Alt+TAB",
 };
 
 const PRESET_AZERTY: HotkeyConfig = {
-  toggle_overlay: "F1",
-  previous_step: "A",
-  next_step: "Z",
-  cycle_build_order: "E",
-  toggle_click_through: "R",
-  toggle_compact: "T",
-  reset_build_order: "Y",
-  toggle_pause: "U",
-  activate_branch_main: "0",
-  activate_branch_1: "1",
-  activate_branch_2: "2",
-  activate_branch_3: "3",
-  activate_branch_4: "4",
-  toggle_counters: "TAB",
+  toggle_overlay: "Ctrl+Alt+F1",
+  previous_step: "Ctrl+Alt+A",
+  next_step: "Ctrl+Alt+Z",
+  cycle_build_order: "Ctrl+Alt+E",
+  toggle_click_through: "Ctrl+Alt+R",
+  toggle_compact: "Ctrl+Alt+T",
+  reset_build_order: "Ctrl+Alt+Y",
+  toggle_pause: "Ctrl+Alt+U",
+  activate_branch_main: "Ctrl+Alt+0",
+  activate_branch_1: "Ctrl+Alt+1",
+  activate_branch_2: "Ctrl+Alt+2",
+  activate_branch_3: "Ctrl+Alt+3",
+  activate_branch_4: "Ctrl+Alt+4",
+  toggle_counters: "Ctrl+Alt+TAB",
 };
 
 interface HotkeyRowProps {
@@ -60,20 +47,9 @@ interface HotkeyRowProps {
 
 function HotkeyRow({ label, value, onChange }: HotkeyRowProps) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm">{label}</span>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-20">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {AVAILABLE_HOTKEYS.map((key) => (
-            <SelectItem key={key} value={key}>
-              {key}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="flex items-center justify-between py-1 px-2 hover:bg-muted/50 rounded-lg transition-colors">
+      <span className="text-sm font-medium">{label}</span>
+      <HotkeyCapture value={value} onChange={onChange} />
     </div>
   );
 }

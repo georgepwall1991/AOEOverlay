@@ -34,7 +34,17 @@ fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
 
 #[cfg(target_os = "windows")]
 fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
-    let sapi_rate = ((rate - 1.0) * 5.0).clamp(-10.0, 10.0) as i32;
+    // SAPI rate is -10 to 10. 
+    // 1.0 maps to 0.
+    // 0.5 maps to -5.
+    // 2.0 maps to 5.
+    let sapi_rate = if rate < 1.0 {
+        // More granular control for slower speeds
+        ((rate - 1.0) * 10.0).clamp(-10.0, 0.0) as i32
+    } else {
+        ((rate - 1.0) * 5.0).clamp(0.0, 10.0) as i32
+    };
+    
     let escaped_text = escape_powershell(text);
     let script = format!(
         "Add-Type -AssemblyName System.Speech; \

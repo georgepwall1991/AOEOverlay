@@ -2,55 +2,55 @@
   "id": "chinese-zhuge-nu-rush",
   "name": "Chinese Zhuge Nu Rush",
   "civilization": "Chinese",
-  "description": "Exploits the Song Dynasty for rapid [icon:villager] production. Crushes opponents with massive [icon:crossbowman] Zhuge Nu spam.",
+  "description": "Uses the Song Dynasty for rapid [icon:villager] production. Overwhelms opponents with a mass of [icon:zhuge_nu] Zhuge Nu spam.",
   "difficulty": "Advanced",
   "enabled": true,
   "steps": [
     {
       "id": "step-1",
-      "description": "Send 6 starting villagers to [icon:sheep] sheep. Queue villagers.",
+      "description": "Queue [icon:villager] villagers. Send 6 starting villagers to [icon:sheep] sheep. [icon:rally] Rally [icon:scout] scout to find sheep and scout enemy.",
       "timing": "0:00",
       "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
     {
       "id": "step-2",
-      "description": "1st new [icon:villager] builds [icon:house] house then [icon:mining_camp] Mining Camp on [icon:gold] gold.",
+      "description": "1st new [icon:villager] builds [icon:house] house, then [icon:mining_camp] Mining Camp on [icon:gold] gold.",
       "timing": "0:25",
       "resources": { "food": 6, "wood": 0, "gold": 1, "stone": 0, "villagers": 7 }
     },
     {
       "id": "step-3",
-      "description": "2nd new [icon:villager] to [icon:gold] gold. Total 2 on gold.",
+      "description": "Send next new [icon:villager] to [icon:gold] gold. (Total 2 on gold). Have [icon:imperial_official] Imperial Official supervise gold for tax.",
       "timing": "0:50",
       "resources": { "food": 6, "wood": 0, "gold": 2, "stone": 0, "villagers": 8 }
     },
     {
       "id": "step-4",
-      "description": "3rd new [icon:villager] builds [icon:lumber_camp] Lumber Camp. 4th new villager to [icon:wood] wood.",
+      "description": "Next new [icon:villager] builds [icon:lumber_camp] Lumber Camp on [icon:wood] wood. Send following villager to wood. (Total 2 on wood).",
       "timing": "1:15",
       "resources": { "food": 6, "wood": 2, "gold": 2, "stone": 0, "villagers": 10 }
     },
     {
       "id": "step-5",
-      "description": "[icon:feudal_age] Age up with [icon:landmark] Barbican of the Sun! Use 2 villagers from food to build.",
+      "description": "[icon:feudal_age] Age up with [icon:barbican_of_the_sun] Barbican of the Sun! Use 2 [icon:villager] villagers from [icon:food] food to build. Place defensively.",
       "timing": "2:30",
       "resources": { "food": 6, "wood": 2, "gold": 2, "stone": 0, "villagers": 12, "builders": 2 }
     },
     {
       "id": "step-6",
-      "description": "Immediately build [icon:landmark] Imperial Academy to trigger Song Dynasty.",
+      "description": "Immediately build [icon:imperial_academy] Imperial Academy to trigger [icon:upgrade] Song Dynasty. Use 3 builders for faster transition.",
       "timing": "4:00",
       "resources": { "food": 8, "wood": 4, "gold": 4, "stone": 0, "villagers": 16, "builders": 3 }
     },
     {
       "id": "step-7",
-      "description": "[icon:upgrade] Song Dynasty reached! Build 2 [icon:archery_range] Archery Ranges.",
+      "description": "[icon:upgrade] Song Dynasty reached! Build 2 [icon:archery_range] Archery Ranges. Start [icon:zhuge_nu] Zhuge Nu production immediately.",
       "timing": "5:30",
       "resources": { "food": 10, "wood": 6, "gold": 4, "stone": 0, "villagers": 20 }
     },
     {
       "id": "step-8",
-      "description": "[icon:attack] Mass [icon:crossbowman] Zhuge Nu! Push with 15+ units and an Imperial Official supervising.",
+      "description": "[icon:attack] Mass production! Push with 15+ [icon:zhuge_nu] units. Have [icon:imperial_official] Imperial Official supervise ranges for faster recruitment.",
       "timing": "7:00",
       "resources": { "food": 12, "wood": 8, "gold": 6, "stone": 0, "villagers": 26 }
     }

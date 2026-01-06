@@ -86,14 +86,14 @@ Just paste the URL and the build is imported automatically.
 
 | Key | Action |
 |:---:|--------|
-| `F1` | Toggle overlay visibility |
-| `F2` | Previous step |
-| `F3` | Next step |
-| `F4` | Cycle between build orders |
-| `F5` | Toggle click-through mode |
-| `F6` | Toggle compact mode |
-| `F7` | Reset to step 1 |
-| `F8` | Start/pause timer |
+| `Ctrl+Alt+F1` | Toggle overlay visibility |
+| `Ctrl+Alt+F2` | Previous step |
+| `Ctrl+Alt+F3` | Next step |
+| `Ctrl+Alt+F4` | Cycle between build orders |
+| `Ctrl+Alt+F5` | Toggle click-through mode |
+| `Ctrl+Alt+F6` | Toggle compact mode |
+| `Ctrl+Alt+F7` | Reset to step 1 |
+| `Ctrl+Alt+F8` | Start/pause timer |
 | `?` | Show keyboard shortcuts |
 
 All hotkeys work while AoE4 has focus. Fully customizable in Settings.
@@ -117,7 +117,7 @@ Voice reminders to keep you on track:
 1. **Launch the app** — Overlay appears in the corner of your screen
 2. **Import a build** — Settings → paste URL from aoe4world or aoe4guides
 3. **Start your game** — Overlay stays on top of AoE4
-4. **Navigate with hotkeys** — Press `F3` to advance steps as you play
+4. **Navigate with hotkeys** — Press `Ctrl+Alt+F3` to advance steps as you play
 5. **Listen to coaching** — Steps are read aloud automatically
 
 ### Quick Tips

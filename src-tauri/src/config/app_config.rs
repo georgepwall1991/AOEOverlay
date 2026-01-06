@@ -70,11 +70,11 @@ fn default_branch_3() -> String { "Alt+3".to_string() }
 fn default_branch_4() -> String { "Alt+4".to_string() }
 
 fn default_toggle_counters() -> String {
-    "TAB".to_string()
+    "Ctrl+Alt+TAB".to_string()
 }
 
 fn default_toggle_pause() -> String {
-    "F8".to_string()
+    "Ctrl+Alt+F8".to_string()
 }
 
 fn default_ui_scale() -> f64 {
@@ -237,24 +237,24 @@ impl Default for AppConfig {
             theme: "dark".to_string(),
             overlay_preset: default_overlay_preset(),
             hotkeys: HotkeyConfig {
-                toggle_overlay: "F1".to_string(),
-                previous_step: "F2".to_string(),
-                next_step: "F3".to_string(),
-                cycle_build_order: "F4".to_string(),
-                toggle_click_through: "F5".to_string(),
-                toggle_compact: "F6".to_string(),
-                reset_build_order: "F7".to_string(),
-                toggle_pause: "F8".to_string(),
-                activate_branch_main: "Alt+0".to_string(),
-                activate_branch_1: "Alt+1".to_string(),
-                activate_branch_2: "Alt+2".to_string(),
-                activate_branch_3: "Alt+3".to_string(),
-                activate_branch_4: "Alt+4".to_string(),
-                toggle_counters: "TAB".to_string(),
+                toggle_overlay: "Ctrl+Alt+F1".to_string(),
+                previous_step: "Ctrl+Alt+F2".to_string(),
+                next_step: "Ctrl+Alt+F3".to_string(),
+                cycle_build_order: "Ctrl+Alt+F4".to_string(),
+                toggle_click_through: "Ctrl+Alt+F5".to_string(),
+                toggle_compact: "Ctrl+Alt+F6".to_string(),
+                reset_build_order: "Ctrl+Alt+F7".to_string(),
+                toggle_pause: "Ctrl+Alt+F8".to_string(),
+                activate_branch_main: "Ctrl+Alt+0".to_string(),
+                activate_branch_1: "Ctrl+Alt+1".to_string(),
+                activate_branch_2: "Ctrl+Alt+2".to_string(),
+                activate_branch_3: "Ctrl+Alt+3".to_string(),
+                activate_branch_4: "Ctrl+Alt+4".to_string(),
+                toggle_counters: "Ctrl+Alt+TAB".to_string(),
             },
             window_position: None,
             window_size: None,
-            click_through: true,
+            click_through: false,
             compact_mode: false,
             coach_only_mode: false,
             auto_advance: AutoAdvanceConfig {
@@ -291,7 +291,7 @@ mod tests {
         assert_eq!(config.theme, "dark");
         assert!(config.click_through);
         assert!(!config.compact_mode);
-        assert_eq!(config.hotkeys.toggle_overlay, "F1");
+        assert_eq!(config.hotkeys.toggle_overlay, "Ctrl+Alt+F1");
     }
 
     #[test]
@@ -304,7 +304,7 @@ mod tests {
 
     #[test]
     fn test_default_toggle_pause() {
-        assert_eq!(default_toggle_pause(), "F8");
+        assert_eq!(default_toggle_pause(), "Ctrl+Alt+F8");
     }
 
     #[test]
@@ -357,15 +357,15 @@ mod tests {
     #[test]
     fn test_app_config_default_hotkeys() {
         let config = AppConfig::default();
-        assert_eq!(config.hotkeys.toggle_overlay, "F1");
-        assert_eq!(config.hotkeys.previous_step, "F2");
-        assert_eq!(config.hotkeys.next_step, "F3");
-        assert_eq!(config.hotkeys.cycle_build_order, "F4");
-        assert_eq!(config.hotkeys.toggle_click_through, "F5");
-        assert_eq!(config.hotkeys.toggle_compact, "F6");
-        assert_eq!(config.hotkeys.reset_build_order, "F7");
-        assert_eq!(config.hotkeys.toggle_pause, "F8");
-        assert_eq!(config.hotkeys.toggle_counters, "TAB");
+        assert_eq!(config.hotkeys.toggle_overlay, "Ctrl+Alt+F1");
+        assert_eq!(config.hotkeys.previous_step, "Ctrl+Alt+F2");
+        assert_eq!(config.hotkeys.next_step, "Ctrl+Alt+F3");
+        assert_eq!(config.hotkeys.cycle_build_order, "Ctrl+Alt+F4");
+        assert_eq!(config.hotkeys.toggle_click_through, "Ctrl+Alt+F5");
+        assert_eq!(config.hotkeys.toggle_compact, "Ctrl+Alt+F6");
+        assert_eq!(config.hotkeys.reset_build_order, "Ctrl+Alt+F7");
+        assert_eq!(config.hotkeys.toggle_pause, "Ctrl+Alt+F8");
+        assert_eq!(config.hotkeys.toggle_counters, "Ctrl+Alt+TAB");
     }
 
     #[test]
@@ -458,25 +458,25 @@ mod tests {
     #[test]
     fn test_hotkey_config_all_fields() {
         let config = HotkeyConfig {
-            toggle_overlay: "F1".to_string(),
-            previous_step: "F2".to_string(),
-            next_step: "F3".to_string(),
-            cycle_build_order: "F4".to_string(),
-            toggle_click_through: "F5".to_string(),
-            toggle_compact: "F6".to_string(),
-            reset_build_order: "F7".to_string(),
-            toggle_pause: "F8".to_string(),
-            activate_branch_main: "F9".to_string(),
+            toggle_overlay: "Ctrl+Alt+F1".to_string(),
+            previous_step: "Ctrl+Alt+F2".to_string(),
+            next_step: "Ctrl+Alt+F3".to_string(),
+            cycle_build_order: "Ctrl+Alt+F4".to_string(),
+            toggle_click_through: "Ctrl+Alt+F5".to_string(),
+            toggle_compact: "Ctrl+Alt+F6".to_string(),
+            reset_build_order: "Ctrl+Alt+F7".to_string(),
+            toggle_pause: "Ctrl+Alt+F8".to_string(),
+            activate_branch_main: "Ctrl+Alt+F9".to_string(),
             activate_branch_1: "1".to_string(),
             activate_branch_2: "2".to_string(),
             activate_branch_3: "3".to_string(),
             activate_branch_4: "4".to_string(),
-            toggle_counters: "TAB".to_string(),
+            toggle_counters: "Ctrl+Alt+TAB".to_string(),
         };
-        assert_eq!(config.toggle_overlay, "F1");
-        assert_eq!(config.toggle_pause, "F8");
-        assert_eq!(config.activate_branch_main, "F9");
-        assert_eq!(config.toggle_counters, "TAB");
+        assert_eq!(config.toggle_overlay, "Ctrl+Alt+F1");
+        assert_eq!(config.toggle_pause, "Ctrl+Alt+F8");
+        assert_eq!(config.activate_branch_main, "Ctrl+Alt+F9");
+        assert_eq!(config.toggle_counters, "Ctrl+Alt+TAB");
     }
 
     #[test]

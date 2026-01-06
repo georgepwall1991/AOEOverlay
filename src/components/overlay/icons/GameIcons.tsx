@@ -76,6 +76,8 @@ export const GAME_ICONS = {
   // Religious & Trade
   monk: { path: "/icons/monk.webp", emoji: "🧙", color: "#8b5cf6" },
   trader: { path: "/icons/trader.webp", emoji: "🐪", color: "#f59e0b" },
+  prelate: { path: "/icons/prelate.webp", emoji: "⛪", color: "#fbbf24" },
+  mehter: { path: "/icons/monk.webp", emoji: "🥁", color: "#8b5cf6" },
 
   // Ages
   dark_age: { path: "/icons/dark_age.webp", emoji: "🌑", color: "#374151" },
@@ -149,12 +151,73 @@ export const GAME_ICONS = {
   // Civ-specific units
   ronin: { path: "/icons/ronin.webp", emoji: "⚔️", color: "#dc2626" },
   landsknecht: { path: "/icons/landsknecht.webp", emoji: "⚔️", color: "#facc15" },
-  prelate: { path: "/icons/prelate.webp", emoji: "⛪", color: "#fbbf24" },
   mangudai: { path: "/icons/mangudai.webp", emoji: "🏹", color: "#f97316" },
   keshik: { path: "/icons/keshik.webp", emoji: "🏇", color: "#ea580c" },
   khan: { path: "/icons/khan.webp", emoji: "🏹", color: "#fbbf24" },
   king: { path: "/icons/king.webp", emoji: "👑", color: "#fbbf24" },
+  // Delhi
   ghazi_raider: { path: "/icons/horseman.webp", emoji: "🏇", color: "#f97316" },
+  tower_elephant: { path: "/icons/archer.webp", emoji: "🐘", color: "#fbbf24" },
+  war_elephant: { path: "/icons/spearman.webp", emoji: "🐘", color: "#fbbf24" },
+
+  // Byzantine units
+  limitanei: { path: "/icons/spearman.webp", emoji: "🛡️", color: "#64748b" },
+  varangian_guard: { path: "/icons/man_at_arms.webp", emoji: "🪓", color: "#475569" },
+  cataphract: { path: "/icons/knight.webp", emoji: "🏇", color: "#a855f7" },
+  cheirosiphon: { path: "/icons/siege_tower.webp", emoji: "🔥", color: "#dc2626" },
+  dromon: { path: "/icons/fish.webp", emoji: "🚢", color: "#0ea5e9" },
+
+  // Ottoman units
+  sipahi: { path: "/icons/horseman.webp", emoji: "🏇", color: "#f97316" },
+  janissary: { path: "/icons/handcannoneer.webp", emoji: "🔫", color: "#dc2626" },
+  great_bombard: { path: "/icons/bombard.webp", emoji: "💣", color: "#7f1d1d" },
+
+  // Malian units
+  donso: { path: "/icons/spearman.webp", emoji: "🗡️", color: "#64748b" },
+  musofadi_warrior: { path: "/icons/man_at_arms.webp", emoji: "🥷", color: "#475569" },
+  sofa: { path: "/icons/knight.webp", emoji: "🏇", color: "#a855f7" },
+  musofadi_gunner: { path: "/icons/handcannoneer.webp", emoji: "🔫", color: "#dc2626" },
+
+  // Special buildings & Landmarks
+  military_school: { path: "/icons/barracks.webp", emoji: "🏫", color: "#ef4444" },
+  cistern: { path: "/icons/mill.webp", emoji: "💧", color: "#3b82f6" },
+  pit_mine: { path: "/icons/mining_camp.webp", emoji: "⛏️", color: "#eab308" },
+  kura_storehouse: { path: "/icons/mill.webp", emoji: "🏠", color: "#fbbf24" },
+  
+  // More landmarks
+  abbey_of_kings: { path: "/icons/monastery.webp", emoji: "⛪", color: "#8b5cf6" },
+  kings_palace: { path: "/icons/town_center.webp", emoji: "🏰", color: "#fbbf24" },
+  berkshire_palace: { path: "/icons/white-tower.webp", emoji: "🏯", color: "#64748b" },
+  wynguard_palace: { path: "/icons/military-academy.webp", emoji: "🏰", color: "#ef4444" },
+  guild_hall: { path: "/icons/market.webp", emoji: "🏛️", color: "#f97316" },
+  royal_institute: { path: "/icons/university.webp", emoji: "📜", color: "#3b82f6" },
+  red_palace: { path: "/icons/keep.webp", emoji: "🏰", color: "#dc2626" },
+  college_of_artillery: { path: "/icons/siege_workshop.webp", emoji: "🎓", color: "#78716c" },
+  elzbach_palace: { path: "/icons/keep.webp", emoji: "🏰", color: "#64748b" },
+  palace_of_swabia: { path: "/icons/town_center.webp", emoji: "🏰", color: "#fbbf24" },
+  grand_winery: { path: "/icons/mill.webp", emoji: "🍷", color: "#84cc16" },
+  imperial_hippodrome: { path: "/icons/stable.webp", emoji: "🏟️", color: "#a855f7" },
+  golden_horn_tower: { path: "/icons/keep.webp", emoji: "🗼", color: "#fbbf24" },
+
+  // Japanese landmarks
+  koka_township: { path: "/icons/shinobi.webp", emoji: "🥷", color: "#374151" },
+  floating_gate: { path: "/icons/monastery.webp", emoji: "⛩️", color: "#8b5cf6" },
+  temple_of_equality: { path: "/icons/monastery.webp", emoji: "🧘", color: "#8b5cf6" },
+  castle_of_the_crow: { path: "/icons/keep.webp", emoji: "🐦", color: "#64748b" },
+  tanegashima_gunsmith: { path: "/icons/siege_workshop.webp", emoji: "🔫", color: "#78716c" },
+
+  // Malian landmarks
+  mansa_quarry: { path: "/icons/mining_camp.webp", emoji: "💎", color: "#eab308" },
+  saharan_trade_network: { path: "/icons/market.webp", emoji: "🐫", color: "#f97316" },
+  farimba_garrison: { path: "/icons/barracks.webp", emoji: "⛺", color: "#ef4444" },
+  fort_of_the_huntress: { path: "/icons/keep.webp", emoji: "🏹", color: "#dc2626" },
+
+  // Ottoman landmarks
+  twin_minaret_medrese: { path: "/icons/mill.webp", emoji: "🕌", color: "#fbbf24" },
+  istanbul_observatory: { path: "/icons/university.webp", emoji: "🔭", color: "#3b82f6" },
+  tophane_arsenal: { path: "/icons/siege_workshop.webp", emoji: "🏭", color: "#78716c" },
+
+  // Units
   streltsy: { path: "/icons/handcannoneer.webp", emoji: "🔫", color: "#7f1d1d" },
   zhuge_nu: { path: "/icons/zhuge-nu.webp", emoji: "🏹", color: "#dc2626" },
   palace_guard: { path: "/icons/palace-guard.webp", emoji: "⚔️", color: "#facc15" },
@@ -188,6 +251,12 @@ export const GAME_ICONS = {
   shinobi: { path: "/icons/shinobi.webp", emoji: "🥷", color: "#374151" },
   ozutsu: { path: "/icons/ozutsu.webp", emoji: "💣", color: "#7f1d1d" },
 
+  // Civ Variants
+  jeanne_d_arc: { path: "/icons/king.webp", emoji: "👸", color: "#3b82f6" },
+  order_of_the_dragon: { path: "/icons/knight.webp", emoji: "🐉", color: "#dc2626" },
+  zhu_xi_legacy: { path: "/icons/zhuge-nu.webp", emoji: "📜", color: "#eab308" },
+  ayyubids: { path: "/icons/camel_archer.webp", emoji: "🕌", color: "#16a34a" },
+
   // Actions
   rally: { path: "/icons/rally.webp", emoji: "🚩", color: "#22c55e" },
   repair: { path: "/icons/repair.webp", emoji: "🔧", color: "#3b82f6" },
@@ -214,7 +283,6 @@ interface GameIconProps {
 }
 
 // Icons that need labels because they're unclear (only for emoji fallbacks now)
-// Most official icons are clear enough without labels
 const NEEDS_LABEL: Set<GameIconType> = new Set([
   "upgrade", "research", "wheelbarrow", "landmark",
 ]);
@@ -430,59 +498,86 @@ export function renderIconText(text: string, size = 18): React.ReactNode {
     "market": "market",
     "town center": "town_center",
     "tc": "town_center",
+    "janissary": "janissary",
+    "sipahi": "sipahi",
+    "mehter": "mehter",
+    "donso": "donso",
+    "musofadi": "musofadi_warrior",
+    "sofa": "sofa",
+    "limitanei": "limitanei",
+    "varangian": "varangian_guard",
+    "cataphract": "cataphract",
+    "elephant": "tower_elephant",
+    "cistern": "cistern",
+    "pit mine": "pit_mine",
+    "school": "military_school",
+    "samurai": "samurai",
+    "shinobi": "shinobi",
+    "prelate": "prelate",
+    "zhuge nu": "zhuge_nu",
+    "longbow": "longbowman",
+    "lancer": "lancer",
+    "horseman": "horseman",
+    "archer": "archer",
+    "crossbow": "crossbowman",
+    "spearman": "spearman",
+    "maa": "man_at_arms",
+    "ram": "ram",
+    "mangonel": "mangonel",
+    "springald": "springald",
+    "bombard": "bombard",
+    "trebuchet": "trebuchet",
   };
 
-  // 1. Identify existing icons so we don't double-process them
-  const iconMarkers: string[] = [];
-  let processedText = text.replace(/\[icon:(\w+)\]/g, (match) => {
-    iconMarkers.push(match);
-    return `__PRESERVED_ICON_${iconMarkers.length - 1}__`;
-  });
-  
-  // 2. Auto-map keywords
-  const sortedKeywords = Object.keys(autoMappings).sort((a, b) => b.length - a.length);
-  for (const keyword of sortedKeywords) {
-    const re = new RegExp(`\\b${keyword}\\b`, "gi");
-    processedText = processedText.replace(re, () => {
-      return `[icon:${autoMappings[keyword.toLowerCase()]}]`;
-    });
-  }
+  // 1. Split text into parts (text and existing [icon:...] tags)
+  // Using parentheses in split regex includes the delimiter in the result array
+  const pattern = /(\[icon:[a-zA-Z0-9_-]+\])/g;
+  const parts = text.split(pattern);
 
-  // 3. Restore preserved icons
-  processedText = processedText.replace(/__PRESERVED_ICON_(\d+)__/g, (_, index) => {
-    return iconMarkers[parseInt(index, 10)];
-  });
-
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
-
-  const pattern = /\[icon:(\w+)\]/g;
-  while ((match = pattern.exec(processedText)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(processedText.slice(lastIndex, match.index));
+  return parts.map((part, index) => {
+    // If it's an existing icon tag, render it
+    const iconMatch = part.match(/^\[icon:([a-zA-Z0-9_-]+)\]$/);
+    if (iconMatch) {
+      const iconType = iconMatch[1] as GameIconType;
+      if (iconType in GAME_ICONS) {
+        return <GameIcon key={index} type={iconType} size={size} className="mx-0.5 align-middle" />;
+      }
+      // Fallback for unknown icons
+      const fallbackText = iconType.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      return <span key={index} className="mx-0.5 font-bold text-amber-400/80">{fallbackText}</span>;
     }
 
-    const iconType = match[1] as GameIconType;
-    if (iconType in GAME_ICONS) {
-      parts.push(
-        <GameIcon key={match.index} type={iconType} size={size} className="mx-0.5 align-middle" showLabel={false} />
-      );
-    } else {
-      // Fallback for unknown icons: show as readable text instead of raw tag
-      const fallbackText = iconType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-      parts.push(<span key={match.index} className="mx-0.5 font-bold text-amber-400/80">{fallbackText}</span>);
+    // It's a text part, apply auto-mappings
+    let processedPart: (string | React.ReactNode)[] = [part];
+    
+    const sortedKeywords = Object.keys(autoMappings).sort((a, b) => b.length - a.length);
+    
+    for (const keyword of sortedKeywords) {
+      const iconType = autoMappings[keyword];
+      const re = new RegExp(`(\\b${keyword}\\b)`, "gi");
+      
+      const newProcessedPart: (string | React.ReactNode)[] = [];
+      
+      for (const subPart of processedPart) {
+        if (typeof subPart !== "string") {
+          newProcessedPart.push(subPart);
+          continue;
+        }
+        
+        const subSubParts = subPart.split(re);
+        for (const ssp of subSubParts) {
+          if (ssp.toLowerCase() === keyword.toLowerCase()) {
+            newProcessedPart.push(<GameIcon key={`${index}-${keyword}-${newProcessedPart.length}`} type={iconType} size={size} className="mx-0.5 align-middle" />);
+          } else if (ssp !== "") {
+            newProcessedPart.push(ssp);
+          }
+        }
+      }
+      processedPart = newProcessedPart;
     }
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < processedText.length) {
-    parts.push(processedText.slice(lastIndex));
-  }
-
-  return parts.length > 0 ? parts : text;
+    
+    return <span key={index}>{processedPart}</span>;
+  });
 }
 
-// Re-export ResourceIcon for backwards compatibility
 export { ResourceIcon } from "./ResourceIcons";

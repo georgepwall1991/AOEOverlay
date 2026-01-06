@@ -1,5 +1,5 @@
 import { GripVertical, Settings } from "lucide-react";
-import { useWindowDrag, useAutoResize, useTimer, useBuildOrderSync, useClickThroughUndo } from "@/hooks";
+import { useAutoResize, useTimer, useBuildOrderSync, useClickThroughUndo } from "@/hooks";
 import { useOpacity, useConfigStore, useCurrentStep, useCurrentBuildOrder } from "@/stores";
 import { BuildOrderDisplay } from "./build-display/BuildOrderDisplay";
 import { BuildSelectorDropdown } from "./build-display/BuildSelectorDropdown";
@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 
 
 export function Overlay() {
-  const { startDrag } = useWindowDrag();
   const opacity = useOpacity();
   const { config } = useConfigStore();
   const currentBuild = useCurrentBuildOrder();
@@ -117,13 +116,20 @@ export function Overlay() {
         <div className="timeline-thread ml-[32px]" />
 
         {/* Draggable Header */}
-        <div className="flex items-center px-4 py-3 border-b border-white/[0.03] z-50">
-          <div className="flex-1 flex items-center gap-3">
-            <BuildSelectorDropdown />
-            <MacroCycleHUD />
+        <div 
+          data-tauri-drag-region
+          className="flex items-center px-4 py-3 border-b border-white/[0.03] z-50 cursor-move"
+        >
+          <div className="flex-1 flex items-center gap-3 pointer-events-none" data-tauri-drag-region>
+            <div className="pointer-events-auto">
+              <BuildSelectorDropdown />
+            </div>
+            <div className="pointer-events-auto">
+              <MacroCycleHUD />
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pointer-events-auto">
             {config.show_clock && <SystemClock />}
             <button
               onClick={() => showSettings()}
@@ -134,11 +140,10 @@ export function Overlay() {
             </button>
             <KeyboardShortcutsOverlay />
             <div
+              className="nav-pill opacity-50"
               data-tauri-drag-region
-              onMouseDown={startDrag}
-              className="nav-pill cursor-move hover:bg-white/10 transition-colors"
             >
-              <GripVertical className="w-4 h-4 opacity-50" />
+              <GripVertical className="w-4 h-4" />
             </div>
           </div>
         </div>

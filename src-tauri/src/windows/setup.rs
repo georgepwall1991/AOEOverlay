@@ -66,13 +66,6 @@ fn apply_overlay_window_state(window: &tauri::WebviewWindow) {
     // Force alpha to 255 to fix invisible window issue
     force_layered_alpha_opaque(window);
 
-    if let Err(e) = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-        x: 50,
-        y: 50,
-    })) {
-        eprintln!("[Windows] Failed to position overlay window: {}", e);
-    }
-
     // If the window ended up tiny (e.g., from a bad restore), force a sane size
     match window.outer_size() {
         Ok(size) => {

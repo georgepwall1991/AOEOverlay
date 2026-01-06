@@ -9,7 +9,6 @@ interface CompactHeaderProps {
   updateConfig: (updates: Partial<AppConfig>) => void;
   buildOrderName?: string;
   activeBranchName?: string;
-  startDrag: (e: React.MouseEvent) => void;
 }
 
 export function CompactHeader({
@@ -17,7 +16,6 @@ export function CompactHeader({
   updateConfig,
   buildOrderName,
   activeBranchName,
-  startDrag,
 }: CompactHeaderProps) {
   const floatingStyle = config.floating_style;
 
@@ -66,7 +64,6 @@ export function CompactHeader({
       <div
         className="flex-1 flex items-center gap-1 cursor-move hover:bg-white/5 px-1"
         data-tauri-drag-region
-        onMouseDown={startDrag}
       >
         <GripVertical className="w-3 h-3 text-white/40 flex-shrink-0" />
         {buildOrderName && (

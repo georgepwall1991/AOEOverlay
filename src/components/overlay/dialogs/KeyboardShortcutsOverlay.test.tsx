@@ -12,14 +12,14 @@ vi.mock("@/stores", () => ({
   useConfigStore: vi.fn(() => ({
     config: {
       hotkeys: {
-        previous_step: "F2",
-        next_step: "F3",
-        reset_build_order: "F9",
-        cycle_build_order: "F4",
-        toggle_pause: "F1",
-        toggle_overlay: "F7",
-        toggle_compact: "F6",
-        toggle_click_through: "F5",
+        previous_step: "Ctrl+Alt+F2",
+        next_step: "Ctrl+Alt+F3",
+        reset_build_order: "R",
+        cycle_build_order: "Ctrl+Alt+F4",
+        toggle_pause: "Ctrl+Alt+F1",
+        toggle_overlay: "Ctrl+Alt+F7",
+        toggle_compact: "Ctrl+Alt+F6",
+        toggle_click_through: "Ctrl+Alt+F5",
       },
     },
   })),
@@ -172,13 +172,15 @@ describe("KeyboardShortcutsOverlay", () => {
       expect(screen.getByText("Toggle Click-Through")).toBeInTheDocument();
     });
 
-    it("shows hotkey values", () => {
-      expect(screen.getByText("F2")).toBeInTheDocument();
-      expect(screen.getByText("F3")).toBeInTheDocument();
-      expect(screen.getByText("F9")).toBeInTheDocument();
-      expect(screen.getByText("F4")).toBeInTheDocument();
-      expect(screen.getByText("F1")).toBeInTheDocument();
-    });
+  it("shows hotkey values", () => {
+    render(<KeyboardShortcutsOverlay />);
+    fireEvent.click(screen.getByTitle("Keyboard Shortcuts (?)"));
+    expect(screen.getAllByText("Ctrl+Alt+F2").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Ctrl+Alt+F3").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("R").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Ctrl+Alt+F4").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Ctrl+Alt+F1").length).toBeGreaterThan(0);
+  });
 
     it("shows close button", () => {
       expect(screen.getByTestId("x-icon")).toBeInTheDocument();
@@ -239,8 +241,7 @@ describe("ShortcutRow component", () => {
     const previousStepRow = screen.getByText("Previous Step");
     expect(previousStepRow).toBeInTheDocument();
 
-    const f2Key = screen.getByText("F2");
-    expect(f2Key.tagName).toBe("KBD");
+          const f2Key = screen.getByText("Ctrl+Alt+F2");    expect(f2Key.tagName).toBe("KBD");
   });
 
   it("renders help shortcut", () => {

@@ -340,6 +340,75 @@ export const ICON_REGISTRY: Record<string, IconEntry> = {
     category: "unit",
   },
 
+  // Byzantines
+  limitanei: {
+    name: "limitanei",
+    displayName: "Limitanei",
+    hasFile: false,
+    aliases: [],
+    category: "unit",
+  },
+  varangian_guard: {
+    name: "varangian_guard",
+    displayName: "Varangian Guard",
+    hasFile: false,
+    aliases: ["varangian"],
+    category: "unit",
+  },
+  cataphract: {
+    name: "cataphract",
+    displayName: "Cataphract",
+    hasFile: false,
+    aliases: ["tagmata"],
+    category: "unit",
+  },
+
+  // Ottomans
+  janissary: {
+    name: "janissary",
+    displayName: "Janissary",
+    hasFile: false,
+    aliases: [],
+    category: "unit",
+  },
+  sipahi: {
+    name: "sipahi",
+    displayName: "Sipahi",
+    hasFile: false,
+    aliases: [],
+    category: "unit",
+  },
+  mehter: {
+    name: "mehter",
+    displayName: "Mehter",
+    hasFile: false,
+    aliases: [],
+    category: "unit",
+  },
+
+  // Malians
+  donso: {
+    name: "donso",
+    displayName: "Donso",
+    hasFile: false,
+    aliases: [],
+    category: "unit",
+  },
+  musofadi_warrior: {
+    name: "musofadi_warrior",
+    displayName: "Musofadi Warrior",
+    hasFile: false,
+    aliases: ["musofadi"],
+    category: "unit",
+  },
+  sofa: {
+    name: "sofa",
+    displayName: "Sofa",
+    hasFile: false,
+    aliases: [],
+    category: "unit",
+  },
+
   // Rus
   streltsy: {
     name: "streltsy",
@@ -466,36 +535,6 @@ export const ICON_REGISTRY: Record<string, IconEntry> = {
     displayName: "Camel Archer",
     hasFile: false,
     aliases: ["camelarcher"],
-    category: "unit",
-  },
-
-  // Ottomans
-  janissary: {
-    name: "janissary",
-    displayName: "Janissary",
-    hasFile: false,
-    aliases: [],
-    category: "unit",
-  },
-  sipahi: {
-    name: "sipahi",
-    displayName: "Sipahi",
-    hasFile: false,
-    aliases: [],
-    category: "unit",
-  },
-  mehter: {
-    name: "mehter",
-    displayName: "Mehter",
-    hasFile: false,
-    aliases: [],
-    category: "unit",
-  },
-  great_bombard: {
-    name: "great_bombard",
-    displayName: "Great Bombard",
-    hasFile: false,
-    aliases: ["greatbombard"],
     category: "unit",
   },
 
@@ -654,6 +693,28 @@ export const ICON_REGISTRY: Record<string, IconEntry> = {
     category: "building",
   },
 
+  military_school: {
+    name: "military_school",
+    displayName: "Military School",
+    hasFile: false,
+    aliases: [],
+    category: "building",
+  },
+  cistern: {
+    name: "cistern",
+    displayName: "Cistern",
+    hasFile: false,
+    aliases: [],
+    category: "building",
+  },
+  pit_mine: {
+    name: "pit_mine",
+    displayName: "Pit Mine",
+    hasFile: false,
+    aliases: [],
+    category: "building",
+  },
+
   // ============================================================================
   // LANDMARKS
   // ============================================================================
@@ -678,6 +739,20 @@ export const ICON_REGISTRY: Record<string, IconEntry> = {
     displayName: "White Tower",
     hasFile: true,
     aliases: ["whitetower"],
+    category: "landmark",
+  },
+  kings_palace: {
+    name: "kings_palace",
+    displayName: "King's Palace",
+    hasFile: false,
+    aliases: ["kingspalace"],
+    category: "landmark",
+  },
+  berkshire_palace: {
+    name: "berkshire_palace",
+    displayName: "Berkshire Palace",
+    hasFile: false,
+    aliases: ["berkshirepalace"],
     category: "landmark",
   },
 
@@ -807,6 +882,126 @@ export const ICON_REGISTRY: Record<string, IconEntry> = {
     displayName: "The Golden Gate",
     hasFile: true,
     aliases: ["goldengate"],
+    category: "landmark",
+  },
+
+  // Japanese
+  koka_township: {
+    name: "koka_township",
+    displayName: "Koka Township",
+    hasFile: false,
+    aliases: ["kokatownship"],
+    category: "landmark",
+  },
+  kura_storehouse: {
+    name: "kura_storehouse",
+    displayName: "Kura Storehouse",
+    hasFile: false,
+    aliases: ["kurastorehouse"],
+    category: "landmark",
+  },
+  floating_gate: {
+    name: "floating_gate",
+    displayName: "Floating Gate",
+    hasFile: false,
+    aliases: ["floatinggate"],
+    category: "landmark",
+  },
+  temple_of_equality: {
+    name: "temple_of_equality",
+    displayName: "Temple of Equality",
+    hasFile: false,
+    aliases: ["templeofequality"],
+    category: "landmark",
+  },
+  castle_of_the_crow: {
+    name: "castle_of_the_crow",
+    displayName: "Castle of the Crow",
+    hasFile: false,
+    aliases: ["castleofthecrow"],
+    category: "landmark",
+  },
+  tanegashima_gunsmith: {
+    name: "tanegashima_gunsmith",
+    displayName: "Tanegashima Gunsmith",
+    hasFile: false,
+    aliases: ["tanegashimagunsmith"],
+    category: "landmark",
+  },
+
+  // Byzantines
+  grand_winery: {
+    name: "grand_winery",
+    displayName: "Grand Winery",
+    hasFile: false,
+    aliases: ["grandwinery"],
+    category: "landmark",
+  },
+  imperial_hippodrome: {
+    name: "imperial_hippodrome",
+    displayName: "Imperial Hippodrome",
+    hasFile: false,
+    aliases: ["imperialhippodrome"],
+    category: "landmark",
+  },
+  golden_horn_tower: {
+    name: "golden_horn_tower",
+    displayName: "Golden Horn Tower",
+    hasFile: false,
+    aliases: ["goldenhorntower"],
+    category: "landmark",
+  },
+
+  // Malians
+  mansa_quarry: {
+    name: "mansa_quarry",
+    displayName: "Mansa Quarry",
+    hasFile: false,
+    aliases: ["mansaquarry"],
+    category: "landmark",
+  },
+  saharan_trade_network: {
+    name: "saharan_trade_network",
+    displayName: "Saharan Trade Network",
+    hasFile: false,
+    aliases: ["saharantradenetwork"],
+    category: "landmark",
+  },
+  farimba_garrison: {
+    name: "farimba_garrison",
+    displayName: "Farimba Garrison",
+    hasFile: false,
+    aliases: ["farimbagarrison"],
+    category: "landmark",
+  },
+  fort_of_the_huntress: {
+    name: "fort_of_the_huntress",
+    displayName: "Fort of the Huntress",
+    hasFile: false,
+    aliases: ["fortofthehuntress"],
+    category: "landmark",
+  },
+
+  // Ottomans
+  twin_minaret_medrese: {
+    name: "twin_minaret_medrese",
+    displayName: "Twin Minaret Medrese",
+    hasFile: false,
+    aliases: ["twinminaretmedrese"],
+    category: "landmark",
+  },
+  istanbul_observatory: {
+    name: "istanbul_observatory",
+    displayName: "Istanbul Observatory",
+    hasFile: false,
+    aliases: ["istanbulobservatory"],
+    category: "landmark",
+  },
+  tophane_arsenal: {
+    name: "tophane_arsenal",
+    displayName: "Tophane Arsenal",
+    hasFile: false,
+    aliases: ["tophanearsenal"],
     category: "landmark",
   },
 

@@ -2,13 +2,13 @@
   "id": "english-longbow-rush",
   "name": "English Longbow Rush",
   "civilization": "English",
-  "description": "The quintessential English opening. Focuses on rapid Feudal Age transition into constant [icon:longbowman] Longbowmen pressure.",
+  "description": "The quintessential English opening. Focuses on rapid transition into [icon:feudal_age] Feudal Age for constant [icon:longbowman] Longbowmen pressure.",
   "difficulty": "Beginner",
   "enabled": true,
   "steps": [
     {
       "id": "step-1",
-      "description": "Queue [icon:villager] villagers. Send 6 starting villagers to [icon:sheep] sheep. Rally scout to find sheep.",
+      "description": "Queue [icon:villager] villagers. Send 6 starting villagers to [icon:sheep] sheep. [icon:rally] Rally [icon:scout] scout to find more sheep.",
       "timing": "0:00",
       "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
@@ -20,50 +20,50 @@
     },
     {
       "id": "step-3",
-      "description": "2nd, 3rd, and 4th new [icon:villager] to [icon:wood] wood. Total 4 on wood.",
+      "description": "Send next 3 [icon:villager] villagers to [icon:wood] wood. (Total 4 on wood).",
       "timing": "0:50",
       "resources": { "food": 6, "wood": 4, "gold": 0, "stone": 0, "villagers": 10 }
     },
     {
       "id": "step-4",
-      "description": "5th new [icon:villager] builds [icon:mining_camp] Mining Camp on [icon:gold] gold. 6th new villager to [icon:gold] gold.",
+      "description": "New [icon:villager] builds [icon:mining_camp] Mining Camp on [icon:gold] gold. [icon:rally] Rally next villager to gold. (Total 2 on gold).",
       "timing": "1:40",
       "resources": { "food": 6, "wood": 4, "gold": 2, "stone": 0, "villagers": 12 }
     },
     {
       "id": "step-5",
-      "description": "7th and 8th new [icon:villager] to [icon:food] food. Total 8 on food.",
+      "description": "Send next 2 [icon:villager] villagers to [icon:food] food. (Total 8 on food).",
       "timing": "2:30",
       "resources": { "food": 8, "wood": 4, "gold": 2, "stone": 0, "villagers": 14 }
     },
     {
       "id": "step-6",
-      "description": "[icon:feudal_age] Age up with [icon:landmark] Council Hall! Use 2 villagers from [icon:wood] wood to build.",
-      "timing": "3:15",
+      "description": "[icon:feudal_age] Age up with [icon:council_hall] Council Hall! Use 2 [icon:villager] villagers from [icon:wood] wood to build.",
+      "timing": "3:10",
       "resources": { "food": 8, "wood": 2, "gold": 2, "stone": 0, "villagers": 14, "builders": 2 }
     },
     {
       "id": "step-7",
-      "description": "Rally new [icon:villager] villagers to [icon:food] food while aging up.",
+      "description": "[icon:rally] Rally all new [icon:villager] villagers to [icon:food] food while aging up.",
       "timing": "3:30",
       "resources": { "food": 10, "wood": 2, "gold": 2, "stone": 0, "villagers": 16 }
     },
     {
       "id": "step-8",
-      "description": "[icon:feudal_age] Feudal Age! Immediately queue [icon:longbowman] Longbowmen. Send 2 builders to [icon:wood] wood.",
-      "timing": "4:30",
+      "description": "[icon:feudal_age] Feudal Age reached! Immediately queue [icon:longbowman] Longbowmen. Send builders back to [icon:wood] wood.",
+      "timing": "4:20",
       "resources": { "food": 10, "wood": 4, "gold": 2, "stone": 0, "villagers": 18 }
     },
     {
       "id": "step-9",
-      "description": "Research [icon:wheelbarrow] Wheelbarrow. Build [icon:blacksmith] Blacksmith for ranged upgrades.",
-      "timing": "5:30",
+      "description": "Research [icon:wheelbarrow] Wheelbarrow. Build [icon:blacksmith] Blacksmith for ranged [icon:upgrade] upgrades.",
+      "timing": "5:15",
       "resources": { "food": 12, "wood": 6, "gold": 4, "stone": 0, "villagers": 22 }
     },
     {
       "id": "step-10",
-      "description": "[icon:attack] Constant production! Send 6-8 [icon:longbowman] to harass enemy wood line.",
-      "timing": "6:30",
+      "description": "[icon:attack] Constant production! Send 6-8 [icon:longbowman] to harass enemy wood line. Build [icon:barracks] Barracks for [icon:spearman] Spearmen support.",
+      "timing": "6:15",
       "resources": { "food": 14, "wood": 8, "gold": 4, "stone": 0, "villagers": 26 }
     }
   ],
@@ -82,7 +82,7 @@
         },
         {
           "id": "def-2",
-          "description": "[icon:barracks] Build Barracks. Produce [icon:spearman] Spearmen to counter [icon:horseman] horsemen.",
+          "description": "Build [icon:barracks] Barracks. Produce [icon:spearman] Spearmen to counter [icon:horseman] horsemen.",
           "timing": "4:45",
           "resources": { "food": 10, "wood": 4, "gold": 2, "stone": 0, "villagers": 18 }
         }

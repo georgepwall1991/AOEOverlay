@@ -222,6 +222,15 @@ export function useGlobalHotkeys() {
       const { config } = useConfigStore.getState();
       const h = config.hotkeys;
 
+      // Construct current key string to match config (e.g. "Ctrl+Alt+F3")
+      const modifiers = [];
+      if (e.ctrlKey) modifiers.push("Ctrl");
+      if (e.altKey) modifiers.push("Alt");
+      if (e.shiftKey) modifiers.push("Shift");
+      
+      const keyName = e.key.toUpperCase();
+      const keyString = modifiers.length > 0 ? `${modifiers.join("+")}+${keyName}` : keyName;
+
       // Map local keys to Tauri event names
       const keyMap: Record<string, string> = {
         [h.toggle_overlay]: "hotkey-toggle-overlay",
@@ -240,7 +249,7 @@ export function useGlobalHotkeys() {
         [h.toggle_counters]: "hotkey-toggle-counters",
       };
 
-      const eventName = keyMap[e.key];
+      const eventName = keyMap[keyString];
       if (eventName) {
         e.preventDefault();
         emit(eventName);

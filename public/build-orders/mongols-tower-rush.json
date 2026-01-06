@@ -8,33 +8,39 @@
   "steps": [
     {
       "id": "step-1",
-      "description": "Pack [icon:ger] Ger. Pack [icon:town_center] TC. Move TC towards the center of the map.",
+      "description": "Immediately pack [icon:ger] Ger and [icon:town_center] Town Center. Move TC towards a wood line near the center.",
       "timing": "0:00",
       "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
     {
       "id": "step-2",
-      "description": "Unpack TC near [icon:wood] wood and [icon:sheep] sheep. Unpack Ger on wood.",
+      "description": "Unpack [icon:town_center] TC near [icon:wood] wood and [icon:sheep] sheep. Unpack Ger on wood and send all 6 starting villagers to wood.",
       "timing": "0:45",
-      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
+      "resources": { "food": 0, "wood": 6, "gold": 0, "stone": 0, "villagers": 6 }
     },
     {
       "id": "step-3",
-      "description": "Send 1 [icon:villager] to build [icon:outpost] Outpost near enemy [icon:gold] gold.",
-      "timing": "1:15",
-      "resources": { "food": 6, "wood": 1, "gold": 0, "stone": 0, "villagers": 7 }
+      "description": "Send 1 [icon:villager] to build [icon:outpost] Outpost near enemy [icon:gold] gold. [icon:rally] Rally new villagers to [icon:food] sheep.",
+      "timing": "1:30",
+      "resources": { "food": 2, "wood": 5, "gold": 0, "stone": 0, "villagers": 8 }
     },
     {
       "id": "step-4",
-      "description": "Produce 2 [icon:spearman] Spearmen to protect the tower builder.",
-      "timing": "2:00",
-      "resources": { "food": 6, "wood": 3, "gold": 0, "stone": 0, "villagers": 9 }
+      "description": "Build [icon:barracks] Barracks. Produce 2 [icon:spearman] Spearmen to protect the tower builder. [icon:rally] Rally to enemy gold.",
+      "timing": "2:15",
+      "resources": { "food": 4, "wood": 6, "gold": 0, "stone": 0, "villagers": 11 }
     },
     {
       "id": "step-5",
-      "description": "[icon:attack] Garrison tower. Deny enemy gold. Build 2nd [icon:outpost] on wood line.",
-      "timing": "2:45",
-      "resources": { "food": 8, "wood": 4, "gold": 0, "stone": 0, "villagers": 12 }
+      "description": "[icon:attack] Garrison tower. Deny enemy gold. Build 2nd [icon:outpost] on wood line. Rally more to [icon:food] food.",
+      "timing": "3:00",
+      "resources": { "food": 6, "wood": 8, "gold": 0, "stone": 0, "villagers": 15 }
+    },
+    {
+      "id": "step-6",
+      "description": "[icon:feudal_age] Age up with Deer Stones! Place it near wood or food for movement speed buff. Use 3 builders.",
+      "timing": "4:30",
+      "resources": { "food": 10, "wood": 8, "gold": 0, "stone": 0, "villagers": 20, "builders": 3 }
     }
   ]
 }

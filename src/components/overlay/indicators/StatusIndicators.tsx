@@ -3,7 +3,7 @@ import { Volume2, VolumeX, MousePointer2Off, MousePointer2, Minimize2, Maximize2
 import { useTTS } from "@/hooks";
 import { useConfigStore, useMatchupStore } from "@/stores";
 import { cn, logTelemetryEvent } from "@/lib/utils";
-import { toggleClickThrough as tauriToggleClickThrough, toggleCompactMode as tauriToggleCompactMode } from "@/lib/tauri";
+import { toggleClickThrough as tauriToggleClickThrough, toggleCompactMode as tauriToggleCompactMode, saveConfig } from "@/lib/tauri";
 
 interface StatusIndicatorsProps {
   onToggleClickThrough?: () => void;
@@ -69,13 +69,32 @@ export function StatusIndicators({
     return () => clearInterval(interval);
   }, [isSpeaking]);
 
-  const toggleVoice = () => {
+  const toggleVoice = async () => {
+    const currentVoice = config.voice ?? {
+      enabled: false,
+      rate: 1.0,
+      speakSteps: true,
+      speakReminders: true,
+      speakDelta: true,
+    };
+    
+    const nextVoice = {
+      ...currentVoice,
+      enabled: !voiceEnabled,
+    };
+
     updateConfig({
-      voice: {
-        ...config.voice!,
-        enabled: !voiceEnabled,
-      },
+      voice: nextVoice,
     });
+
+    try {
+      await saveConfig({
+        ...config,
+        voice: nextVoice,
+      });
+    } catch (error) {
+      console.error("Failed to save voice config:", error);
+    }
   };
 
   const toggleClickThrough = async () => {

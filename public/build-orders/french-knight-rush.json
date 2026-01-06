@@ -2,13 +2,13 @@
   "id": "french-knight-rush",
   "name": "French Knight Rush",
   "civilization": "French",
-  "description": "Exploits French faster [icon:villager] production. Fast Feudal into [icon:knight] Royal Knight harassment.",
+  "description": "Exploits French faster [icon:villager] production. Fast [icon:feudal_age] Feudal Age into early [icon:knight] Royal Knight harassment.",
   "difficulty": "Intermediate",
   "enabled": true,
   "steps": [
     {
       "id": "step-1",
-      "description": "6 villagers to [icon:sheep] sheep. Rally [icon:scout] scout to sheep.",
+      "description": "Queue [icon:villager] villagers. Send 6 starting villagers to [icon:sheep] sheep. [icon:rally] Rally [icon:scout] scout to find sheep.",
       "timing": "0:00",
       "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0, "villagers": 6 }
     },
@@ -20,50 +20,50 @@
     },
     {
       "id": "step-3",
-      "description": "2nd new [icon:villager] builds [icon:mining_camp] Mining Camp on [icon:gold] gold. 3rd new villager to [icon:gold] gold.",
+      "description": "Next [icon:villager] builds [icon:mining_camp] Mining Camp on [icon:gold] gold. Send following villager to gold too. (Total 3 on gold).",
       "timing": "0:45",
       "resources": { "food": 6, "wood": 0, "gold": 3, "stone": 0, "villagers": 9 }
     },
     {
       "id": "step-4",
-      "description": "4th new [icon:villager] to [icon:food] food. Total 7 on food.",
+      "description": "[icon:rally] Rally next new [icon:villager] to [icon:food] food. (Total 7 on food).",
       "timing": "1:30",
       "resources": { "food": 7, "wood": 0, "gold": 3, "stone": 0, "villagers": 10 }
     },
     {
       "id": "step-5",
-      "description": "5th new [icon:villager] to [icon:wood] wood. Build [icon:lumber_camp] Lumber Camp.",
+      "description": "Next new [icon:villager] builds [icon:lumber_camp] Lumber Camp on [icon:wood] wood.",
       "timing": "2:00",
       "resources": { "food": 7, "wood": 1, "gold": 3, "stone": 0, "villagers": 11 }
     },
     {
       "id": "step-6",
-      "description": "Rally new villagers to [icon:food] food. Total 10 on food.",
+      "description": "Rally next 3 villagers to [icon:food] food. (Total 10 on food).",
       "timing": "2:30",
       "resources": { "food": 10, "wood": 1, "gold": 3, "stone": 0, "villagers": 14 }
     },
     {
       "id": "step-7",
-      "description": "[icon:feudal_age] Age up with [icon:landmark] School of Cavalry! Use 2 villagers from food to build.",
-      "timing": "3:15",
+      "description": "[icon:feudal_age] Age up with [icon:school_of_cavalry] School of Cavalry! Use 2 [icon:villager] villagers from [icon:food] food to build.",
+      "timing": "3:10",
       "resources": { "food": 8, "wood": 1, "gold": 3, "stone": 0, "villagers": 14, "builders": 2 }
     },
     {
       "id": "step-8",
-      "description": "Shift 2 villagers from food to [icon:wood] wood. Rally new villagers to [icon:wood] wood.",
+      "description": "Shift 2 villagers from food to [icon:wood] wood. Rally all new villagers to wood. (Total 5 on wood).",
       "timing": "3:30",
       "resources": { "food": 6, "wood": 5, "gold": 3, "stone": 0, "villagers": 16 }
     },
     {
       "id": "step-9",
-      "description": "[icon:feudal_age] Feudal Age! Produce [icon:knight] Royal Knights. Research [icon:upgrade] Chivalry.",
-      "timing": "4:30",
+      "description": "[icon:feudal_age] Feudal Age reached! Immediately produce [icon:knight] Royal Knights. Research [icon:upgrade] Chivalry when possible.",
+      "timing": "4:20",
       "resources": { "food": 8, "wood": 6, "gold": 4, "stone": 0, "villagers": 18 }
     },
     {
       "id": "step-10",
-      "description": "[icon:attack] Harass with 1st [icon:knight]. Target isolated villagers.",
-      "timing": "5:00",
+      "description": "[icon:attack] Harass with 1st [icon:knight]. Target isolated villagers. Build [icon:archery_range] Archery Range for [icon:archer] Archer support.",
+      "timing": "4:50",
       "resources": { "food": 10, "wood": 6, "gold": 4, "stone": 0, "villagers": 20 }
     }
   ]

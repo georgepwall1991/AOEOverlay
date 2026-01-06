@@ -207,16 +207,18 @@ export function useBuildOrderDialogs({
     setIsBrowsing(true);
     setBrowseError(null);
     try {
-      const results = await browseAoe4GuidesBuilds(
-        browseCivFilter ? { civ: browseCivFilter } : undefined
-      );
+      const results = await browseAoe4GuidesBuilds({
+        civ: browseCivFilter || undefined,
+        search: browseSearchQuery || undefined,
+        strategy: browseStrategyFilter || undefined,
+      });
       setBrowseResults(results);
     } catch (error) {
       setBrowseError(error instanceof Error ? error.message : "Failed to load builds");
     } finally {
       setIsBrowsing(false);
     }
-  }, [browseCivFilter]);
+  }, [browseCivFilter, browseSearchQuery, browseStrategyFilter]);
 
   // Import from browse handler
   const handleImportFromBrowse = useCallback(
@@ -247,18 +249,18 @@ export function useBuildOrderDialogs({
   const filteredBrowseResults = (() => {
     let results = [...browseResults];
 
-    // Search filter
+    // Local filter for search (redundant if API supports it, but good for narrowing)
     if (browseSearchQuery.trim()) {
       const query = browseSearchQuery.toLowerCase();
       results = results.filter(
         (build) =>
           build.title.toLowerCase().includes(query) ||
           build.author.toLowerCase().includes(query) ||
-          build.description?.toLowerCase().includes(query)
+          (build.description && build.description.toLowerCase().includes(query))
       );
     }
 
-    // Strategy filter
+    // Local filter for strategy
     if (browseStrategyFilter) {
       results = results.filter((build) =>
         build.strategy?.toLowerCase().includes(browseStrategyFilter.toLowerCase())

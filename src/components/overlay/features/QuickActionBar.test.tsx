@@ -26,11 +26,11 @@ vi.mock("@/stores", () => ({
   useConfigStore: vi.fn(() => ({
     config: {
       hotkeys: {
-        previous_step: "F2",
-        next_step: "F3",
-        toggle_pause: "F1",
-        reset_build_order: "F9",
-        cycle_build_order: "F4",
+        previous_step: "Ctrl+Alt+F2",
+        next_step: "Ctrl+Alt+F3",
+        toggle_pause: "Ctrl+Alt+F1",
+        reset_build_order: "R",
+        cycle_build_order: "Ctrl+Alt+F4",
       },
     },
   })),
@@ -139,16 +139,16 @@ describe("QuickActionBar", () => {
 
     it("shows hotkey hints in button titles", () => {
       render(<QuickActionBar />);
-      expect(screen.getByTitle("Previous Step (F2)")).toBeInTheDocument();
-      expect(screen.getByTitle("Next Step (F3)")).toBeInTheDocument();
-      expect(screen.getByTitle("Start Timer (F1)")).toBeInTheDocument();
+      expect(screen.getByTitle("Previous Step (Ctrl+Alt+F2)")).toBeInTheDocument();
+      expect(screen.getByTitle("Next Step (Ctrl+Alt+F3)")).toBeInTheDocument();
+      expect(screen.getByTitle("Start Timer (Ctrl+Alt+F1)")).toBeInTheDocument();
     });
   });
 
   describe("navigation", () => {
     it("calls previousStep when previous button clicked", () => {
       render(<QuickActionBar />);
-      const prevButton = screen.getByTitle("Previous Step (F2)");
+      const prevButton = screen.getByTitle("Previous Step (Ctrl+Alt+F2)");
 
       fireEvent.click(prevButton);
 
@@ -157,7 +157,7 @@ describe("QuickActionBar", () => {
 
     it("calls nextStep when next button clicked", () => {
       render(<QuickActionBar />);
-      const nextButton = screen.getByTitle("Next Step (F3)");
+      const nextButton = screen.getByTitle("Next Step (Ctrl+Alt+F3)");
 
       fireEvent.click(nextButton);
 
@@ -166,7 +166,7 @@ describe("QuickActionBar", () => {
 
     it("starts timer when next is clicked and timer not running", () => {
       render(<QuickActionBar />);
-      const nextButton = screen.getByTitle("Next Step (F3)");
+      const nextButton = screen.getByTitle("Next Step (Ctrl+Alt+F3)");
 
       fireEvent.click(nextButton);
 
@@ -184,7 +184,7 @@ describe("QuickActionBar", () => {
       });
 
       render(<QuickActionBar />);
-      const prevButton = screen.getByTitle("Previous Step (F2)");
+      const prevButton = screen.getByTitle("Previous Step (Ctrl+Alt+F2)");
 
       expect(prevButton).toBeDisabled();
     });
@@ -200,7 +200,7 @@ describe("QuickActionBar", () => {
       });
 
       render(<QuickActionBar />);
-      const nextButton = screen.getByTitle("Next Step (F3)");
+      const nextButton = screen.getByTitle("Next Step (Ctrl+Alt+F3)");
 
       expect(nextButton).toBeDisabled();
     });
@@ -209,7 +209,7 @@ describe("QuickActionBar", () => {
   describe("timer controls", () => {
     it("starts timer when play button clicked", () => {
       render(<QuickActionBar />);
-      const playButton = screen.getByTitle("Start Timer (F1)");
+      const playButton = screen.getByTitle("Start Timer (Ctrl+Alt+F1)");
 
       fireEvent.click(playButton);
 
@@ -238,7 +238,7 @@ describe("QuickActionBar", () => {
 
       render(<QuickActionBar />);
       expect(screen.getByTestId("pause")).toBeInTheDocument();
-      const pauseButton = screen.getByTitle("Pause Timer (F1)");
+      const pauseButton = screen.getByTitle("Pause Timer (Ctrl+Alt+F1)");
 
       fireEvent.click(pauseButton);
 
@@ -266,7 +266,7 @@ describe("QuickActionBar", () => {
       });
 
       render(<QuickActionBar />);
-      const resumeButton = screen.getByTitle("Resume Timer (F1)");
+      const resumeButton = screen.getByTitle("Resume Timer (Ctrl+Alt+F1)");
 
       fireEvent.click(resumeButton);
 
@@ -278,7 +278,7 @@ describe("QuickActionBar", () => {
     it("requires double click to reset (confirmation)", async () => {
       render(<QuickActionBar />);
       // Find button with reset hotkey
-      const resetButton = screen.getByTitle(/Reset.*F9/);
+      const resetButton = screen.getByTitle(/Reset.*R/);
 
       // First click - arm confirmation
       fireEvent.click(resetButton);
@@ -293,7 +293,7 @@ describe("QuickActionBar", () => {
 
     it("confirmation times out after 3 seconds", async () => {
       render(<QuickActionBar />);
-      const resetButton = screen.getByTitle(/Reset.*F9/);
+      const resetButton = screen.getByTitle(/Reset.*R/);
 
       // First click - arm confirmation
       fireEvent.click(resetButton);
@@ -355,7 +355,7 @@ describe("QuickActionBar", () => {
   describe("cycle build order", () => {
     it("requires double click to cycle (confirmation)", async () => {
       render(<QuickActionBar />);
-      const cycleButton = screen.getByTitle("Cycle Build Order (F4)");
+      const cycleButton = screen.getByTitle("Cycle Build Order (Ctrl+Alt+F4)");
 
       // First click - arm confirmation
       fireEvent.click(cycleButton);
@@ -368,7 +368,7 @@ describe("QuickActionBar", () => {
 
     it("cycle confirmation times out", async () => {
       render(<QuickActionBar />);
-      const cycleButton = screen.getByTitle("Cycle Build Order (F4)");
+      const cycleButton = screen.getByTitle("Cycle Build Order (Ctrl+Alt+F4)");
 
       // First click
       fireEvent.click(cycleButton);
@@ -385,7 +385,7 @@ describe("QuickActionBar", () => {
 
     it("resets timer and badges on cycle", () => {
       render(<QuickActionBar />);
-      const cycleButton = screen.getByTitle("Cycle Build Order (F4)");
+      const cycleButton = screen.getByTitle("Cycle Build Order (Ctrl+Alt+F4)");
 
       // Double click to confirm
       fireEvent.click(cycleButton);

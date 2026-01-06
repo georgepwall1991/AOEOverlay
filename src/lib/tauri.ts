@@ -137,27 +137,27 @@ const MOCK_BUILD_ORDERS: BuildOrder[] = [
     id: "test-order-1",
     name: "English Longbow Rush",
     civilization: "English",
-    description: "Basic English aggression",
+    description: "Basic English aggression into [icon:feudal_age] Feudal Age.",
     difficulty: "Beginner",
     enabled: true,
     steps: [
-      { id: "s1", description: "Build House", timing: "0:00", resources: { food: 50 } },
-      { id: "s2", description: "Build Council Hall", timing: "2:30", resources: { food: 400, gold: 200 } },
-      { id: "s3", description: "Train [icon:longbowman] Longbows to harass the enemy wood line", timing: "4:00" },
-      { id: "s4", description: "Move your [icon:scout] to find the enemy base and place a rally point", timing: "5:00" }
+      { id: "s1", description: "Build [icon:house] House and send 6 to [icon:sheep] sheep.", timing: "0:00", resources: { food: 6, villagers: 6 } },
+      { id: "s2", description: "Build [icon:council_hall] Council Hall! Use 2 [icon:villager] builders.", timing: "2:30", resources: { food: 8, wood: 2, gold: 2, villagers: 14, builders: 2 } },
+      { id: "s3", description: "Train [icon:longbowman] Longbowmen to harass the enemy wood line.", timing: "4:00", resources: { food: 10, wood: 4, gold: 2, villagers: 18 } },
+      { id: "s4", description: "Move your [icon:scout] to find the enemy base and place a [icon:rally] rally point.", timing: "5:00", resources: { food: 12, wood: 6, gold: 4, villagers: 22 } }
     ]
   },
   {
     id: "test-order-2",
-    name: "French 2TC Boom (Experimental Layout Test)",
+    name: "French 2TC Boom",
     civilization: "French",
-    description: "Advanced boom with many resources and long complex instructions",
+    description: "Advanced boom with [icon:town_center] Second TC.",
     difficulty: "Advanced",
     enabled: true,
     steps: [
-      { id: "f1", description: "Start by sending 6 vills to food and queueing 3 more vills to gold immediately", timing: "0:00", resources: { food: 50, wood: 50, gold: 50, stone: 50 } },
-      { id: "f2", description: "Build [icon:town_center] SECOND TOWN CENTER near the berries or deer but make sure you are safe from raids", timing: "5:30", resources: { wood: 400, stone: 300, food: 100, gold: 100 } },
-      { id: "f3", description: "This is an extremely long instruction designed to see if the text wraps properly in the new expanded UI without being cut off", timing: "7:00", resources: { food: 9999, wood: 9999 } }
+      { id: "f1", description: "Start by sending 6 [icon:villager] vills to [icon:sheep] food and queueing 3 more vills to [icon:gold] gold.", timing: "0:00", resources: { food: 6, gold: 3, villagers: 9 } },
+      { id: "f2", description: "Build [icon:town_center] SECOND TOWN CENTER near the [icon:berries] berries or [icon:deer] deer. Use 4 builders.", timing: "5:30", resources: { food: 12, wood: 8, gold: 4, stone: 0, villagers: 24, builders: 4 } },
+      { id: "f3", description: "Maintain constant [icon:villager] production from both centers while researching [icon:wheelbarrow] Wheelbarrow.", timing: "7:00", resources: { food: 16, wood: 10, gold: 6, villagers: 32 } }
     ]
   }
 ];

@@ -25,7 +25,7 @@ vi.mock("@/stores", () => ({
     config: {
       floating_style: true,
       hotkeys: {
-        cycle_build_order: "F4",
+        cycle_build_order: "Ctrl+Alt+F4",
       },
     },
   })),

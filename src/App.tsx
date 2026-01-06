@@ -41,7 +41,8 @@ function OverlayWithWindowFix() {
     };
 
     // Multiple attempts at different delays
-    const delays = [100, 500, 1000, 2000, 3000, 5000];
+    // Reduced frequency to avoid interrupting user drag/interaction
+    const delays = [200, 2000];
     timeoutIdsRef.current = delays.map((delay) =>
       setTimeout(() => {
         forceShowAndRepaint();

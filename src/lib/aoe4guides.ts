@@ -10,11 +10,20 @@ import { sanitizeTiming } from "@/stores/timerStore";
 import { IntelligentConverter } from "./intelligentConverter";
 
 // ============================================================================
+// Schema Helpers
+// ============================================================================
+
+// Helper to handle null/undefined and provide default
+const stringOrNull = (defaultVal = "") => z.string().nullish().transform(v => v ?? defaultVal);
+const numberOrNull = (defaultVal = 0) => z.number().nullish().transform(v => v ?? defaultVal);
+const boolOrNull = (defaultVal = false) => z.boolean().nullish().transform(v => v ?? defaultVal);
+
+// ============================================================================
 // Zod Schemas for API Response Validation
 // ============================================================================
 
 const Aoe4GuidesStepSchema = z.object({
-  description: z.string(),
+  description: stringOrNull(),
   time: z.string().optional(),
   villagers: z.string().optional(),
   builders: z.string().optional(),
@@ -27,7 +36,7 @@ const Aoe4GuidesStepSchema = z.object({
 const Aoe4GuidesAgePhaseSchema = z.object({
   type: z.enum(["age", "ageUp"]),
   age: z.number(),
-  gameplan: z.string(),
+  gameplan: stringOrNull(),
   steps: z.array(Aoe4GuidesStepSchema),
 });
 
@@ -38,31 +47,26 @@ const Aoe4GuidesTimestampSchema = z.object({
 
 const Aoe4GuidesBuildSchema = z.object({
   id: z.string(),
-  title: z.string().default(""),
-  description: z.string().default(""),
-  author: z.string().default(""),
-  authorUid: z.string().default(""),
+  title: stringOrNull(),
+  description: stringOrNull(),
+  author: stringOrNull(),
+  authorUid: stringOrNull(),
   civ: z.string(),
-  strategy: z.string().default(""),
-  season: z.string().default(""),
-  map: z.string().default(""),
-  video: z.string().default(""),
-  views: z.number().default(0),
-  likes: z.number().default(0),
-  upvotes: z.number().default(0),
-  downvotes: z.number().default(0),
-  score: z.number().default(0),
-  scoreAllTime: z.number().default(0),
+  strategy: stringOrNull(),
+  season: stringOrNull(),
+  map: stringOrNull(),
+  video: stringOrNull(),
+  views: numberOrNull(),
+  likes: numberOrNull(),
+  upvotes: numberOrNull(),
+  downvotes: numberOrNull(),
+  score: numberOrNull(),
+  scoreAllTime: numberOrNull(),
   timeCreated: Aoe4GuidesTimestampSchema.optional(),
   timeUpdated: Aoe4GuidesTimestampSchema.optional(),
   steps: z.array(Aoe4GuidesAgePhaseSchema),
-  isDraft: z.boolean().default(false),
+  isDraft: boolOrNull(),
 });
-
-// Helper to handle null/undefined and provide default
-const stringOrNull = (defaultVal = "") => z.string().nullish().transform(v => v ?? defaultVal);
-const numberOrNull = (defaultVal = 0) => z.number().nullish().transform(v => v ?? defaultVal);
-const boolOrNull = (defaultVal = false) => z.boolean().nullish().transform(v => v ?? defaultVal);
 
 // Lenient schema for browse endpoint - handles null values from API
 const Aoe4GuidesBuildSummarySchema = z.object({
@@ -154,6 +158,11 @@ const CIVILIZATION_CODE_MAP: Record<string, Civilization> = {
   MAC: "Macedonian Dynasty",
   SEN: "Sengoku Daimyo",
   TUG: "Tughlaq Dynasty",
+  // Potential future or alternative codes
+  ARA: "Ayyubids",
+  ZUX: "Zhu Xi's Legacy",
+  BYZ_ALT: "Byzantines",
+  JAP_ALT: "Japanese",
 };
 
 // Reverse mapping for filtering (full name -> code)
@@ -177,6 +186,8 @@ export const CIVILIZATION_TO_CODE: Record<string, string> = {
   // Aliases/Variants
   "Knights Templar": "KTE", 
   "Teutonic Order": "KTE",
+  "The Golden Horde": "GHO",
+  "Sengoku": "SEN",
   // Dynasties of the East DLC
   "Golden Horde": "GHO",
   "Macedonian Dynasty": "MAC",
@@ -192,6 +203,8 @@ const STRATEGY_DIFFICULTY_MAP: Record<string, Difficulty> = {
   "All-in": "Advanced",
   Cheese: "Expert",
   Timing: "Advanced",
+  Aggressive: "Advanced",
+  Defensive: "Intermediate",
 };
 
 // ============================================================================
@@ -215,7 +228,8 @@ export function extractAoe4GuidesId(url: string): string | null {
 
   const patterns = [
     /aoe4guides\.com\/build\/([a-zA-Z0-9]+)/i,
-    /^([a-zA-Z0-9]{10,30})$/, // IDs are typically alphanumeric, 10-30 chars
+    /aoe4guides\.com\/builds\/([a-zA-Z0-9]+)/i,
+    /^([a-zA-Z0-9]{8,30})$/, // IDs are typically alphanumeric, 8-30 chars
   ];
 
   for (const pattern of patterns) {
@@ -232,7 +246,8 @@ export function extractAoe4GuidesId(url: string): string | null {
  * Normalize civilization code to full name
  */
 function normalizeCivilization(civCode: string): Civilization {
-  const mapped = CIVILIZATION_CODE_MAP[civCode.toUpperCase()];
+  const upperCode = civCode.toUpperCase();
+  const mapped = CIVILIZATION_CODE_MAP[upperCode];
 
   if (!mapped) {
     console.warn(
@@ -250,22 +265,38 @@ function normalizeCivilization(civCode: string): Civilization {
  */
 function strategyToDifficulty(strategy?: string): Difficulty {
   if (!strategy) return "Intermediate";
-  return STRATEGY_DIFFICULTY_MAP[strategy] || "Intermediate";
+  
+  // Try exact match first
+  if (STRATEGY_DIFFICULTY_MAP[strategy]) {
+    return STRATEGY_DIFFICULTY_MAP[strategy];
+  }
+
+  // Try case-insensitive substring match
+  const lowerStrategy = strategy.toLowerCase();
+  for (const [key, difficulty] of Object.entries(STRATEGY_DIFFICULTY_MAP)) {
+    if (lowerStrategy.includes(key.toLowerCase())) {
+      return difficulty;
+    }
+  }
+
+  return "Intermediate";
 }
 
 /**
  * Parse resource string to number, handling relative values like "+3" or "-2"
  */
-function parseResource(value?: string, previousValue = 0): number | undefined {
-  if (!value || value.trim() === "" || value.includes("<br")) return undefined;
+function parseResource(value?: string | number, previousValue = 0): number | undefined {
+  if (value === undefined || value === null) return undefined;
   
-  const cleanValue = value.trim();
-  const num = parseInt(cleanValue, 10);
+  const stringValue = String(value).trim();
+  if (stringValue === "" || stringValue.includes("<br")) return undefined;
+  
+  const num = parseInt(stringValue, 10);
   
   if (isNaN(num)) return undefined;
 
   // Handle relative updates (e.g., "+3" or "-2")
-  if (cleanValue.startsWith("+") || cleanValue.startsWith("-")) {
+  if (stringValue.startsWith("+") || stringValue.startsWith("-")) {
     return Math.max(0, previousValue + num);
   }
 
@@ -297,6 +328,7 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   berrybush: "berries",
   cattle: "cattle",
   oliveoil: "olive_oil",
+  olive_oil: "olive_oil",
   bounty: "bounty",
   // Units - generic
   villager: "villager",
@@ -306,6 +338,7 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   "archer-2": "archer",
   "archer_2": "archer",
   "man-at-arms": "man_at_arms",
+  "man_at_arms": "man_at_arms",
   "man-at-arms-1": "man_at_arms",
   spearman: "spearman",
   "spearman-1": "spearman",
@@ -333,11 +366,13 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   "knight-2": "knight",
   "lancer-3": "lancer",
   "lancer-4": "lancer",
+  lancer: "lancer",
   // Civ-specific units
   ronin_unit: "ronin",
   ronin: "ronin",
   "imperial-official": "imperial_official",
   "imperialofficial": "imperial_official",
+  "imperial_official": "imperial_official",
   "zhuge-nu": "zhuge_nu",
   "zhuge_nu": "zhuge_nu",
   "zhuge-nu-2": "zhuge_nu",
@@ -395,6 +430,9 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   siege_workshop: "siege_workshop",
   "siege-workshop": "siege_workshop",
   farm: "farm",
+  hunting_cabin: "hunting_cabin",
+  hunting_cabin_rus: "hunting_cabin",
+  ger: "ger",
   // Ages
   age_1: "dark_age",
   age_2: "feudal_age",
@@ -404,6 +442,7 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   wheelbarrow: "wheelbarrow",
   "professional-scouts": "professional_scouts",
   "professional_scouts": "professional_scouts",
+  "professional-scout": "professional_scouts",
   horticulture: "horticulture",
   "double-broadaxe": "double_broadaxe",
   "double_broadaxe": "double_broadaxe",
@@ -425,6 +464,9 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   "specialized-pick": "specialized_pick",
   "specialized_pick": "specialized_pick",
   textiles: "textiles",
+  "fresh-foodstuffs": "upgrade",
+  "fresh_foodstuffs": "upgrade",
+  "fresh-foodstuff": "upgrade",
 
   // Technologies - Military
   "iron-undermesh": "iron_undermesh",
@@ -455,6 +497,10 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   "angled_surfaces": "angled_surfaces",
   "master-smiths": "master_smiths",
   "master_smiths": "master_smiths",
+  "boot-camp": "upgrade",
+  "boot_camp": "upgrade",
+  "all-see-eye": "upgrade",
+  "all_see_eye": "upgrade",
 
   // Unit upgrades
   "hardened-spearmen": "hardened_spearmen",
@@ -523,13 +569,6 @@ const AOE4GUIDES_ICON_MAP: Record<string, string> = {
   rally: "rally",
   repair: "repair",
   time: "time",
-  // Techs
-  "fresh-foodstuffs": "upgrade",
-  "fresh_foodstuffs": "upgrade",
-  "boot-camp": "upgrade",
-  "boot_camp": "upgrade",
-  "all-see-eye": "upgrade",
-  "all_see_eye": "upgrade",
 };
 
 /**
@@ -677,7 +716,10 @@ function getReadableIconName(iconName: string): string | null {
   // Check if it contains landmark patterns
   if (lowerName.includes("landmark_") || lowerName.includes("_landmark")) {
     // Convert snake_case to Title Case
-    return iconName.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    return iconName
+      .replace(/landmark_/gi, "")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, c => c.toUpperCase());
   }
 
   return null; // Use icon marker
@@ -702,6 +744,27 @@ const TEXT_TO_ICON_MAP: Array<[RegExp, string]> = [
   [/\bVillager\s+Japanese\b/gi, "[icon:villager]"],
   [/\bVillager\s+Byzantine\b/gi, "[icon:villager]"],
   [/\bVillager\s+Ayyubid\b/gi, "[icon:villager]"],
+  // Common resources
+  [/\b(?:on|to)\s+sheep\b/gi, "[icon:sheep]"],
+  [/\b(?:on|to)\s+wood\b/gi, "[icon:wood]"],
+  [/\b(?:on|to)\s+gold\b/gi, "[icon:gold]"],
+  [/\b(?:on|to)\s+stone\b/gi, "[icon:stone]"],
+  [/\b(?:on|to)\s+berries\b/gi, "[icon:berries]"],
+  // Common units
+  [/\bArcher\b/gi, "[icon:archer]"],
+  [/\bSpearman\b/gi, "[icon:spearman]"],
+  [/\bKnight\b/gi, "[icon:knight]"],
+  [/\bHorseman\b/gi, "[icon:horseman]"],
+  [/\bMan-at-Arms\b/gi, "[icon:man_at_arms]"],
+  [/\bCrossbowman\b/gi, "[icon:crossbowman]"],
+  [/\bHandcannoneer\b/gi, "[icon:handcannoneer]"],
+  // Common buildings
+  [/\bBarracks\b/gi, "[icon:barracks]"],
+  [/\bArchery Range\b/gi, "[icon:archery_range]"],
+  [/\bStable\b/gi, "[icon:stable]"],
+  [/\bBlacksmith\b/gi, "[icon:blacksmith]"],
+  [/\bMarket\b/gi, "[icon:market]"],
+  [/\bTown Center\b/gi, "[icon:town_center]"],
 ];
 
 /**
@@ -754,8 +817,17 @@ function convertHtmlToIconMarkers(html: string): string {
     let iconName = AOE4GUIDES_ICON_MAP[filename];
 
     // If not found, try with parent context
-    if (!iconName && parentFolder === "resource" && filename.startsWith("resource_")) {
+    if (!iconName && (parentFolder === "resource" || parentFolder === "pictures") && filename.startsWith("resource_")) {
       iconName = filename.replace("resource_", "");
+    }
+    
+    // Check for age icons
+    if (!iconName && filename.startsWith("age_")) {
+      const ageNum = filename.replace("age_", "");
+      if (ageNum === "1") iconName = "dark_age";
+      if (ageNum === "2") iconName = "feudal_age";
+      if (ageNum === "3") iconName = "castle_age";
+      if (ageNum === "4") iconName = "imperial_age";
     }
 
     // If we have a mapped icon name, use our marker format
@@ -781,8 +853,12 @@ function convertHtmlToIconMarkers(html: string): string {
       .replace(/\b\w/g, c => c.toUpperCase());
   });
 
-  // Convert <br /> tags to newlines or spaces
-  result = result.replace(/<br\s*\/?>/gi, " | ");
+  // Convert <br /> tags and block elements to newlines or separators
+  result = result.replace(/<(?:br|p|div|li)[^>]*>/gi, " | ");
+  result = result.replace(/<\/(?:p|div|li)>/gi, "");
+  
+  // Remove all other HTML tags
+  result = result.replace(/<[^>]+>/g, "");
 
   // Condense multiple separators (e.g., " | | | " -> " | ")
   result = result.replace(/(\s*\|\s*)+/g, " | ");
@@ -802,7 +878,7 @@ function convertHtmlToIconMarkers(html: string): string {
   // Split concatenated CamelCase words (e.g., "ScoutsSurvival" -> "Scouts Survival")
   // But preserve icon markers by temporarily replacing them
   const iconMarkers: string[] = [];
-  result = result.replace(/\[icon:\w+\]/g, (match) => {
+  result = result.replace(/\[icon:[^\]]+\]/g, (match) => {
     iconMarkers.push(match);
     return `__ICON_${iconMarkers.length - 1}__`;
   });
@@ -812,7 +888,7 @@ function convertHtmlToIconMarkers(html: string): string {
   // Restore icon markers
   result = result.replace(/__ICON_(\d+)__/g, (_, index) => iconMarkers[parseInt(index)]);
 
-  // Convert text mentions of villagers to icon markers
+  // Convert text mentions to icon markers
   for (const [pattern, replacement] of TEXT_TO_ICON_MAP) {
     result = result.replace(pattern, replacement);
   }
@@ -822,8 +898,12 @@ function convertHtmlToIconMarkers(html: string): string {
   result = result.replace(/\]([a-zA-Z0-9])/g, "] $1");
   result = result.replace(/([a-zA-Z0-9])\[/g, "$1 [");
 
-  // Clean up any double spaces that might have been introduced
-  result = result.replace(/\s+/g, " ").trim();
+  // Clean up any double spaces or leading/trailing separators
+  result = result
+    .replace(/\s+/g, " ")
+    .replace(/^\|\s*/, "")
+    .replace(/\s*\|$/, "")
+    .trim();
 
   return result;
 }
@@ -1058,6 +1138,9 @@ export async function importAoe4GuidesBuild(urlOrId: string): Promise<BuildOrder
  */
 async function fetchBuildsWithSort(options: {
   civ?: string;
+  search?: string;
+  strategy?: string;
+  author?: string;
   orderBy: "views" | "upvotes" | "timeCreated";
   order: "desc" | "asc";
 }): Promise<Aoe4GuidesBuildSummary[]> {
@@ -1067,6 +1150,10 @@ async function fetchBuildsWithSort(options: {
     const code = CIVILIZATION_TO_CODE[options.civ] || options.civ.toUpperCase();
     params.set("civ", code);
   }
+
+  if (options.search) params.set("search", options.search);
+  if (options.strategy) params.set("strategy", options.strategy);
+  if (options.author) params.set("author", options.author);
 
   params.set("orderBy", options.orderBy);
   params.set("order", options.order);
@@ -1110,13 +1197,16 @@ async function fetchBuildsWithSort(options: {
  */
 export async function browseAoe4GuidesBuilds(options?: {
   civ?: string; // Civilization code (ENG, FRE, etc.) or full name
+  search?: string;
+  strategy?: string;
+  author?: string;
 }): Promise<Aoe4GuidesBuildSummary[]> {
   // Query with 3 different sort orders in parallel to maximize results
   // Use Promise.allSettled so partial failures don't break everything
   const results = await Promise.allSettled([
-    fetchBuildsWithSort({ civ: options?.civ, orderBy: "views", order: "desc" }),
-    fetchBuildsWithSort({ civ: options?.civ, orderBy: "upvotes", order: "desc" }),
-    fetchBuildsWithSort({ civ: options?.civ, orderBy: "timeCreated", order: "desc" }),
+    fetchBuildsWithSort({ ...options, orderBy: "views", order: "desc" }),
+    fetchBuildsWithSort({ ...options, orderBy: "upvotes", order: "desc" }),
+    fetchBuildsWithSort({ ...options, orderBy: "timeCreated", order: "desc" }),
   ]);
 
   // Collect successful results

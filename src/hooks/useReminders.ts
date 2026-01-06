@@ -57,6 +57,7 @@ export function useReminders() {
   const { speakReminder, isSpeaking } = useTTS();
   const busyCooldownUntil = useRef<number>(0);
   const lastCheckedTimeRef = useRef<number>(-1);
+  const lastSpokenSeconds = useRef<number>(-1);
 
   const reminderStates = useRef<Record<ReminderKey, ReminderState>>({
     villagerQueue: { lastSpoken: 0 },
@@ -84,8 +85,13 @@ export function useReminders() {
   const checkReminders = useCallback(async () => {
     const reminderConfig = getReminderConfig();
     const { isRunning, elapsedSeconds } = useTimerStore.getState();
-    const calmMode = reminderConfig.calmMode ?? { enabled: false, untilSeconds: 180 };
-    const isCalmWindow = calmMode.enabled && elapsedSeconds < calmMode.untilSeconds;
+    
+    // Calm mode: don't annoy the user during the first few minutes of build execution
+    // Default to 180 seconds (3 mins) if not specified
+    const calmModeEnabled = reminderConfig.calmMode?.enabled ?? true;
+    const calmModeUntil = reminderConfig.calmMode?.untilSeconds ?? 180;
+    const isCalmWindow = calmModeEnabled && elapsedSeconds < calmModeUntil;
+    
     const now = Date.now();
 
     // Don't run if reminders are disabled or timer isn't running
@@ -100,15 +106,14 @@ export function useReminders() {
     }
 
     // Loop through all seconds between last checked and current (handles lag/catch-up)
-    // We only evaluate alerts for each second, regular reminders still use intervals.
     let currentT = lastCheckedTimeRef.current + 1;
     while (currentT <= elapsedSeconds) {
-      // Don't speak if TTS is already speaking; add short backoff to reduce contention
-      if (busyCooldownUntil.current > now || isSpeaking()) {
+      // Don't speak if TTS is already speaking OR we already spoke in THIS second
+      if (busyCooldownUntil.current > now || isSpeaking() || lastSpokenSeconds.current === currentT) {
         if (isSpeaking()) {
           busyCooldownUntil.current = now + BUSY_COOLDOWN_MS;
         }
-        break; // Stop catch-up loop if we can't speak - will resume from currentT next tick
+        break; 
       }
 
       let spokenInThisSecond = false;
@@ -130,20 +135,21 @@ export function useReminders() {
 
             if (
               alertTime !== null &&
-              currentT === alertTime && // Check EXACTLY the alert time
+              currentT === alertTime && 
               !matchupAlertState.current.spokenAlerts.has(alertId)
             ) {
               await speakReminder(alert.message);
               matchupAlertState.current.spokenAlerts.add(alertId);
+              lastSpokenSeconds.current = currentT;
               busyCooldownUntil.current = Date.now() + BUSY_COOLDOWN_MS;
               spokenInThisSecond = true;
-              break; // One alert per second max
+              break; 
             }
           }
         }
       }
 
-      // Sacred Site Alerts (one-time, time-based)
+      // Sacred Site Alerts
       if (!spokenInThisSecond && reminderConfig.sacredSites?.enabled) {
         // 4:30 - Warning
         if (
@@ -152,6 +158,7 @@ export function useReminders() {
         ) {
           await speakReminder("Sacred sites spawn in 30 seconds");
           sacredSiteState.current.spawnWarningSpoken = true;
+          lastSpokenSeconds.current = currentT;
           busyCooldownUntil.current = Date.now() + BUSY_COOLDOWN_MS;
           spokenInThisSecond = true;
         }
@@ -164,20 +171,20 @@ export function useReminders() {
         ) {
           await speakReminder("Sacred sites are active!");
           sacredSiteState.current.activeSpoken = true;
+          lastSpokenSeconds.current = currentT;
           busyCooldownUntil.current = Date.now() + BUSY_COOLDOWN_MS;
           spokenInThisSecond = true;
         }
       }
 
       currentT++;
-      if (spokenInThisSecond) break; // If we spoke, stop loop to avoid overlapping speech
+      if (spokenInThisSecond) break; 
     }
 
     lastCheckedTimeRef.current = currentT - 1;
 
-    // Regular interval-based reminders (processed ONCE per checkReminders call, not in loop)
-    // Don't speak if loop above already triggered something
-    if (busyCooldownUntil.current > now || isSpeaking()) {
+    // Regular interval-based reminders
+    if (busyCooldownUntil.current > now || isSpeaking() || lastSpokenSeconds.current === elapsedSeconds) {
       return;
     }
 
@@ -193,19 +200,20 @@ export function useReminders() {
     for (const key of reminderKeys) {
       const itemConfig = reminderConfig[key];
       if (!itemConfig?.enabled) continue;
-      if (isCalmWindow && (key === "military" || key === "mapControl" || key === "macroCheck")) {
-        continue; // hold off on non-critical reminders during calm window
+      
+      // During calm window, only allow the most critical reminders
+      if (isCalmWindow && (key !== "villagerQueue" && key !== "scout")) {
+        continue; 
       }
 
       const state = reminderStates.current[key];
       const intervalMs = itemConfig.intervalSeconds * 1000;
 
       if (now - state.lastSpoken >= intervalMs) {
-        // Speak the reminder
         await speakReminder(REMINDER_MESSAGES[key], REMINDER_SOUNDS[key]);
         reminderStates.current[key].lastSpoken = now;
+        lastSpokenSeconds.current = elapsedSeconds;
         busyCooldownUntil.current = Date.now() + BUSY_COOLDOWN_MS;
-        // Only speak one reminder per interval check
         break;
       }
     }

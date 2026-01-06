@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useWindowDrag, useAutoResize, useTimer } from "@/hooks";
+import { useAutoResize, useTimer } from "@/hooks";
 import {
   useOpacity,
   useConfigStore,
@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { CompactHeader, CompactStepContent } from "./compact";
 
 export function CompactOverlay() {
-  const { startDrag } = useWindowDrag();
   const opacity = useOpacity();
   const { config, updateConfig } = useConfigStore();
   const { currentStepIndex, nextStep, previousStep } = useBuildOrderStore();
@@ -92,7 +91,6 @@ export function CompactOverlay() {
           updateConfig={updateConfig}
           buildOrderName={currentBuildOrder?.name}
           activeBranchName={activeBranchName}
-          startDrag={startDrag}
         />
 
         {currentStep ? (
