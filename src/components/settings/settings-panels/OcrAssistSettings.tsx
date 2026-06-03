@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useConfigStore, useOcrAssistStore } from "@/stores";
-import { saveConfig } from "@/lib/tauri";
+import { saveConfig, setContentProtection } from "@/lib/tauri";
 import { DEFAULT_OCR_ASSIST_CONFIG, type OcrAssistConfig } from "@/types";
 
 export function OcrAssistSettings() {
@@ -25,6 +25,18 @@ export function OcrAssistSettings() {
     await persist(next);
     setStatus(enabled ? "calibrating" : "off");
     if (!enabled) reset();
+
+    // OCR screenshots the screen, so protect the overlay from capture the moment
+    // OCR turns on — otherwise it would read its own pixels. We don't auto-disable
+    // protection when OCR is turned off (the user may still want it for streaming).
+    if (enabled && !config.content_protection) {
+      updateConfig({ content_protection: true });
+      try {
+        await setContentProtection(true);
+      } catch (error) {
+        console.error("Failed to enable content protection for OCR:", error);
+      }
+    }
   };
 
   const updateNumber = async (
@@ -59,6 +71,7 @@ export function OcrAssistSettings() {
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
             Experimental and read-only. OCR hints can surface age/resource/population signals, but they never auto-advance steps.
+            Enabling OCR also turns on “Hide from screen capture” so the overlay never reads its own pixels.
           </span>
         </div>
 

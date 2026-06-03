@@ -9,7 +9,10 @@
 
 use tauri::Manager;
 use windows::Win32::Foundation::{COLORREF, HWND};
-use windows::Win32::UI::WindowsAndMessaging::{SetLayeredWindowAttributes, LWA_ALPHA};
+use windows::Win32::UI::WindowsAndMessaging::{
+    SetLayeredWindowAttributes, SetWindowDisplayAffinity, LWA_ALPHA, WDA_EXCLUDEFROMCAPTURE,
+    WDA_NONE,
+};
 
 /// Forces the layered window alpha to 255 (fully opaque).
 ///
@@ -36,6 +39,26 @@ pub fn force_layered_alpha_opaque(window: &tauri::WebviewWindow) {
             }
         },
         Err(e) => eprintln!("[Windows] Failed to get HWND for overlay window: {}", e),
+    }
+}
+
+/// Excludes (or re-includes) the overlay from screen capture.
+///
+/// When enabled we set `WDA_EXCLUDEFROMCAPTURE`, which makes the window invisible
+/// to screen recorders, share/meeting sessions, and — crucially — to our own OCR
+/// screenshots, so the overlay never captures itself. `WDA_EXCLUDEFROMCAPTURE`
+/// needs Windows 10 2004+; on older builds `SetWindowDisplayAffinity` returns an
+/// error which we surface to the caller. Passing `false` restores `WDA_NONE`.
+pub fn set_content_protection(window: &tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
+    let hwnd = window.hwnd().map_err(|e| e.to_string())?;
+    let affinity = if enabled {
+        WDA_EXCLUDEFROMCAPTURE
+    } else {
+        WDA_NONE
+    };
+    unsafe {
+        let raw_hwnd = HWND(hwnd.0 as isize as *mut std::ffi::c_void);
+        SetWindowDisplayAffinity(raw_hwnd, affinity).map_err(|e| e.to_string())
     }
 }
 

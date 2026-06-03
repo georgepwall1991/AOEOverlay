@@ -4,6 +4,8 @@ import {
   isRectVisible,
   clampOntoMonitor,
   keepOnScreen,
+  inferCorner,
+  anchorResize,
   type Rect,
 } from "./windowBounds";
 
@@ -101,6 +103,71 @@ describe("windowBounds", () => {
       // On the right monitor, right edge 3600 + 500 = 4100 > 3840 -> x = 3340
       const rect: Rect = { x: 3600, y: 100, width: 500, height: 600 };
       expect(keepOnScreen(rect, RIGHT)).toEqual({ x: 3340, y: 100 });
+    });
+  });
+
+  describe("inferCorner", () => {
+    it("anchors a top-left window to its top-left corner", () => {
+      expect(inferCorner({ x: 50, y: 50, width: 500, height: 600 }, FHD)).toBe("top-left");
+    });
+
+    it("anchors a top-right window to its top-right corner", () => {
+      expect(inferCorner({ x: 1400, y: 50, width: 500, height: 600 }, FHD)).toBe("top-right");
+    });
+
+    it("anchors a bottom-left window to its bottom-left corner", () => {
+      expect(inferCorner({ x: 50, y: 500, width: 500, height: 500 }, FHD)).toBe("bottom-left");
+    });
+
+    it("anchors a bottom-right window to its bottom-right corner", () => {
+      expect(inferCorner({ x: 1400, y: 600, width: 500, height: 400 }, FHD)).toBe("bottom-right");
+    });
+
+    it("resolves a dead-centered window to top-left", () => {
+      // Center exactly on the monitor center (960, 540)
+      expect(inferCorner({ x: 710, y: 240, width: 500, height: 600 }, FHD)).toBe("top-left");
+    });
+
+    it("uses the window's own monitor coordinate space", () => {
+      // Right monitor center is 2880; this window's center (3490) is to its right.
+      expect(inferCorner({ x: 3300, y: 50, width: 380, height: 600 }, RIGHT)).toBe("top-right");
+    });
+  });
+
+  describe("anchorResize", () => {
+    it("keeps the top-left fixed when shrinking a top-left overlay", () => {
+      const before: Rect = { x: 100, y: 100, width: 500, height: 600 };
+      expect(anchorResize(before, { width: 400, height: 450 }, "top-left", FHD)).toEqual({ x: 100, y: 100 });
+    });
+
+    it("holds the right edge when a top-right overlay shrinks (closes the gap)", () => {
+      // right edge = 1000 + 500 = 1500; after shrink to 400 wide, x = 1500 - 400 = 1100
+      const before: Rect = { x: 1000, y: 100, width: 500, height: 600 };
+      expect(anchorResize(before, { width: 400, height: 600 }, "top-right", FHD)).toEqual({ x: 1100, y: 100 });
+    });
+
+    it("holds the right edge when a top-right overlay grows", () => {
+      // right edge 1500 stays; growing to 700 wide pushes x left to 800
+      const before: Rect = { x: 1000, y: 100, width: 500, height: 600 };
+      expect(anchorResize(before, { width: 700, height: 600 }, "top-right", FHD)).toEqual({ x: 800, y: 100 });
+    });
+
+    it("holds the bottom-right corner for a bottom-right overlay", () => {
+      // corner = (1500, 1000); shrink to 400x400 -> x=1100, y=600
+      const before: Rect = { x: 1000, y: 400, width: 500, height: 600 };
+      expect(anchorResize(before, { width: 400, height: 400 }, "bottom-right", FHD)).toEqual({ x: 1100, y: 600 });
+    });
+
+    it("holds the bottom edge for a bottom-left overlay", () => {
+      // bottom = 1000; shrink height to 400 -> y = 600, x stays 100
+      const before: Rect = { x: 100, y: 400, width: 500, height: 600 };
+      expect(anchorResize(before, { width: 500, height: 400 }, "bottom-left", FHD)).toEqual({ x: 100, y: 600 });
+    });
+
+    it("clamps back on-screen when holding an edge would push it off", () => {
+      // Right-anchored growth wider than the monitor would put x negative; clamp to 0.
+      const before: Rect = { x: 0, y: 100, width: 1900, height: 600 };
+      expect(anchorResize(before, { width: 2000, height: 600 }, "top-right", FHD)).toEqual({ x: 0, y: 100 });
     });
   });
 });

@@ -107,7 +107,7 @@ fn register_single_hotkey<R: Runtime>(
         println!("[Hotkeys] Registering {} -> {}", key_str, event_name);
 
         let app_handle = app.clone();
-        let target_shortcut = shortcut.clone(); // Capture the specific shortcut for this handler
+        let target_shortcut = shortcut; // Capture the specific shortcut for this handler (Shortcut is Copy)
 
         app.global_shortcut()
             .on_shortcut(shortcut, move |app, triggered_shortcut, event| {

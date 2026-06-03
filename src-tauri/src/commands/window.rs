@@ -109,6 +109,17 @@ pub fn recreate_overlay_window(app: AppHandle) -> Result<(), String> {
     {
         crate::windows::force_layered_alpha_opaque(&window);
         let _ = window.set_focus();
+
+        // The rebuilt window starts capturable; restore the saved preference.
+        let protect = app
+            .state::<crate::state::AppState>()
+            .config
+            .lock()
+            .map(|c| c.content_protection)
+            .unwrap_or(false);
+        if protect {
+            let _ = crate::windows::set_content_protection(&window, true);
+        }
     }
 
     Ok(())

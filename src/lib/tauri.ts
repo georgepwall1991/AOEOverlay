@@ -383,6 +383,17 @@ export async function toggleCompactMode(): Promise<boolean> {
   return invoke<boolean>("toggle_compact_mode");
 }
 
+// Exclude the overlay from screen capture (streams, share sessions, OCR).
+// Persists the setting and applies it natively to the overlay window.
+export async function setContentProtection(enabled: boolean): Promise<void> {
+  if (IS_MOCK) {
+    const config = await getConfig();
+    await saveConfig({ ...config, content_protection: enabled });
+    return;
+  }
+  return invoke("set_content_protection", { enabled });
+}
+
 // Monitor queries (used to keep the overlay on a visible screen). Mock-safe.
 export async function getAvailableMonitors(): Promise<Monitor[]> {
   if (IS_MOCK) return [];

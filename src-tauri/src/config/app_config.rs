@@ -24,6 +24,10 @@ pub struct AppConfig {
     pub compact_mode: bool,
     #[serde(default)]
     pub coach_only_mode: bool,
+    /// Exclude the overlay from screen capture (streams, share sessions, and our
+    /// own OCR capture) via `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`.
+    #[serde(default)]
+    pub content_protection: bool,
     pub auto_advance: AutoAdvanceConfig,
     pub filter_civilization: Option<String>,
     pub filter_difficulty: Option<String>,
@@ -395,6 +399,7 @@ impl Default for AppConfig {
             click_through: false,
             compact_mode: false,
             coach_only_mode: false,
+            content_protection: false,
             auto_advance: AutoAdvanceConfig {
                 enabled: false,
                 delay_seconds: 0,

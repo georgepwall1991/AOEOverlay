@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import { getCurrentWindow, LogicalSize, getCurrentMonitor, setWindowPosition } from "@/lib/tauri";
-import { keepOnScreen, monitorToBounds } from "@/lib/windowBounds";
+import { anchorResize, inferCorner, monitorToBounds, type Rect } from "@/lib/windowBounds";
 
 // Window interface with setSize accepting LogicalSize
 interface ResizableWindow {
@@ -10,20 +10,22 @@ interface ResizableWindow {
 }
 
 /**
- * After a resize, nudge the window inward if it now spills past the right/bottom
- * edge of its monitor, so the overlay anchors to the nearest edge instead of
- * creeping off-screen as build-order steps grow/shrink. No-op in mock/test.
+ * After a resize, hold the overlay's anchored corner fixed — inferred from which
+ * corner of the monitor the window sits in. A top-right overlay grows leftward
+ * and shrinks back toward the top-right instead of leaving a gap; the result is
+ * still clamped on-screen. `before` is the window rect captured before the
+ * resize. No-op in mock/test, where physical position/size aren't available.
  */
-async function anchorOnScreen(win: ResizableWindow) {
+async function reanchorAfterResize(win: ResizableWindow, before: Rect | null) {
+  if (!before || !win.outerPosition || !win.outerSize) return;
   const monitor = await getCurrentMonitor();
-  if (!monitor || !win.outerPosition || !win.outerSize) return;
-  const pos = await win.outerPosition();
-  const size = await win.outerSize();
-  const next = keepOnScreen(
-    { x: pos.x, y: pos.y, width: size.width, height: size.height },
-    monitorToBounds(monitor)
-  );
-  if (next.x !== pos.x || next.y !== pos.y) {
+  if (!monitor) return;
+  const newSize = await win.outerSize();
+  const bounds = monitorToBounds(monitor);
+  const corner = inferCorner(before, bounds);
+  const next = anchorResize(before, newSize, corner, bounds);
+  const cur = await win.outerPosition();
+  if (next.x !== cur.x || next.y !== cur.y) {
     await setWindowPosition(next.x, next.y);
   }
 }
@@ -54,8 +56,18 @@ export function useAutoResize() {
 
       try {
         const win = getCurrentWindow() as ResizableWindow;
+
+        // Capture the pre-resize rect (physical px) so the anchored corner can
+        // stay put once the new size is applied.
+        let before: Rect | null = null;
+        if (win.outerPosition && win.outerSize) {
+          const p = await win.outerPosition();
+          const s = await win.outerSize();
+          before = { x: p.x, y: p.y, width: s.width, height: s.height };
+        }
+
         await win.setSize(new LogicalSize(newWidth, newHeight));
-        await anchorOnScreen(win);
+        await reanchorAfterResize(win, before);
       } catch (e) {
         console.error("Failed to resize window:", e);
       }

@@ -71,7 +71,7 @@ fn foreground_process() -> Option<(u32, String)> {
 
         let full_path = String::from_utf16_lossy(&buf[..len as usize]);
         let basename = full_path
-            .rsplit(|c| c == '\\' || c == '/')
+            .rsplit(['\\', '/'])
             .next()
             .unwrap_or(&full_path)
             .to_string();
@@ -235,11 +235,7 @@ mod tests {
     fn test_basename_extraction_matches_game() {
         // Simulate what foreground_process() builds from a full image path.
         let full = "C:\\Program Files\\Age of Empires IV\\RelicCardinal.exe";
-        let basename = full
-            .rsplit(|c| c == '\\' || c == '/')
-            .next()
-            .unwrap()
-            .to_string();
+        let basename = full.rsplit(['\\', '/']).next().unwrap().to_string();
         assert_eq!(basename, "RelicCardinal.exe");
         assert!(basename.eq_ignore_ascii_case("reliccardinal.exe"));
     }
@@ -247,11 +243,7 @@ mod tests {
     #[test]
     fn test_basename_extraction_unix_separator() {
         let full = "/mnt/games/RelicCardinal.exe";
-        let basename = full
-            .rsplit(|c| c == '\\' || c == '/')
-            .next()
-            .unwrap()
-            .to_string();
+        let basename = full.rsplit(['\\', '/']).next().unwrap().to_string();
         assert_eq!(basename, "RelicCardinal.exe");
     }
 }

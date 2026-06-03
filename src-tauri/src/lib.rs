@@ -1,4 +1,6 @@
 use std::sync::Mutex;
+#[cfg(target_os = "windows")]
+use tauri::Manager;
 
 mod audio;
 mod commands;
@@ -50,6 +52,24 @@ pub fn run() {
                 // Watch the foreground window so the overlay auto-shows in-game
                 // and hides the moment you alt-tab away.
                 windows::start_game_detection(app.handle().clone());
+
+                // Re-apply saved content protection — a freshly created window
+                // starts capturable (WDA_NONE) regardless of the stored setting.
+                let protect = app
+                    .state::<AppState>()
+                    .config
+                    .lock()
+                    .map(|c| c.content_protection)
+                    .unwrap_or(false);
+                if protect {
+                    if let Some(window) = app.get_webview_window("overlay") {
+                        if let Err(e) = windows::set_content_protection(&window, true) {
+                            eprintln!(
+                                "[Windows] Failed to apply content protection at startup: {e}"
+                            );
+                        }
+                    }
+                }
             }
 
             Ok(())
@@ -72,6 +92,7 @@ pub fn run() {
             set_click_through,
             toggle_click_through,
             toggle_compact_mode,
+            set_content_protection,
             get_game_detection_state,
             set_overlay_visible,
             import_build_order,

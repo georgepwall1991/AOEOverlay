@@ -34,7 +34,7 @@ mod tests {
 
         // Verify we can lock and access the config
         let config = state.config.lock().unwrap();
-        assert!(config.hotkeys.toggle_overlay.len() > 0);
+        assert!(!config.hotkeys.toggle_overlay.is_empty());
     }
 
     #[test]

@@ -158,6 +158,7 @@ export interface AppConfig {
   click_through: boolean;
   compact_mode: boolean;
   coach_only_mode?: boolean;
+  content_protection?: boolean; // Exclude the overlay from screen capture (streams + OCR)
   auto_advance: AutoAdvanceConfig;
   filter_civilization?: string;
   filter_difficulty?: string;
@@ -286,6 +287,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   click_through: false,
   compact_mode: false, // Default to expanded mode (more info visible)
   coach_only_mode: false,
+  content_protection: false, // Visible to capture by default; opt in for streaming/OCR
   auto_advance: {
     enabled: false,
     delay_seconds: 0,

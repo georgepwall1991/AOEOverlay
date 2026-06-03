@@ -258,7 +258,8 @@ mod tests {
     #[test]
     fn test_macos_wpm_negative_rate() {
         // Negative rate produces negative WPM (unlikely in practice but test math)
-        let negative_wpm = (-1.0_f32 * 200.0) as i32;
+        let rate = -1.0_f32;
+        let negative_wpm = (rate * 200.0) as i32;
         assert_eq!(negative_wpm, -200);
     }
 

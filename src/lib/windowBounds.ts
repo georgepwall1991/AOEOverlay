@@ -92,6 +92,52 @@ export function keepOnScreen(rect: Rect, monitor: Rect): { x: number; y: number 
   return { x: Math.round(x), y: Math.round(y) };
 }
 
+/** Which corner of the overlay stays put as it resizes. */
+export type OverlayCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+/**
+ * Infers the anchored corner from where a window currently sits on its monitor:
+ * the monitor half its center falls in picks the horizontal/vertical edges to
+ * hold. A window in the top-right of the screen anchors its top-right corner, so
+ * it grows leftward/downward and — crucially — shrinks back toward that corner
+ * instead of leaving a gap. Dead-center resolves to top-left (the app's default
+ * top-anchored feel).
+ */
+export function inferCorner(rect: Rect, monitor: Rect): OverlayCorner {
+  const centerX = rect.x + rect.width / 2;
+  const centerY = rect.y + rect.height / 2;
+  const right = centerX > monitor.x + monitor.width / 2;
+  const bottom = centerY > monitor.y + monitor.height / 2;
+  if (bottom) return right ? "bottom-right" : "bottom-left";
+  return right ? "top-right" : "top-left";
+}
+
+/**
+ * Repositions a resized window so the chosen `anchor` corner stays fixed in both
+ * directions. `before` is the window rect *prior* to the resize; `newSize` is its
+ * size *after* it. The named corner of `before` is held constant (right-anchored
+ * corners keep the right edge, bottom-anchored ones keep the bottom edge), then
+ * the result is clamped onto `monitor` so the window never leaves the screen.
+ *
+ * This closes the "shrink gap": a top-right overlay that loses build-order steps
+ * keeps hugging the top-right corner instead of stranding empty space to its right.
+ */
+export function anchorResize(
+  before: Rect,
+  newSize: { width: number; height: number },
+  anchor: OverlayCorner,
+  monitor: Rect
+): { x: number; y: number } {
+  const right = before.x + before.width;
+  const bottom = before.y + before.height;
+
+  const x = anchor === "top-right" || anchor === "bottom-right" ? right - newSize.width : before.x;
+  const y = anchor === "bottom-left" || anchor === "bottom-right" ? bottom - newSize.height : before.y;
+
+  // Final safety: keep the (possibly grown) window on the monitor.
+  return keepOnScreen({ x, y, width: newSize.width, height: newSize.height }, monitor);
+}
+
 function clamp(value: number, min: number, max: number): number {
   if (max < min) return min;
   return Math.min(Math.max(value, min), max);

@@ -56,6 +56,49 @@ pub fn toggle_compact_mode(app: AppHandle, state: State<AppState>) -> Result<boo
     toggle_config_bool(&state, &app, |c| &mut c.compact_mode)
 }
 
+/// Applies content protection (exclude-from-capture) to a live overlay window.
+/// Uses the native `WDA_EXCLUDEFROMCAPTURE` path on Windows and Tauri's
+/// cross-platform `set_content_protected` elsewhere.
+fn apply_content_protection(window: &tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        crate::windows::set_content_protection(window, enabled)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        window
+            .set_content_protected(enabled)
+            .map_err(|e| e.to_string())
+    }
+}
+
+/// Enables/disables content protection so the overlay is hidden from screen
+/// capture (streams, share sessions, and our own OCR screenshots). Persists the
+/// choice to config, broadcasts it, and applies it to the live overlay window.
+#[tauri::command]
+pub fn set_content_protection(
+    app: AppHandle,
+    state: State<AppState>,
+    enabled: bool,
+) -> Result<(), String> {
+    // Persist + broadcast so both windows stay in sync.
+    {
+        let mut config = state.config.lock().map_err(|e| e.to_string())?;
+        config.content_protection = enabled;
+        let config_path = get_config_path();
+        let json = serde_json::to_string_pretty(&*config).map_err(|e| e.to_string())?;
+        atomic_write(&config_path, json).map_err(|e| e.to_string())?;
+        app.emit(CONFIG_CHANGED_EVENT, &*config)
+            .map_err(|e| e.to_string())?;
+    }
+
+    // Apply to the live overlay window.
+    if let Some(window) = app.get_webview_window("overlay") {
+        apply_content_protection(&window, enabled)?;
+    }
+    Ok(())
+}
+
 /// Snapshot of the foreground game-detection state, for the UI to sync on mount.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]

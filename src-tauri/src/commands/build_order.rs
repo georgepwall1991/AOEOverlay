@@ -185,8 +185,8 @@ mod tests {
 
     #[test]
     fn test_max_import_size_is_reasonable() {
-        assert!(MAX_IMPORT_SIZE >= 1024);
-        assert!(MAX_IMPORT_SIZE <= 10 * 1024 * 1024);
+        const { assert!(MAX_IMPORT_SIZE >= 1024) };
+        const { assert!(MAX_IMPORT_SIZE <= 10 * 1024 * 1024) };
     }
 
     #[test]

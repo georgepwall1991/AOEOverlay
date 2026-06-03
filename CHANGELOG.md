@@ -5,6 +5,35 @@ All notable changes to the AoE4 Overlay are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-06-03
+
+### Added
+
+- **Hide overlay from screen capture.** A new **Settings → Gameplay → Hide from
+  screen capture** toggle keeps the overlay out of screen recordings, stream and
+  meeting share sessions, and screenshots — you still see it on your own screen,
+  but viewers and capture tools don't. Built on Windows'
+  `SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)`. Enabling **OCR Assist** turns
+  it on automatically so OCR never reads the overlay's own pixels. Requires
+  Windows 10 version 2004 or newer.
+
+### Changed
+
+- **True corner-anchored positioning.** As build-order steps appear and disappear
+  and the overlay resizes, it now holds whichever corner it's docked to — inferred
+  from where it sits on the monitor — fixed in both directions. A top-right overlay
+  keeps hugging the top-right corner instead of leaving a gap to its right when it
+  shrinks, while still clamping itself fully on-screen.
+
+### Technical
+
+- New native `set_content_protection` helper and Tauri command, re-applied on
+  startup and after window recreation; `content_protection` added to the app config.
+- New `inferCorner` / `anchorResize` geometry helpers in `src/lib/windowBounds.ts`,
+  wired into `useAutoResize`, with 12 new unit tests.
+- Cleared all `cargo clippy` lints — now clean on `--all-targets`.
+- 154 Rust tests and 930 frontend tests passing.
+
 ## [1.6.0] - 2026-06-03
 
 ### Added
@@ -48,5 +77,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced build orders, expanded hotkey support, and build-order icon rendering.
 - RTS Builds import support, plus AoE4World and AoE4 Guides imports.
 
+[1.7.0]: https://github.com/georgepwall1991/AOEOverlay/releases/tag/v1.7.0
 [1.6.0]: https://github.com/georgepwall1991/AOEOverlay/releases/tag/v1.6.0
 [1.5.0]: https://github.com/georgepwall1991/AOEOverlay/releases/tag/v1.5.0

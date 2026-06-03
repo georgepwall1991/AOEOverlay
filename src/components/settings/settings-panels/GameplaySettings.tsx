@@ -3,7 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Gamepad2, Timer } from "lucide-react";
 import { useConfigStore } from "@/stores";
-import { saveConfig, toggleClickThrough, toggleCompactMode } from "@/lib/tauri";
+import { saveConfig, toggleClickThrough, toggleCompactMode, setContentProtection } from "@/lib/tauri";
 import { DEFAULT_TIMER_DRIFT_CONFIG, DEFAULT_GAME_DETECTION_CONFIG } from "@/types";
 import type { TimerDriftConfig } from "@/types";
 
@@ -25,6 +25,17 @@ export function GameplaySettings() {
       updateConfig({ compact_mode: newState });
     } catch (error) {
       console.error("Failed to toggle compact mode:", error);
+    }
+  };
+
+  const handleContentProtectionToggle = async () => {
+    const next = !config.content_protection;
+    updateConfig({ content_protection: next });
+    try {
+      // The Rust command persists, broadcasts, and applies it to the window.
+      await setContentProtection(next);
+    } catch (error) {
+      console.error("Failed to toggle content protection:", error);
     }
   };
 
@@ -121,6 +132,23 @@ export function GameplaySettings() {
               id="click-through"
               checked={config.click_through}
               onCheckedChange={handleClickThroughToggle}
+            />
+          </div>
+
+          {/* Content Protection (hide from screen capture) */}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label htmlFor="content-protection">Hide from screen capture</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Keep the overlay out of screen recordings, stream/share sessions,
+                and OCR screenshots — you still see it, viewers and capture tools
+                don't. Recommended for streamers. Requires Windows 10 (2004+).
+              </p>
+            </div>
+            <Switch
+              id="content-protection"
+              checked={config.content_protection ?? false}
+              onCheckedChange={handleContentProtectionToggle}
             />
           </div>
 

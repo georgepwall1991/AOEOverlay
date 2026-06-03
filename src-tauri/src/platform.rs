@@ -1,4 +1,4 @@
-/// Platform-specific utilities shared across modules.
+//! Platform-specific utilities shared across modules.
 
 /// Escapes a string for safe use in PowerShell single-quoted strings.
 /// Handles special characters that could cause command injection or parsing issues.
