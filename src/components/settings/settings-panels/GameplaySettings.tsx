@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Gamepad2, Timer } from "lucide-react";
 import { useConfigStore } from "@/stores";
 import { saveConfig, toggleClickThrough, toggleCompactMode } from "@/lib/tauri";
-import { DEFAULT_TIMER_DRIFT_CONFIG } from "@/types";
+import { DEFAULT_TIMER_DRIFT_CONFIG, DEFAULT_GAME_DETECTION_CONFIG } from "@/types";
 import type { TimerDriftConfig } from "@/types";
 
 export function GameplaySettings() {
@@ -55,6 +55,23 @@ export function GameplaySettings() {
     }
   };
 
+  const gameDetectionConfig = config.gameDetection ?? DEFAULT_GAME_DETECTION_CONFIG;
+
+  const handleGameDetectionToggle = async () => {
+    const newConfig = {
+      ...gameDetectionConfig,
+      enabled: !gameDetectionConfig.enabled,
+      // Keep auto-hide coupled to the master toggle for a one-switch experience.
+      autoHide: !gameDetectionConfig.enabled,
+    };
+    updateConfig({ gameDetection: newConfig });
+    try {
+      await saveConfig({ ...config, gameDetection: newConfig });
+    } catch (error) {
+      console.error("Failed to save game detection config:", error);
+    }
+  };
+
   const timerDriftConfig = config.timerDrift ?? DEFAULT_TIMER_DRIFT_CONFIG;
 
   const handleTimerDriftToggle = async () => {
@@ -80,6 +97,23 @@ export function GameplaySettings() {
         </h2>
 
         <div className="space-y-3">
+          {/* Auto Show/Hide with the game (foreground detection) */}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label htmlFor="game-detection">Auto-hide when not in game</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Show the overlay only while Age of Empires IV is the active window,
+                and hide it the instant you alt-tab away. Stays visible until the
+                game is detected the first time.
+              </p>
+            </div>
+            <Switch
+              id="game-detection"
+              checked={gameDetectionConfig.enabled}
+              onCheckedChange={handleGameDetectionToggle}
+            />
+          </div>
+
           {/* Click-Through Mode */}
           <div className="flex items-center justify-between">
             <Label htmlFor="click-through">Click-Through Mode</Label>

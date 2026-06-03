@@ -115,6 +115,13 @@ export interface TelemetryConfig {
   maxEvents: number;
 }
 
+export interface GameDetectionConfig {
+  enabled: boolean; // Auto show/hide the overlay based on the foreground window
+  autoHide: boolean; // Hide the overlay when the game is not focused
+  processNames: string[]; // Executable basenames that count as "the game"
+  pollIntervalMs: number; // Foreground poll cadence (ms)
+}
+
 export interface MetronomeConfig {
   enabled: boolean;
   intervalSeconds: number;
@@ -165,6 +172,7 @@ export interface AppConfig {
   coach_pack?: CoachPackConfig;
   ocrAssist?: OcrAssistConfig;
   streamOverlay?: StreamOverlayConfig;
+  gameDetection?: GameDetectionConfig;
   show_clock?: boolean;
 }
 
@@ -245,6 +253,13 @@ export const DEFAULT_STREAM_OVERLAY_CONFIG: StreamOverlayConfig = {
   transparentBackground: true,
 };
 
+export const DEFAULT_GAME_DETECTION_CONFIG: GameDetectionConfig = {
+  enabled: true,
+  autoHide: true,
+  processNames: ["RelicCardinal.exe"],
+  pollIntervalMs: 700,
+};
+
 export const DEFAULT_CONFIG: AppConfig = {
   overlay_opacity: 0.95,
   ui_scale: 1,
@@ -286,5 +301,6 @@ export const DEFAULT_CONFIG: AppConfig = {
   coach_pack: DEFAULT_COACH_PACK_CONFIG,
   ocrAssist: DEFAULT_OCR_ASSIST_CONFIG,
   streamOverlay: DEFAULT_STREAM_OVERLAY_CONFIG,
+  gameDetection: DEFAULT_GAME_DETECTION_CONFIG,
   show_clock: true,
 };

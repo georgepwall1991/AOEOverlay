@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useConfigStore } from "@/stores";
-import { getCurrentWindow, getWindowSize, setWindowSize, getWindowPosition, setWindowPosition, saveConfig, listen } from "@/lib/tauri";
+import { getCurrentWindow, getWindowSize, setWindowSize, getWindowPosition, setWindowPosition, saveConfig, listen, getAvailableMonitors, getPrimaryMonitor } from "@/lib/tauri";
+import { monitorToBounds, isRectVisible, clampOntoMonitor } from "@/lib/windowBounds";
 
 export function useWindowSize() {
   const { config, updateConfig, isLoading } = useConfigStore();
@@ -24,6 +25,27 @@ export function useWindowSize() {
         // Restore position
         if (config.window_position) {
           await setWindowPosition(config.window_position.x, config.window_position.y);
+        }
+
+        // Safety: if the saved position lands on a disconnected/changed monitor,
+        // pull the overlay back onto a visible screen so it isn't lost off-screen.
+        const monitors = await getAvailableMonitors();
+        if (monitors.length > 0) {
+          const size = await getWindowSize();
+          const pos = await getWindowPosition();
+          const rect = { x: pos.x, y: pos.y, width: size.width, height: size.height };
+          const bounds = monitors.map(monitorToBounds);
+
+          if (!isRectVisible(rect, bounds)) {
+            const primary = await getPrimaryMonitor();
+            const target = primary ? monitorToBounds(primary) : bounds[0];
+            const safe = clampOntoMonitor(rect, target);
+            await setWindowPosition(safe.x, safe.y);
+            // Read the latest config from the store (avoids stale-closure deps).
+            const store = useConfigStore.getState();
+            store.updateConfig({ window_position: safe });
+            await saveConfig({ ...store.config, window_position: safe });
+          }
         }
       } catch (error) {
         console.error("Failed to restore window state:", error);

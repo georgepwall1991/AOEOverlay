@@ -10,3 +10,4 @@ export * from "./sessionStore";
 export * from "./eventLogStore";
 export * from "./matchupStore";
 export * from "./metronomeStore";
+export * from "./gameStore";

@@ -17,3 +17,4 @@ export * from "./useReminders";
 export * from "./useMetronome";
 export * from "./useHotkeyListener";
 export * from "./useBuildOrderDialogs";
+export * from "./useGameDetection";

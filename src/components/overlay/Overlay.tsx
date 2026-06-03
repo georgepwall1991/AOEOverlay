@@ -1,6 +1,6 @@
 import { GripVertical, Settings } from "lucide-react";
 import { useAutoResize, useTimer, useBuildOrderSync, useClickThroughUndo } from "@/hooks";
-import { useOpacity, useConfigStore, useCurrentStep, useCurrentBuildOrder } from "@/stores";
+import { useOpacity, useConfigStore, useCurrentStep, useCurrentBuildOrder, useGameStore } from "@/stores";
 import { BuildOrderDisplay } from "./build-display/BuildOrderDisplay";
 import { BuildSelectorDropdown } from "./build-display/BuildSelectorDropdown";
 import { CompactOverlay } from "./CompactOverlay";
@@ -29,6 +29,7 @@ export function Overlay() {
   const currentStep = useCurrentStep();
   const { isRunning } = useTimer();
   const { toggleWithUndo, undoClickThrough, undoActive } = useClickThroughUndo();
+  const gameDetected = useGameStore((s) => s.enabled && s.focused);
   const scale = config.ui_scale ?? 1;
   const overlayPreset = config.overlay_preset === "info_dense"
     ? "build-order"
@@ -164,11 +165,25 @@ export function Overlay() {
 
         {/* Performance & Status Strip */}
         <div className="flex items-center justify-between px-6 py-2 bg-white/[0.02] border-b border-white/[0.03] z-10">
-          <StatusIndicators
-            onToggleClickThrough={toggleWithUndo}
-            clickThroughUndoActive={undoActive}
-            onUndoClickThrough={undoClickThrough}
-          />
+          <div className="flex items-center gap-2">
+            {gameDetected && (
+              <span
+                className="inline-flex items-center gap-1.5 text-[10px] font-medium text-emerald-300/90 bg-emerald-500/10 border border-emerald-400/20 rounded-full px-2 py-0.5"
+                title="AoE4 detected — overlay auto-hides when you tab away"
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                </span>
+                Live
+              </span>
+            )}
+            <StatusIndicators
+              onToggleClickThrough={toggleWithUndo}
+              clickThroughUndoActive={undoActive}
+              onUndoClickThrough={undoClickThrough}
+            />
+          </div>
           {(isRunning || currentStep?.timing) && (
             <div className="ml-4 min-w-[240px] max-w-[280px] flex-1">
               <TimerBar targetTiming={currentStep?.timing} />

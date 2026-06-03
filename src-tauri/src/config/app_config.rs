@@ -45,6 +45,8 @@ pub struct AppConfig {
     pub ocr_assist: Option<OcrAssistConfig>,
     #[serde(default, rename = "streamOverlay")]
     pub stream_overlay: Option<StreamOverlayConfig>,
+    #[serde(default, rename = "gameDetection")]
+    pub game_detection: Option<GameDetectionConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -302,6 +304,33 @@ impl Default for StreamOverlayConfig {
     }
 }
 
+/// Foreground-window game detection: auto-show the overlay only while the game
+/// is the active window, and hide it the instant you alt-tab to another app.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GameDetectionConfig {
+    /// Master toggle for foreground detection + auto show/hide.
+    pub enabled: bool,
+    /// Hide the overlay when the game is not the foreground window.
+    pub auto_hide: bool,
+    /// Process image names (basename, case-insensitive) that count as "the game".
+    pub process_names: Vec<String>,
+    /// How often to poll the foreground window, in milliseconds.
+    pub poll_interval_ms: u32,
+}
+
+impl Default for GameDetectionConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            auto_hide: true,
+            // AoE4's game binary (same for Steam and Microsoft Store builds).
+            process_names: vec!["RelicCardinal.exe".to_string()],
+            poll_interval_ms: 700,
+        }
+    }
+}
+
 impl Default for ReminderConfig {
     fn default() -> Self {
         Self {
@@ -386,6 +415,7 @@ impl Default for AppConfig {
             }),
             ocr_assist: Some(OcrAssistConfig::default()),
             stream_overlay: Some(StreamOverlayConfig::default()),
+            game_detection: Some(GameDetectionConfig::default()),
         }
     }
 }
@@ -659,5 +689,26 @@ mod tests {
     fn test_default_sacred_sites() {
         let config = default_sacred_sites();
         assert!(config.enabled);
+    }
+
+    #[test]
+    fn test_game_detection_config_default() {
+        let config = GameDetectionConfig::default();
+        assert!(config.enabled);
+        assert!(config.auto_hide);
+        assert_eq!(config.poll_interval_ms, 700);
+        assert!(config
+            .process_names
+            .iter()
+            .any(|n| n.eq_ignore_ascii_case("reliccardinal.exe")));
+    }
+
+    #[test]
+    fn test_app_config_default_game_detection() {
+        let config = AppConfig::default();
+        let gd = config.game_detection.expect("game_detection present");
+        assert!(gd.enabled);
+        assert!(gd.auto_hide);
+        assert_eq!(gd.process_names.len(), 1);
     }
 }

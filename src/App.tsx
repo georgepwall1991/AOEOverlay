@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { getCurrentWindow } from "@/lib/tauri";
 import { Overlay } from "@/components/overlay";
 import { SettingsWindow } from "@/components/settings";
-import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize, useReminders, useMetronome } from "@/hooks";
-import { useConfigStore } from "@/stores";
+import { useGlobalHotkeys, useBuildOrders, useConfig, useWindowSize, useReminders, useMetronome, useGameDetection } from "@/hooks";
+import { useConfigStore, useOverlayStore } from "@/stores";
 
 // Extended window interface for Tauri window methods
 // Using unknown for methods that may not exist on mock windows
@@ -17,6 +17,10 @@ interface TauriWindowExtended {
 
 function OverlayWithWindowFix() {
   const timeoutIdsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  // Manual show/hide (toggle-overlay hotkey / tray). The native window is also
+  // hidden in Rust for true pass-through; this gate keeps the web/preview build
+  // and animations in sync. Game-detection auto-hide does NOT touch isVisible.
+  const isVisible = useOverlayStore((s) => s.isVisible);
 
   useEffect(() => {
     // Force window to show and resize (resize triggers WebView2 repaint)
@@ -57,7 +61,15 @@ function OverlayWithWindowFix() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100px', minWidth: '100px' }}>
+    <div
+      style={{
+        minHeight: '100px',
+        minWidth: '100px',
+        opacity: isVisible ? 1 : 0,
+        pointerEvents: isVisible ? 'auto' : 'none',
+        transition: 'opacity 150ms ease',
+      }}
+    >
       <Overlay />
     </div>
   );
@@ -74,6 +86,7 @@ function App() {
   useWindowSize();
   useReminders(); // Run reminders even when overlay UI is hidden
   useMetronome();
+  useGameDetection(); // Auto show/hide overlay based on whether AoE4 is focused
 
   useEffect(() => {
     const initWindow = async () => {

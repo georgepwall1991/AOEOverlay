@@ -15,7 +15,7 @@ mod windows;
 use commands::*;
 use config::{load_build_orders, load_config};
 use hotkeys::register_hotkeys;
-use state::AppState;
+use state::{AppState, GameDetectionRuntime};
 use tray::setup_tray;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -32,6 +32,7 @@ pub fn run() {
             config: Mutex::new(config),
             build_orders: Mutex::new(build_orders),
             tts_process: Mutex::new(None),
+            game_detection: Mutex::new(GameDetectionRuntime::default()),
         })
         .setup(|app| {
             // Setup system tray
@@ -46,6 +47,9 @@ pub fn run() {
             #[cfg(target_os = "windows")]
             {
                 windows::setup_overlay_window(app.handle().clone());
+                // Watch the foreground window so the overlay auto-shows in-game
+                // and hides the moment you alt-tab away.
+                windows::start_game_detection(app.handle().clone());
             }
 
             Ok(())
@@ -68,6 +72,8 @@ pub fn run() {
             set_click_through,
             toggle_click_through,
             toggle_compact_mode,
+            get_game_detection_state,
+            set_overlay_visible,
             import_build_order,
             export_build_order,
             tts::speak,

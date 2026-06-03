@@ -1,9 +1,31 @@
 import { useEffect, useRef, useCallback } from "react";
-import { getCurrentWindow, LogicalSize } from "@/lib/tauri";
+import { getCurrentWindow, LogicalSize, getCurrentMonitor, setWindowPosition } from "@/lib/tauri";
+import { keepOnScreen, monitorToBounds } from "@/lib/windowBounds";
 
 // Window interface with setSize accepting LogicalSize
 interface ResizableWindow {
   setSize: (size: LogicalSize) => Promise<void>;
+  outerPosition?: () => Promise<{ x: number; y: number }>;
+  outerSize?: () => Promise<{ width: number; height: number }>;
+}
+
+/**
+ * After a resize, nudge the window inward if it now spills past the right/bottom
+ * edge of its monitor, so the overlay anchors to the nearest edge instead of
+ * creeping off-screen as build-order steps grow/shrink. No-op in mock/test.
+ */
+async function anchorOnScreen(win: ResizableWindow) {
+  const monitor = await getCurrentMonitor();
+  if (!monitor || !win.outerPosition || !win.outerSize) return;
+  const pos = await win.outerPosition();
+  const size = await win.outerSize();
+  const next = keepOnScreen(
+    { x: pos.x, y: pos.y, width: size.width, height: size.height },
+    monitorToBounds(monitor)
+  );
+  if (next.x !== pos.x || next.y !== pos.y) {
+    await setWindowPosition(next.x, next.y);
+  }
 }
 
 export function useAutoResize() {
@@ -33,6 +55,7 @@ export function useAutoResize() {
       try {
         const win = getCurrentWindow() as ResizableWindow;
         await win.setSize(new LogicalSize(newWidth, newHeight));
+        await anchorOnScreen(win);
       } catch (e) {
         console.error("Failed to resize window:", e);
       }

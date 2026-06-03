@@ -3,7 +3,15 @@ import { emit as tauriEmit, listen as tauriListen, type UnlistenFn } from "@taur
 export type { UnlistenFn };
 import { LogicalSize, PhysicalSize, Size } from "@tauri-apps/api/dpi";
 export { LogicalSize, PhysicalSize, Size };
-import { getCurrentWindow as tauriGetCurrentWindow, type Window } from "@tauri-apps/api/window";
+import {
+  getCurrentWindow as tauriGetCurrentWindow,
+  availableMonitors as tauriAvailableMonitors,
+  currentMonitor as tauriCurrentMonitor,
+  primaryMonitor as tauriPrimaryMonitor,
+  type Window,
+  type Monitor,
+} from "@tauri-apps/api/window";
+export type { Monitor };
 import { open as tauriOpen, save as tauriSave } from "@tauri-apps/plugin-dialog";
 import { openPath } from "@tauri-apps/plugin-opener";
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
@@ -55,6 +63,20 @@ export const dialog = {
 // Event names for cross-window sync
 export const BUILD_ORDERS_CHANGED_EVENT = "build-orders-changed";
 export const CONFIG_CHANGED_EVENT = "config-changed";
+// Emitted by the Rust foreground watcher when the game gains/loses focus
+export const GAME_FOCUS_CHANGED_EVENT = "game-focus-changed";
+
+export interface GameFocusPayload {
+  focused: boolean;
+  processName?: string | null;
+  everSeen: boolean;
+}
+
+export interface GameDetectionState {
+  focused: boolean;
+  everSeen: boolean;
+  enabled: boolean;
+}
 
 // Mock window interface for browser testing
 interface MockWindow {
@@ -359,6 +381,48 @@ export async function toggleCompactMode(): Promise<boolean> {
     return next;
   }
   return invoke<boolean>("toggle_compact_mode");
+}
+
+// Monitor queries (used to keep the overlay on a visible screen). Mock-safe.
+export async function getAvailableMonitors(): Promise<Monitor[]> {
+  if (IS_MOCK) return [];
+  try {
+    return await tauriAvailableMonitors();
+  } catch {
+    return [];
+  }
+}
+
+export async function getCurrentMonitor(): Promise<Monitor | null> {
+  if (IS_MOCK) return null;
+  try {
+    return await tauriCurrentMonitor();
+  } catch {
+    return null;
+  }
+}
+
+export async function getPrimaryMonitor(): Promise<Monitor | null> {
+  if (IS_MOCK) return null;
+  try {
+    return await tauriPrimaryMonitor();
+  } catch {
+    return null;
+  }
+}
+
+// Foreground game-detection state (for syncing the status indicator on mount)
+export async function getGameDetectionState(): Promise<GameDetectionState> {
+  if (IS_MOCK) {
+    return { focused: false, everSeen: false, enabled: false };
+  }
+  return invoke<GameDetectionState>("get_game_detection_state");
+}
+
+// Manually show/hide the overlay window (toggle-overlay hotkey + tray menu)
+export async function setOverlayVisible(visible: boolean): Promise<void> {
+  if (IS_MOCK) return Promise.resolve();
+  return invoke("set_overlay_visible", { visible });
 }
 
 // TTS commands

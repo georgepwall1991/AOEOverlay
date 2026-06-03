@@ -55,3 +55,66 @@ pub fn toggle_click_through(app: AppHandle, state: State<AppState>) -> Result<bo
 pub fn toggle_compact_mode(app: AppHandle, state: State<AppState>) -> Result<bool, String> {
     toggle_config_bool(&state, &app, |c| &mut c.compact_mode)
 }
+
+/// Snapshot of the foreground game-detection state, for the UI to sync on mount.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GameDetectionState {
+    pub focused: bool,
+    pub ever_seen: bool,
+    pub enabled: bool,
+}
+
+/// Shows or hides the overlay window (manual toggle-overlay hotkey + tray menu).
+///
+/// Uses the same layered-window alpha + click-through path as the game-focus
+/// watcher on Windows; falls back to native show/hide elsewhere.
+#[tauri::command]
+pub fn set_overlay_visible(
+    app: AppHandle,
+    state: State<AppState>,
+    visible: bool,
+) -> Result<(), String> {
+    let click_through = state
+        .config
+        .lock()
+        .map_err(|e| e.to_string())?
+        .click_through;
+
+    if let Some(window) = app.get_webview_window("overlay") {
+        #[cfg(target_os = "windows")]
+        {
+            crate::windows::apply_overlay_visibility(&window, visible, click_through);
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            if visible {
+                window.show().map_err(|e| e.to_string())?;
+                window
+                    .set_ignore_cursor_events(click_through)
+                    .map_err(|e| e.to_string())?;
+            } else {
+                window.hide().map_err(|e| e.to_string())?;
+            }
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_game_detection_state(state: State<AppState>) -> Result<GameDetectionState, String> {
+    let runtime = state.game_detection.lock().map_err(|e| e.to_string())?;
+    let enabled = state
+        .config
+        .lock()
+        .map_err(|e| e.to_string())?
+        .game_detection
+        .as_ref()
+        .map(|g| g.enabled)
+        .unwrap_or(false);
+    Ok(GameDetectionState {
+        focused: runtime.focused,
+        ever_seen: runtime.ever_seen,
+        enabled,
+    })
+}

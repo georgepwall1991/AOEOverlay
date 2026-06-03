@@ -1,6 +1,6 @@
 [package]
 name = "aoe4-overlay"
-version = "1.5.0"
+version = "1.6.0"
 description = "AoE4 Build Order Overlay"
 authors = ["you"]
 edition = "2021"
@@ -24,4 +24,8 @@ dirs = "5"
 thiserror = "1"
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.58", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation"] }
+windows = { version = "0.58", features = [
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_System_Threading",
+] }

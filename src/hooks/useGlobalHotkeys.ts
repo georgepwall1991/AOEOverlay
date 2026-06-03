@@ -12,14 +12,29 @@ import {
   resolveActiveSteps,
 } from "@/stores";
 import { parseTimingToSeconds } from "@/stores/timerStore";
-import { toggleClickThrough, toggleCompactMode, speak } from "@/lib/tauri";
+import { toggleClickThrough, toggleCompactMode, speak, setOverlayVisible } from "@/lib/tauri";
 import { DEFAULT_VOICE_CONFIG } from "@/types";
 import { logTelemetryEvent } from "@/lib/utils";
 
 export function useGlobalHotkeys() {
   const { nextStep, previousStep, cycleBuildOrder, resetSteps, setActiveBranch } =
     useBuildOrderStore();
-  const { toggleVisibility, setVisible } = useOverlayStore();
+  const { setVisible } = useOverlayStore();
+
+  // Apply overlay visibility both to the store (UI state) and the native window
+  // (alpha + click-through), so the toggle-overlay hotkey and tray actually hide it.
+  const applyVisibility = useCallback(async (visible: boolean) => {
+    setVisible(visible);
+    try {
+      await setOverlayVisible(visible);
+    } catch (error) {
+      console.error("Failed to set overlay visibility:", error);
+    }
+  }, [setVisible]);
+
+  const handleToggleOverlay = useCallback(async () => {
+    await applyVisibility(!useOverlayStore.getState().isVisible);
+  }, [applyVisibility]);
   const { toggle: toggleCounters } = useCounterGridStore();
   const { updateConfig } = useConfigStore();
   const { startTimer, resetTimer, recordStepTime, togglePause } = useTimerStore();
@@ -161,7 +176,7 @@ export function useGlobalHotkeys() {
   // Build hotkey configurations
   const hotkeys: HotkeyConfig[] = useMemo(() => [
     // Overlay controls
-    hotkey("hotkey-toggle-overlay", toggleVisibility, "hotkey:overlay:toggle"),
+    hotkey("hotkey-toggle-overlay", handleToggleOverlay, "hotkey:overlay:toggle"),
     hotkey("hotkey-toggle-click-through", handleToggleClickThrough, ""), // handles own telemetry
     hotkey("hotkey-toggle-compact", handleToggleCompact, ""), // handles own telemetry
 
@@ -187,11 +202,11 @@ export function useGlobalHotkeys() {
     hotkey("hotkey-activate-branch-4", () => activateBranch(3), "hotkey:branch:4"),
 
     // Tray icon events
-    hotkey("tray-toggle-overlay", toggleVisibility, "tray:overlay:toggle", "tray"),
-    hotkey("tray-show-overlay", () => setVisible(true), "tray:overlay:show", "tray"),
-    hotkey("tray-hide-overlay", () => setVisible(false), "tray:overlay:hide", "tray"),
+    hotkey("tray-toggle-overlay", handleToggleOverlay, "tray:overlay:toggle", "tray"),
+    hotkey("tray-show-overlay", () => applyVisibility(true), "tray:overlay:show", "tray"),
+    hotkey("tray-hide-overlay", () => applyVisibility(false), "tray:overlay:hide", "tray"),
   ], [
-    toggleVisibility,
+    handleToggleOverlay,
     handleToggleClickThrough,
     handleToggleCompact,
     previousStep,
@@ -202,7 +217,7 @@ export function useGlobalHotkeys() {
     toggleCounters,
     setActiveBranch,
     activateBranch,
-    setVisible,
+    applyVisibility,
   ]);
 
   // Set up all hotkey listeners using the factory hook

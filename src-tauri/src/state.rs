@@ -2,10 +2,21 @@ use crate::config::{AppConfig, BuildOrder};
 use std::process::Child;
 use std::sync::Mutex;
 
+/// Live game-detection state, updated by the foreground-window watcher thread.
+/// Read by the `get_game_detection_state` command so the UI can sync on mount.
+#[derive(Debug, Clone, Default)]
+pub struct GameDetectionRuntime {
+    /// Whether the monitored game is currently the foreground window.
+    pub focused: bool,
+    /// Whether the game has been seen in the foreground at least once this session.
+    pub ever_seen: bool,
+}
+
 pub struct AppState {
     pub config: Mutex<AppConfig>,
     pub build_orders: Mutex<Vec<BuildOrder>>,
     pub tts_process: Mutex<Option<Child>>,
+    pub game_detection: Mutex<GameDetectionRuntime>,
 }
 
 #[cfg(test)]
@@ -18,6 +29,7 @@ mod tests {
             config: Mutex::new(AppConfig::default()),
             build_orders: Mutex::new(Vec::new()),
             tts_process: Mutex::new(None),
+            game_detection: Mutex::new(GameDetectionRuntime::default()),
         };
 
         // Verify we can lock and access the config
@@ -31,6 +43,7 @@ mod tests {
             config: Mutex::new(AppConfig::default()),
             build_orders: Mutex::new(Vec::new()),
             tts_process: Mutex::new(None),
+            game_detection: Mutex::new(GameDetectionRuntime::default()),
         };
 
         // Lock and modify config
@@ -50,6 +63,7 @@ mod tests {
             config: Mutex::new(AppConfig::default()),
             build_orders: Mutex::new(Vec::new()),
             tts_process: Mutex::new(None),
+            game_detection: Mutex::new(GameDetectionRuntime::default()),
         };
 
         // Start with empty build orders
@@ -90,6 +104,7 @@ mod tests {
             config: Mutex::new(AppConfig::default()),
             build_orders: Mutex::new(Vec::new()),
             tts_process: Mutex::new(None),
+            game_detection: Mutex::new(GameDetectionRuntime::default()),
         };
 
         // Initially no TTS process
@@ -106,6 +121,7 @@ mod tests {
             config: Mutex::new(AppConfig::default()),
             build_orders: Mutex::new(Vec::new()),
             tts_process: Mutex::new(None),
+            game_detection: Mutex::new(GameDetectionRuntime::default()),
         });
 
         let state_clone = Arc::clone(&state);
