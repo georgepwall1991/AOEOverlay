@@ -13,6 +13,7 @@ interface TauriWindowExtended {
   outerSize?: () => Promise<{ width: number; height: number }>;
   setSize?: (size: unknown) => Promise<void>;
   setFocus?: () => Promise<void>;
+  isFocused?: () => Promise<boolean>;
 }
 
 function OverlayWithWindowFix() {
@@ -38,7 +39,12 @@ function OverlayWithWindowFix() {
           await win.setSize?.({ type: 'Physical', width: size.width, height: size.height });
         }
 
-        await win.setFocus?.();
+        // Only refocus if the overlay already holds focus — never steal it from
+        // the game (mirrors the native guard in the Rust window setup).
+        const alreadyFocused = (await win.isFocused?.()) ?? false;
+        if (alreadyFocused) {
+          await win.setFocus?.();
+        }
       } catch (e) {
         console.error("[OverlayWithWindowFix] Error forcing repaint:", e);
       }

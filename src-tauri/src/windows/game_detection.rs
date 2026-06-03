@@ -20,7 +20,8 @@ use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetForegroundWindow, GetWindowThreadProcessId, SetLayeredWindowAttributes, LWA_ALPHA,
+    GetForegroundWindow, GetWindowThreadProcessId, SetLayeredWindowAttributes, SetWindowPos,
+    HWND_TOPMOST, LWA_ALPHA, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
 };
 
 const GAME_FOCUS_EVENT: &str = "game-focus-changed";
@@ -79,6 +80,33 @@ fn foreground_process() -> Option<(u32, String)> {
     }
 }
 
+/// Returns the process id owning the current foreground window, if it can be
+/// determined. Lighter than `foreground_process` (no process handle / image-name
+/// lookup) for the common "is this us?" check.
+fn foreground_pid() -> Option<u32> {
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.0.is_null() {
+            return None;
+        }
+        let mut pid: u32 = 0;
+        let thread_id = GetWindowThreadProcessId(hwnd, Some(&mut pid as *mut u32));
+        if thread_id == 0 || pid == 0 {
+            return None;
+        }
+        Some(pid)
+    }
+}
+
+/// True when the current foreground window belongs to our own process.
+///
+/// Startup/repaint focus calls are gated on this so the overlay never tabs the
+/// player out of a running game: we only (re)claim focus when we already own the
+/// foreground (where `set_focus` is just a harmless refresh).
+pub(crate) fn foreground_window_is_ours() -> bool {
+    foreground_pid() == Some(std::process::id())
+}
+
 /// Gets the overlay window, tolerating the occasional "main" label on Windows.
 fn overlay_window(app: &AppHandle) -> Option<tauri::WebviewWindow> {
     app.get_webview_window("overlay")
@@ -95,9 +123,38 @@ fn set_overlay_alpha(window: &tauri::WebviewWindow, alpha: u8) {
     }
 }
 
+/// Re-asserts the overlay as top-most **without activating it** (`SWP_NOACTIVATE`),
+/// so it never steals focus from the game.
+///
+/// This is a cheap no-op when the window is already top-most; the point is to
+/// recover if a transient z-order change (a toast/notification, or the game
+/// re-asserting its own window) buried the overlay mid-match. We call this rather
+/// than relying solely on `set_always_on_top(true)`, which Tauri can treat as a
+/// no-op when it already considers the window top-most (the overlay is created
+/// with `alwaysOnTop: true`), meaning no fresh `SetWindowPos` is issued.
+fn reassert_topmost(window: &tauri::WebviewWindow) {
+    if let Ok(hwnd) = window.hwnd() {
+        unsafe {
+            let raw = HWND(hwnd.0 as isize as *mut std::ffi::c_void);
+            let _ = SetWindowPos(
+                raw,
+                HWND_TOPMOST,
+                0,
+                0,
+                0,
+                0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+            );
+        }
+    }
+}
+
 /// Reveals the overlay without stealing focus from the game.
 fn show_overlay(window: &tauri::WebviewWindow, click_through: bool) {
     let _ = window.set_always_on_top(true);
+    // Force a fresh HWND_TOPMOST in case Tauri no-ops the call above (the overlay
+    // is born always-on-top, so its internal state may already read "topmost").
+    reassert_topmost(window);
     set_overlay_alpha(window, 255);
     // Restore the user's click-through preference now that the overlay is live.
     let _ = window.set_ignore_cursor_events(click_through);
@@ -221,6 +278,18 @@ pub fn start_game_detection(app: AppHandle) {
                             ever_seen,
                         },
                     );
+                }
+            }
+
+            // While the game owns the foreground, keep re-asserting top-most every
+            // tick so a transient z-order change (a notification, or the game
+            // re-asserting its own window) can't bury the overlay mid-match. This
+            // runs beyond the focus *transition* above because the overlay can lose
+            // top-most without any focus change. `SWP_NOACTIVATE` means it never
+            // pulls focus off the game, and it's a no-op when already top-most.
+            if last_focused == Some(true) && !we_hid {
+                if let Some(win) = overlay_window(&app) {
+                    reassert_topmost(&win);
                 }
             }
 
