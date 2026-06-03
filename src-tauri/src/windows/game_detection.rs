@@ -229,6 +229,18 @@ pub fn start_game_detection(app: AppHandle) {
             }
 
             let foreground = foreground_process();
+
+            // Whether a configured game executable is the *current* foreground this
+            // tick. The top-most re-assertion below is gated on this rather than on
+            // `last_focused`: when our own Settings window (which shares our PID)
+            // comes to the foreground, the decision path deliberately preserves
+            // `last_focused == Some(true)`, so keying off it would keep promoting the
+            // overlay above Settings and intercept its clicks.
+            let game_foreground = matches!(
+                &foreground,
+                Some((_, exe)) if process_names.iter().any(|n| n.eq_ignore_ascii_case(exe))
+            );
+
             let (decision, process_name): (Option<bool>, Option<String>) = match &foreground {
                 Some((pid, exe)) => {
                     if process_names.iter().any(|n| n.eq_ignore_ascii_case(exe)) {
@@ -281,13 +293,16 @@ pub fn start_game_detection(app: AppHandle) {
                 }
             }
 
-            // While the game owns the foreground, keep re-asserting top-most every
-            // tick so a transient z-order change (a notification, or the game
+            // While the game itself owns the foreground, keep re-asserting top-most
+            // every tick so a transient z-order change (a notification, or the game
             // re-asserting its own window) can't bury the overlay mid-match. This
             // runs beyond the focus *transition* above because the overlay can lose
             // top-most without any focus change. `SWP_NOACTIVATE` means it never
             // pulls focus off the game, and it's a no-op when already top-most.
-            if last_focused == Some(true) && !we_hid {
+            //
+            // Gated on `game_foreground` (not `last_focused`) so we never fight our
+            // own Settings window for the top spot — see its definition above.
+            if game_foreground && !we_hid {
                 if let Some(win) = overlay_window(&app) {
                     reassert_topmost(&win);
                 }
