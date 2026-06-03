@@ -5,6 +5,43 @@ All notable changes to the AoE4 Overlay are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-06-03
+
+### Added
+
+- **Multiple games & custom executables.** Settings → Gameplay now lets you edit
+  which game executables trigger the overlay (comma-separated) and how often it
+  checks the active window. Previously fixed to `RelicCardinal.exe` (AoE4); you can
+  now add other titles (e.g. `AoE2DE_s.exe`) or match a non-standard install.
+  Clearing the list safely falls back to the default so detection can't lock up.
+
+### Changed
+
+- **Stays on top, reliably.** While Age of Empires IV is the active window the
+  overlay now re-asserts itself as top-most on every detection tick, so a stray
+  notification or the game re-claiming its own window can no longer bury it
+  mid-match. It never pulls focus off the game.
+
+### Fixed
+
+- **Never tabs you out of the game.** The overlay's startup and repaint passes no
+  longer grab focus while another window (the game) is in front — launching or
+  re-rendering the overlay while AoE4 is running can no longer pull you back to the
+  desktop. The detection watcher already avoided this; the startup path did not.
+
+### Technical
+
+- New `foreground_window_is_ours()` gate around every startup/repaint `set_focus()`
+  (native `setup.rs` initial + retry loop, and the `App.tsx` repaint loop via
+  `isFocused()`).
+- New `reassert_topmost()` using `SetWindowPos(HWND_TOPMOST, …, SWP_NOACTIVATE)`,
+  driven from the foreground watcher and gated on the **live** game foreground so
+  it never fights the Settings window for the top spot (caught in code review).
+- Reviewed with the Codex CLI (one regression found and fixed). `cargo fmt` /
+  `clippy --all-targets` clean; 154 Rust tests and 930 frontend tests passing.
+- New `docs/OVERLAY-IMPROVEMENTS.md` — audit, RTS_Overlay research, and the
+  prioritized roadmap (event-driven detection, monitor re-anchor, OCR auto-timer).
+
 ## [1.7.0] - 2026-06-03
 
 ### Added
@@ -77,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced build orders, expanded hotkey support, and build-order icon rendering.
 - RTS Builds import support, plus AoE4World and AoE4 Guides imports.
 
+[1.8.0]: https://github.com/georgepwall1991/AOEOverlay/releases/tag/v1.8.0
 [1.7.0]: https://github.com/georgepwall1991/AOEOverlay/releases/tag/v1.7.0
 [1.6.0]: https://github.com/georgepwall1991/AOEOverlay/releases/tag/v1.6.0
 [1.5.0]: https://github.com/georgepwall1991/AOEOverlay/releases/tag/v1.5.0
