@@ -1,6 +1,6 @@
-use std::sync::Mutex;
-use std::process::Child;
 use crate::config::{AppConfig, BuildOrder};
+use std::process::Child;
+use std::sync::Mutex;
 
 pub struct AppState {
     pub config: Mutex<AppConfig>,
@@ -72,6 +72,9 @@ mod tests {
                 pinned: false,
                 favorite: false,
                 branches: None,
+                source: None,
+                content_version: None,
+                warnings: None,
             });
         }
 

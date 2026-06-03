@@ -5,9 +5,9 @@ use tauri::{
 };
 
 #[cfg(target_os = "windows")]
-use windows::Win32::UI::WindowsAndMessaging::{SetLayeredWindowAttributes, LWA_ALPHA};
-#[cfg(target_os = "windows")]
 use windows::Win32::Foundation::HWND;
+#[cfg(target_os = "windows")]
+use windows::Win32::UI::WindowsAndMessaging::{SetLayeredWindowAttributes, LWA_ALPHA};
 
 #[cfg(target_os = "windows")]
 fn force_layered_alpha_opaque<R: Runtime>(window: &tauri::WebviewWindow<R>) {
@@ -15,7 +15,12 @@ fn force_layered_alpha_opaque<R: Runtime>(window: &tauri::WebviewWindow<R>) {
     if let Ok(hwnd) = window.hwnd() {
         unsafe {
             let hwnd = HWND(hwnd.0 as *mut _);
-            let _ = SetLayeredWindowAttributes(hwnd, windows::Win32::Foundation::COLORREF(0), 255, LWA_ALPHA);
+            let _ = SetLayeredWindowAttributes(
+                hwnd,
+                windows::Win32::Foundation::COLORREF(0),
+                255,
+                LWA_ALPHA,
+            );
         }
     }
 }
@@ -48,7 +53,7 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
 
                         #[cfg(target_os = "windows")]
                         force_layered_alpha_opaque(&window);
-                        
+
                         // Focus is critical on Windows for transparent overlay windows
                         #[cfg(target_os = "windows")]
                         {
@@ -56,7 +61,7 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
                                 eprintln!("[Tray] Failed to focus overlay window: {}", e);
                             }
                         }
-                        
+
                         if let Err(e) = window.set_always_on_top(true) {
                             eprintln!("[Tray] Failed to set overlay window always on top: {}", e);
                         }
@@ -75,7 +80,9 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
                     if let Some(window) = window {
                         let _ = window.hide();
                     } else {
-                        eprintln!("[Tray] Overlay window not found for hide (labels: overlay/main)");
+                        eprintln!(
+                            "[Tray] Overlay window not found for hide (labels: overlay/main)"
+                        );
                     }
                     // Emit event to frontend to hide overlay UI
                     if let Err(e) = app.emit("tray-hide-overlay", ()) {
@@ -122,7 +129,7 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
 
                         #[cfg(target_os = "windows")]
                         force_layered_alpha_opaque(&window);
-                        
+
                         // Focus is critical on Windows for transparent overlay windows
                         #[cfg(target_os = "windows")]
                         {
@@ -130,9 +137,12 @@ pub fn setup_tray<R: Runtime>(app: &App<R>) -> tauri::Result<()> {
                                 eprintln!("[Tray] Failed to focus overlay window (toggle): {}", e);
                             }
                         }
-                        
+
                         if let Err(e) = window.set_always_on_top(true) {
-                            eprintln!("[Tray] Failed to set overlay window always on top (toggle): {}", e);
+                            eprintln!(
+                                "[Tray] Failed to set overlay window always on top (toggle): {}",
+                                e
+                            );
                         }
                     }
                 } else {

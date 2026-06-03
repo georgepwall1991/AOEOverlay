@@ -73,7 +73,7 @@ mod tests {
         let malicious = "'; Remove-Item -Recurse C:\\; '";
         let escaped = escape_powershell(malicious);
         // The single quotes should be doubled, preventing breakout
-        assert!(escaped.contains("''"));
-        assert!(!escaped.contains("'; "));
+        assert_eq!(escaped, "''; Remove-Item -Recurse C:`\\; ''");
+        assert_ne!(escaped, malicious);
     }
 }

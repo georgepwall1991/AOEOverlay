@@ -1,6 +1,6 @@
-use tauri::{AppHandle, Emitter, Manager, Runtime};
-use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Shortcut, ShortcutState, Modifiers};
 use crate::state::AppState;
+use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 // Parse a hotkey string like "Alt+F1" or "Ctrl+Shift+A"
 fn parse_shortcut(key_str: &str) -> Option<Shortcut> {
@@ -105,7 +105,7 @@ fn register_single_hotkey<R: Runtime>(
         let key_owned = key_str.to_string(); // Own the string for the closure (debug only)
         #[cfg(debug_assertions)]
         println!("[Hotkeys] Registering {} -> {}", key_str, event_name);
-        
+
         let app_handle = app.clone();
         let target_shortcut = shortcut.clone(); // Capture the specific shortcut for this handler
 
@@ -129,7 +129,10 @@ fn register_single_hotkey<R: Runtime>(
             })
             .map_err(|e| format!("Failed to register {}: {}", event_name, e))?;
     } else {
-        eprintln!("[Hotkeys] Warning: Unknown key '{}' for {}", key_str, event_name);
+        eprintln!(
+            "[Hotkeys] Warning: Unknown key '{}' for {}",
+            key_str, event_name
+        );
     }
     Ok(())
 }
@@ -152,12 +155,18 @@ pub fn register_hotkeys<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
         (&hotkey_config.previous_step, "hotkey-previous-step"),
         (&hotkey_config.next_step, "hotkey-next-step"),
         (&hotkey_config.cycle_build_order, "hotkey-cycle-build-order"),
-        (&hotkey_config.toggle_click_through, "hotkey-toggle-click-through"),
+        (
+            &hotkey_config.toggle_click_through,
+            "hotkey-toggle-click-through",
+        ),
         (&hotkey_config.toggle_compact, "hotkey-toggle-compact"),
         (&hotkey_config.reset_build_order, "hotkey-reset-build-order"),
         (&hotkey_config.toggle_pause, "hotkey-toggle-pause"),
         (&hotkey_config.toggle_counters, "hotkey-toggle-counters"),
-        (&hotkey_config.activate_branch_main, "hotkey-activate-branch-main"),
+        (
+            &hotkey_config.activate_branch_main,
+            "hotkey-activate-branch-main",
+        ),
         (&hotkey_config.activate_branch_1, "hotkey-activate-branch-1"),
         (&hotkey_config.activate_branch_2, "hotkey-activate-branch-2"),
         (&hotkey_config.activate_branch_3, "hotkey-activate-branch-3"),
@@ -179,22 +188,22 @@ mod tests {
     #[test]
     fn test_parse_shortcut() {
         let s1 = parse_shortcut("Alt+F1").unwrap();
-        assert_eq!(s1.code, Code::F1);
-        assert!(s1.modifiers.contains(Modifiers::ALT));
+        assert_eq!(s1.key, Code::F1);
+        assert!(s1.mods.contains(Modifiers::ALT));
 
         let s2 = parse_shortcut("Ctrl+Shift+A").unwrap();
-        assert_eq!(s2.code, Code::KeyA);
-        assert!(s2.modifiers.contains(Modifiers::CONTROL));
-        assert!(s2.modifiers.contains(Modifiers::SHIFT));
+        assert_eq!(s2.key, Code::KeyA);
+        assert!(s2.mods.contains(Modifiers::CONTROL));
+        assert!(s2.mods.contains(Modifiers::SHIFT));
 
         let s_complex = parse_shortcut("Ctrl+Alt+F1").unwrap();
-        assert_eq!(s_complex.code, Code::F1);
-        assert!(s_complex.modifiers.contains(Modifiers::CONTROL));
-        assert!(s_complex.modifiers.contains(Modifiers::ALT));
+        assert_eq!(s_complex.key, Code::F1);
+        assert!(s_complex.mods.contains(Modifiers::CONTROL));
+        assert!(s_complex.mods.contains(Modifiers::ALT));
 
         let s3 = parse_shortcut("F3").unwrap();
-        assert_eq!(s3.code, Code::F3);
-        assert!(s3.modifiers.is_empty());
+        assert_eq!(s3.key, Code::F3);
+        assert!(s3.mods.is_empty());
     }
 
     #[test]
@@ -243,15 +252,32 @@ mod tests {
     #[test]
     fn test_all_letters() {
         let letters = [
-            ("A", Code::KeyA), ("B", Code::KeyB), ("C", Code::KeyC),
-            ("D", Code::KeyD), ("E", Code::KeyE), ("F", Code::KeyF),
-            ("G", Code::KeyG), ("H", Code::KeyH), ("I", Code::KeyI),
-            ("J", Code::KeyJ), ("K", Code::KeyK), ("L", Code::KeyL),
-            ("M", Code::KeyM), ("N", Code::KeyN), ("O", Code::KeyO),
-            ("P", Code::KeyP), ("Q", Code::KeyQ), ("R", Code::KeyR),
-            ("S", Code::KeyS), ("T", Code::KeyT), ("U", Code::KeyU),
-            ("V", Code::KeyV), ("W", Code::KeyW), ("X", Code::KeyX),
-            ("Y", Code::KeyY), ("Z", Code::KeyZ),
+            ("A", Code::KeyA),
+            ("B", Code::KeyB),
+            ("C", Code::KeyC),
+            ("D", Code::KeyD),
+            ("E", Code::KeyE),
+            ("F", Code::KeyF),
+            ("G", Code::KeyG),
+            ("H", Code::KeyH),
+            ("I", Code::KeyI),
+            ("J", Code::KeyJ),
+            ("K", Code::KeyK),
+            ("L", Code::KeyL),
+            ("M", Code::KeyM),
+            ("N", Code::KeyN),
+            ("O", Code::KeyO),
+            ("P", Code::KeyP),
+            ("Q", Code::KeyQ),
+            ("R", Code::KeyR),
+            ("S", Code::KeyS),
+            ("T", Code::KeyT),
+            ("U", Code::KeyU),
+            ("V", Code::KeyV),
+            ("W", Code::KeyW),
+            ("X", Code::KeyX),
+            ("Y", Code::KeyY),
+            ("Z", Code::KeyZ),
         ];
         for (letter, code) in letters {
             assert_eq!(string_to_code(letter), Some(code), "Failed for {}", letter);

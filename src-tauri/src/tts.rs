@@ -1,6 +1,6 @@
+use crate::state::AppState;
 use std::process::{Child, Command, Stdio};
 use tauri::State;
-use crate::state::AppState;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -12,7 +12,9 @@ use crate::platform::escape_powershell;
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 fn kill_active_tts(state: &State<AppState>) -> Result<(), String> {
-    let mut tts_process = state.tts_process.lock()
+    let mut tts_process = state
+        .tts_process
+        .lock()
         .map_err(|_| "TTS state mutex poisoned".to_string())?;
 
     if let Some(mut child) = tts_process.take() {
@@ -34,7 +36,7 @@ fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
 
 #[cfg(target_os = "windows")]
 fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
-    // SAPI rate is -10 to 10. 
+    // SAPI rate is -10 to 10.
     // 1.0 maps to 0.
     // 0.5 maps to -5.
     // 2.0 maps to 5.
@@ -44,7 +46,7 @@ fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
     } else {
         ((rate - 1.0) * 5.0).clamp(0.0, 10.0) as i32
     };
-    
+
     let escaped_text = escape_powershell(text);
     let script = format!(
         "Add-Type -AssemblyName System.Speech; \
@@ -75,7 +77,10 @@ fn spawn_tts_process(text: &str, rate: f32) -> std::io::Result<Child> {
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 fn spawn_tts_process(_text: &str, _rate: f32) -> std::io::Result<Child> {
-    Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "TTS not supported on this platform"))
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "TTS not supported on this platform",
+    ))
 }
 
 #[tauri::command]
@@ -86,7 +91,9 @@ pub fn speak(text: String, rate: f32, state: State<'_, AppState>) -> Result<(), 
     // 2. Spawn new speech process
     match spawn_tts_process(&text, rate) {
         Ok(child) => {
-            let mut guard = state.tts_process.lock()
+            let mut guard = state
+                .tts_process
+                .lock()
                 .map_err(|_| "TTS state mutex poisoned".to_string())?;
             *guard = Some(child);
             Ok(())
@@ -186,9 +193,7 @@ mod tests {
     #[test]
     fn test_macos_say_command_available() {
         // Test that the 'say' command exists on macOS
-        let output = std::process::Command::new("which")
-            .arg("say")
-            .output();
+        let output = std::process::Command::new("which").arg("say").output();
         assert!(output.is_ok(), "Should be able to run 'which say'");
         let output = output.unwrap();
         assert!(output.status.success(), "say command should exist on macOS");
@@ -207,9 +212,7 @@ mod tests {
     #[cfg(target_os = "linux")]
     #[test]
     fn test_linux_spd_say_available() {
-        let output = std::process::Command::new("which")
-            .arg("spd-say")
-            .output();
+        let output = std::process::Command::new("which").arg("spd-say").output();
         assert!(output.is_ok(), "Should be able to run 'which spd-say'");
     }
 

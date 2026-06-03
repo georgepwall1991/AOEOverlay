@@ -19,7 +19,7 @@ export const BuildOrderStepSchema = z.object({
 });
 
 export const BuildOrderSourceSchema = z.object({
-  type: z.enum(["bundled", "aoe4world", "aoe4guides", "age4builder", "manual"]),
+  type: z.enum(["bundled", "aoe4world", "aoe4guides", "rtsbuilds", "age4builder", "manual"]),
   url: z.string().optional(),
   importedAt: z.string().optional(),
   updatedAt: z.string().optional(),

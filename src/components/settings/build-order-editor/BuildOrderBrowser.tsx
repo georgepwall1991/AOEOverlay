@@ -1,12 +1,22 @@
 import { useState } from "react";
 import { useBuildOrderStore } from "@/stores";
-import { saveBuildOrder } from "@/lib/tauri";
+import { openBuildOrdersFolder, saveBuildOrder } from "@/lib/tauri";
 import { importAoe4WorldBuild } from "@/lib/aoe4world";
+import { importAoe4GuidesBuild } from "@/lib/aoe4guides";
+import { importRtsBuildsBuild } from "@/lib/rtsbuilds";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Download, ExternalLink, Search, Info } from "lucide-react";
+import { Loader2, Download, ExternalLink, Search, Info, FolderOpen } from "lucide-react";
 import type { BuildOrder } from "@/types";
+
+function detectImportSource(value: string) {
+  const normalized = value.trim().toLowerCase();
+  if (normalized.includes("aoe4guides.com")) return "aoe4guides";
+  if (normalized.includes("craftysalamander.github.io/rtsbuilds")) return "rtsbuilds";
+  if (normalized.includes("rtsbuilds/api/builds/aoe4")) return "rtsbuilds";
+  return "aoe4world";
+}
 
 export function BuildOrderBrowser() {
   const [url, setUrl] = useState("");
@@ -21,12 +31,27 @@ export function BuildOrderBrowser() {
     setIsLoading(true);
     setError(null);
     try {
-      const build = await importAoe4WorldBuild(url);
+      const source = detectImportSource(url);
+      const build =
+        source === "aoe4guides"
+          ? await importAoe4GuidesBuild(url)
+          : source === "rtsbuilds"
+            ? await importRtsBuildsBuild(url)
+            : await importAoe4WorldBuild(url);
       setPreview(build);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to fetch build");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOpenBuildFolder = async () => {
+    setError(null);
+    try {
+      await openBuildOrdersFolder();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to open build order folder");
     }
   };
 
@@ -51,8 +76,8 @@ export function BuildOrderBrowser() {
             <Search className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-base font-medium">AoE4World Import</h2>
-            <p className="text-[11px] text-muted-foreground">Import any build order from aoe4world.com</p>
+            <h2 className="text-base font-medium">Build Import</h2>
+            <p className="text-[11px] text-muted-foreground">Paste AoE4World, AoE4 Guides, or RTS Builds links</p>
           </div>
         </div>
 
@@ -65,6 +90,13 @@ export function BuildOrderBrowser() {
           />
           <Button onClick={handleImport} disabled={isLoading || !url.trim()} className="shrink-0">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Fetch"}
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={handleOpenBuildFolder} className="gap-2">
+            <FolderOpen className="w-3.5 h-3.5" />
+            Local build folder
           </Button>
         </div>
 
@@ -126,14 +158,26 @@ export function BuildOrderBrowser() {
             <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-amber-400 transition-colors" />
           </a>
           <a
-            href="https://age4builder.com"
+            href="https://aoe4guides.com/"
             target="_blank"
             rel="noreferrer"
             className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-white/5 hover:bg-muted/30 transition-colors group"
           >
             <div className="flex flex-col">
-              <span className="text-xs font-medium group-hover:text-amber-400 transition-colors">Age4Builder</span>
-              <span className="text-[10px] text-muted-foreground">Interactive creator</span>
+              <span className="text-xs font-medium group-hover:text-amber-400 transition-colors">AoE4 Guides</span>
+              <span className="text-[10px] text-muted-foreground">Popular build orders</span>
+            </div>
+            <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-amber-400 transition-colors" />
+          </a>
+          <a
+            href="https://craftysalamander.github.io/rtsbuilds/?gameId=aoe4"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center justify-between p-3 rounded-xl bg-muted/20 border border-white/5 hover:bg-muted/30 transition-colors group"
+          >
+            <div className="flex flex-col">
+              <span className="text-xs font-medium group-hover:text-amber-400 transition-colors">RTS Builds</span>
+              <span className="text-[10px] text-muted-foreground">RTS Overlay format</span>
             </div>
             <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-amber-400 transition-colors" />
           </a>

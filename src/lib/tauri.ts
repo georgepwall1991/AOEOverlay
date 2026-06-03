@@ -5,6 +5,7 @@ import { LogicalSize, PhysicalSize, Size } from "@tauri-apps/api/dpi";
 export { LogicalSize, PhysicalSize, Size };
 import { getCurrentWindow as tauriGetCurrentWindow, type Window } from "@tauri-apps/api/window";
 import { open as tauriOpen, save as tauriSave } from "@tauri-apps/plugin-dialog";
+import { openPath } from "@tauri-apps/plugin-opener";
 import type { AppConfig, BuildOrder, WindowPosition, WindowSize } from "@/types";
 import { DEFAULT_CONFIG } from "@/types";
 
@@ -232,6 +233,17 @@ export async function getBuildOrders(): Promise<BuildOrder[]> {
     return Promise.resolve(MOCK_BUILD_ORDERS);
   }
   return invoke<BuildOrder[]>("get_build_orders");
+}
+
+export async function getBuildOrdersDirPath(): Promise<string> {
+  if (IS_MOCK) return "Mock local storage";
+  return invoke<string>("get_build_orders_dir_path");
+}
+
+export async function openBuildOrdersFolder(): Promise<void> {
+  if (IS_MOCK) return Promise.resolve();
+  const path = await getBuildOrdersDirPath();
+  return openPath(path);
 }
 
 export async function saveBuildOrder(order: BuildOrder): Promise<void> {

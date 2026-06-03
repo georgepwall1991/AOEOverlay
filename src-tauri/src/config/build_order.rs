@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use super::app_config::MAX_BUILD_ORDER_STEPS;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -117,10 +117,18 @@ pub fn validate_build_order(order: &BuildOrder) -> Result<(), String> {
             }
             for (idx, step) in branch.steps.iter().enumerate() {
                 if step.id.trim().is_empty() {
-                    return Err(format!("Branch {} step {} is missing an id", branch.name, idx + 1));
+                    return Err(format!(
+                        "Branch {} step {} is missing an id",
+                        branch.name,
+                        idx + 1
+                    ));
                 }
                 if step.description.trim().is_empty() {
-                    return Err(format!("Branch {} step {} is missing a description", branch.name, idx + 1));
+                    return Err(format!(
+                        "Branch {} step {} is missing a description",
+                        branch.name,
+                        idx + 1
+                    ));
                 }
             }
         }

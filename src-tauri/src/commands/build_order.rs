@@ -8,11 +8,35 @@ use tauri::{AppHandle, Emitter, State};
 
 const MAX_IMPORT_SIZE: u64 = 1024 * 1024; // 1MB limit
 pub(super) const BUILD_ORDERS_CHANGED_EVENT: &str = "build-orders-changed";
+const BUILD_ORDERS_README: &str = r#"# AoE4 Overlay build orders
+
+Drop RTS Overlay-compatible JSON build orders in this folder, then restart the app or import them from Settings.
+
+Useful sources:
+- AoE4 Guides: https://aoe4guides.com/
+- RTS Builds: https://craftysalamander.github.io/rtsbuilds/?gameId=aoe4
+- AoE4World: https://aoe4world.com/builds
+"#;
 
 #[tauri::command]
 pub fn get_build_orders(state: State<AppState>) -> Result<Vec<BuildOrder>, String> {
     let orders = state.build_orders.lock().map_err(|e| e.to_string())?;
     Ok(orders.clone())
+}
+
+#[tauri::command]
+pub fn get_build_orders_dir_path() -> Result<String, String> {
+    let dir = get_build_orders_dir();
+    let readme_path = dir.join("README.md");
+
+    if !readme_path.exists() {
+        fs::write(&readme_path, BUILD_ORDERS_README)
+            .map_err(|e| format!("Failed to create build order folder README: {}", e))?;
+    }
+
+    dir.to_str()
+        .map(|path| path.to_string())
+        .ok_or_else(|| "Build order folder path is not valid UTF-8".to_string())
 }
 
 #[tauri::command]
@@ -150,6 +174,13 @@ mod tests {
     #[test]
     fn test_build_orders_changed_event_name() {
         assert_eq!(BUILD_ORDERS_CHANGED_EVENT, "build-orders-changed");
+    }
+
+    #[test]
+    fn test_build_orders_readme_mentions_sources() {
+        assert!(BUILD_ORDERS_README.contains("AoE4 Guides"));
+        assert!(BUILD_ORDERS_README.contains("RTS Builds"));
+        assert!(BUILD_ORDERS_README.contains("AoE4World"));
     }
 
     #[test]

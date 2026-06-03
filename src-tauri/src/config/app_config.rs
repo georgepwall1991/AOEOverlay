@@ -12,7 +12,10 @@ pub struct AppConfig {
     pub theme: String,
     #[serde(default = "default_overlay_preset")]
     pub overlay_preset: String,
-    #[serde(default = "default_asset_content_version", rename = "assetContentVersion")]
+    #[serde(
+        default = "default_asset_content_version",
+        rename = "assetContentVersion"
+    )]
     pub asset_content_version: String,
     pub hotkeys: HotkeyConfig,
     pub window_position: Option<WindowPosition>,
@@ -69,11 +72,21 @@ pub struct HotkeyConfig {
     pub toggle_counters: String,
 }
 
-fn default_branch_main() -> String { "Alt+0".to_string() }
-fn default_branch_1() -> String { "Alt+1".to_string() }
-fn default_branch_2() -> String { "Alt+2".to_string() }
-fn default_branch_3() -> String { "Alt+3".to_string() }
-fn default_branch_4() -> String { "Alt+4".to_string() }
+fn default_branch_main() -> String {
+    "Alt+0".to_string()
+}
+fn default_branch_1() -> String {
+    "Alt+1".to_string()
+}
+fn default_branch_2() -> String {
+    "Alt+2".to_string()
+}
+fn default_branch_3() -> String {
+    "Alt+3".to_string()
+}
+fn default_branch_4() -> String {
+    "Alt+4".to_string()
+}
 
 fn default_toggle_counters() -> String {
     "Ctrl+Alt+TAB".to_string()
@@ -170,7 +183,10 @@ pub struct ReminderConfig {
 }
 
 fn default_macro_check() -> ReminderItemConfig {
-    ReminderItemConfig { enabled: false, interval_seconds: 20 }
+    ReminderItemConfig {
+        enabled: false,
+        interval_seconds: 20,
+    }
 }
 
 fn default_sacred_sites() -> SacredSitesConfig {
@@ -290,12 +306,30 @@ impl Default for ReminderConfig {
     fn default() -> Self {
         Self {
             enabled: false,
-            villager_queue: ReminderItemConfig { enabled: true, interval_seconds: 25 },
-            scout: ReminderItemConfig { enabled: true, interval_seconds: 45 },
-            houses: ReminderItemConfig { enabled: true, interval_seconds: 40 },
-            military: ReminderItemConfig { enabled: true, interval_seconds: 60 },
-            map_control: ReminderItemConfig { enabled: true, interval_seconds: 90 },
-            macro_check: ReminderItemConfig { enabled: false, interval_seconds: 20 },
+            villager_queue: ReminderItemConfig {
+                enabled: true,
+                interval_seconds: 25,
+            },
+            scout: ReminderItemConfig {
+                enabled: true,
+                interval_seconds: 45,
+            },
+            houses: ReminderItemConfig {
+                enabled: true,
+                interval_seconds: 40,
+            },
+            military: ReminderItemConfig {
+                enabled: true,
+                interval_seconds: 60,
+            },
+            map_control: ReminderItemConfig {
+                enabled: true,
+                interval_seconds: 90,
+            },
+            macro_check: ReminderItemConfig {
+                enabled: false,
+                interval_seconds: 20,
+            },
             sacred_sites: SacredSitesConfig { enabled: true },
             matchup_alerts: MatchupAlertsConfig { enabled: true },
         }
@@ -494,21 +528,30 @@ mod tests {
 
     #[test]
     fn test_window_size_creation() {
-        let size = WindowSize { width: 800, height: 600 };
+        let size = WindowSize {
+            width: 800,
+            height: 600,
+        };
         assert_eq!(size.width, 800);
         assert_eq!(size.height, 600);
     }
 
     #[test]
     fn test_window_size_minimum() {
-        let size = WindowSize { width: 1, height: 1 };
+        let size = WindowSize {
+            width: 1,
+            height: 1,
+        };
         assert_eq!(size.width, 1);
         assert_eq!(size.height, 1);
     }
 
     #[test]
     fn test_window_size_large() {
-        let size = WindowSize { width: 3840, height: 2160 };
+        let size = WindowSize {
+            width: 3840,
+            height: 2160,
+        };
         assert_eq!(size.width, 3840);
         assert_eq!(size.height, 2160);
     }

@@ -55,6 +55,7 @@ pub fn run() {
             save_config,
             reload_hotkeys,
             get_build_orders,
+            get_build_orders_dir_path,
             save_build_order,
             delete_build_order,
             get_window_position,

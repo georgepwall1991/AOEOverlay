@@ -18,6 +18,7 @@ export type BuildOrderSourceType =
   | "bundled"
   | "aoe4world"
   | "aoe4guides"
+  | "rtsbuilds"
   | "age4builder"
   | "manual";
 

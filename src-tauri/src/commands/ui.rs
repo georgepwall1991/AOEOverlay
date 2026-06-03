@@ -1,6 +1,6 @@
+use super::config_commands::CONFIG_CHANGED_EVENT;
 use crate::config::{atomic_write, get_config_path, AppConfig};
 use crate::state::AppState;
-use super::config_commands::CONFIG_CHANGED_EVENT;
 use tauri::{AppHandle, Emitter, Manager, State, Window};
 
 #[tauri::command]

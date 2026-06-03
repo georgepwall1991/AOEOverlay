@@ -154,6 +154,7 @@ export function BuildOrderManager({ filterCiv, filterDiff, onExport }: BuildOrde
             <option value="bundled">Bundled</option>
             <option value="aoe4world">AoE4World</option>
             <option value="aoe4guides">AoE4Guides</option>
+            <option value="rtsbuilds">RTS Builds</option>
             <option value="age4builder">Age4Builder</option>
             <option value="manual">Manual</option>
           </select>

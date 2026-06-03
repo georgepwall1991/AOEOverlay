@@ -58,7 +58,9 @@ mod tests {
 
     #[test]
     fn test_mutex_poisoned_error() {
-        let err = AppError::MutexPoisoned { context: "config lock" };
+        let err = AppError::MutexPoisoned {
+            context: "config lock",
+        };
         assert_eq!(err.to_string(), "State lock poisoned: config lock");
     }
 

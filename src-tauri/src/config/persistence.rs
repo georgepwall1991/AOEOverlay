@@ -34,7 +34,10 @@ pub fn load_config() -> AppConfig {
     AppConfig::default()
 }
 
-pub fn atomic_write<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(path: P, content: C) -> std::io::Result<()> {
+pub fn atomic_write<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(
+    path: P,
+    content: C,
+) -> std::io::Result<()> {
     let path = path.as_ref();
     // Create a temp file in the same directory to ensure we can rename it (atomic move)
     let tmp_path = path.with_extension("tmp");
@@ -52,7 +55,9 @@ pub fn atomic_write<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(path: P, content:
     }
 
     let err = rename_result.unwrap_err();
-    if cfg!(target_os = "windows") && (err.kind() == ErrorKind::AlreadyExists || err.kind() == ErrorKind::PermissionDenied) {
+    if cfg!(target_os = "windows")
+        && (err.kind() == ErrorKind::AlreadyExists || err.kind() == ErrorKind::PermissionDenied)
+    {
         // Best-effort cleanup before retry
         if path.exists() {
             fs::remove_file(path)?;

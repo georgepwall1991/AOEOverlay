@@ -106,7 +106,10 @@ fn apply_overlay_window_state(window: &tauri::WebviewWindow) {
     }
 
     if let Err(e) = window.set_always_on_top(true) {
-        eprintln!("[Windows] Failed to set overlay window always on top: {}", e);
+        eprintln!(
+            "[Windows] Failed to set overlay window always on top: {}",
+            e
+        );
     }
 
     if debug {
@@ -128,9 +131,7 @@ pub fn setup_overlay_window(app_handle: tauri::AppHandle) {
     if let Some(window) = get_overlay_window(&app_handle) {
         apply_overlay_window_state(&window);
     } else {
-        eprintln!(
-            "[Windows] Overlay window not found at setup (labels: overlay/main); will retry"
-        );
+        eprintln!("[Windows] Overlay window not found at setup (labels: overlay/main); will retry");
     }
 
     // WebView2 on Windows needs time to fully initialize before the content renders.
