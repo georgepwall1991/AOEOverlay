@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -83,6 +84,49 @@ export function GameplaySettings() {
     }
   };
 
+  // Process names are edited as free text (comma/newline separated) and committed
+  // on blur, so typing doesn't fight the cursor or thrash config writes.
+  const [processNamesInput, setProcessNamesInput] = useState(
+    gameDetectionConfig.processNames.join(", "),
+  );
+  useEffect(() => {
+    setProcessNamesInput(gameDetectionConfig.processNames.join(", "));
+  }, [gameDetectionConfig.processNames]);
+
+  const commitProcessNames = async () => {
+    const parsed = processNamesInput
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    // Guard against locking detection out: an empty list would never match the
+    // game, so fall back to the default rather than save nothing.
+    const processNames =
+      parsed.length > 0 ? parsed : DEFAULT_GAME_DETECTION_CONFIG.processNames;
+    const newConfig = { ...gameDetectionConfig, processNames };
+    setProcessNamesInput(processNames.join(", "));
+    updateConfig({ gameDetection: newConfig });
+    try {
+      await saveConfig({ ...config, gameDetection: newConfig });
+    } catch (error) {
+      console.error("Failed to save game detection process names:", error);
+    }
+  };
+
+  const handlePollIntervalChange = async (value: string) => {
+    const parsed = parseInt(value, 10);
+    // Match the Rust-side clamp (200–5000ms) so the UI can't request an invalid cadence.
+    const pollIntervalMs = Number.isNaN(parsed)
+      ? DEFAULT_GAME_DETECTION_CONFIG.pollIntervalMs
+      : Math.min(5000, Math.max(200, parsed));
+    const newConfig = { ...gameDetectionConfig, pollIntervalMs };
+    updateConfig({ gameDetection: newConfig });
+    try {
+      await saveConfig({ ...config, gameDetection: newConfig });
+    } catch (error) {
+      console.error("Failed to save game detection poll interval:", error);
+    }
+  };
+
   const timerDriftConfig = config.timerDrift ?? DEFAULT_TIMER_DRIFT_CONFIG;
 
   const handleTimerDriftToggle = async () => {
@@ -124,6 +168,47 @@ export function GameplaySettings() {
               onCheckedChange={handleGameDetectionToggle}
             />
           </div>
+
+          {/* Detection details (only meaningful while detection is on) */}
+          {gameDetectionConfig.enabled && (
+            <div className="ml-4 space-y-3 border-l border-border/40 pl-3">
+              <div>
+                <Label htmlFor="game-processes">Detected games</Label>
+                <p className="text-xs text-muted-foreground mt-1 mb-1.5">
+                  Executable names that count as &quot;in game&quot; (comma-separated,
+                  case-insensitive). Default is RelicCardinal.exe (AoE4). Add others to
+                  support more titles, e.g. AoE2DE_s.exe.
+                </p>
+                <Input
+                  id="game-processes"
+                  value={processNamesInput}
+                  onChange={(e) => setProcessNamesInput(e.target.value)}
+                  onBlur={commitProcessNames}
+                  placeholder="RelicCardinal.exe"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label htmlFor="poll-interval">Detection speed</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    How often to check the active window (ms). Lower is snappier,
+                    slightly more CPU.
+                  </p>
+                </div>
+                <Input
+                  id="poll-interval"
+                  type="number"
+                  min={200}
+                  max={5000}
+                  step={100}
+                  value={gameDetectionConfig.pollIntervalMs}
+                  onChange={(e) => handlePollIntervalChange(e.target.value)}
+                  className="w-24"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Click-Through Mode */}
           <div className="flex items-center justify-between">
