@@ -34,15 +34,22 @@ These are real differentiators — RTS_Overlay (the most popular competitor) has
 
 ## Tier A — Core goal: rock-solid always-on-top / non-blocking / game-aware
 
-### A1. Event-driven foreground detection (replace the 700 ms poll)
-**Now:** `start_game_detection` polls `GetForegroundWindow` every 700 ms
-(`game_detection.rs`). Up to 700 ms of lag tabbing in/out, plus constant
+### A1. Event-driven foreground detection (replace the 700 ms poll) ✅ DONE
+**Was:** `start_game_detection` polled `GetForegroundWindow` every 700 ms
+(`game_detection.rs`) — up to 700 ms of lag tabbing in/out, plus constant
 background wakeups.
-**Change:** Use `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` on a dedicated thread
-with a message loop — the OS calls us the instant focus changes. Keep a slow
-(~2 s) poll as a safety net for missed events. Net: instant show/hide, ~zero
-idle CPU. This is the headline "clever" upgrade.
-**Effort:** M · **Risk:** M (Win32 hook threading) · **Needs live AoE4 test.**
+**Done:** `SetWinEventHook(EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT)` now runs
+on a **dedicated message-loop thread** (`run_foreground_hook_thread`); the OS calls
+us the instant focus changes. Per MSDN ("keep the WinEvent callback tiny /
+non-reentrant"), the callback only signals a **worker thread** through a `Condvar`,
+and the worker (`run_watcher_worker`) owns all show/hide state and does the Tauri
+work — so a slow window op can never stall the message pump and drop events. A
+**2–5 s safety-net poll** (the worker's `Condvar` wait timeout) self-heals the rare
+missed/NULL event, and the worker re-reads `GetForegroundWindow()` fresh, so a
+NULL-delivered `hwnd` is a non-issue. Net: instant show/hide + lower idle CPU. The
+subtle decision rules were extracted into a pure `decide_focus()` and unit-tested.
+**Still recommended:** live in-game check (borderless + multi-monitor) — events vs.
+the old poll should be imperceptibly faster with no z-order flicker.
 
 ### A2. Never steal focus from the game ✅ DONE
 **Was:** `setup.rs::apply_overlay_window_state` called `window.set_focus()`, and
@@ -137,9 +144,12 @@ risk, matching RTS_Overlay's stance).
 ## Suggested order
 1. ~~**A2** (no focus-steal) + **A3a** (auto topmost)~~ — ✅ shipped. Live in-match
    sanity check still recommended.
-2. **A1** (event-driven detection) — the snappiness upgrade. *Next.*
-3. **A4** (monitor clamp/re-anchor) — kills the off-screen failure mode. A
-   `windowBounds` helper already exists on the frontend to build on.
+2. ~~**A1** (event-driven detection)~~ — ✅ shipped. The snappiness upgrade; live
+   in-match sanity check still recommended.
+3. **A4** (monitor clamp/re-anchor) — kills the off-screen failure mode. *Next.* A
+   `windowBounds` helper already exists on the frontend to build on; re-anchor on
+   `WM_DISPLAYCHANGE` using `MonitorFromRect(MONITOR_DEFAULTTONEAREST)` +
+   `GetMonitorInfo.rcWork`.
 4. **B2** (two-mode input), then **B3** (OCR auto-timer) as a larger initiative.
 
 **Verification note:** A1–A3 alter native Windows window behavior and should be
